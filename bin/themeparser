@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+#
+# given a scope, like "ls.directory", get the color associated with that scope
+#
+# options:
+#   --format -- what format do you want the color in {hex, rgb, escape codes)
+#   --theme -- can be specified here, if not, uses $THEME_FILE environment
+#              variable
+#
+#   --default -- if the scope isn't present in the theme
+#     use this instead, or do we build this into the theme?
+#
+
+import argparse
+import json
+import os
+import sys
+
+import rich.color
+import rich.console
+
+def _build_parser():
+    """Build the argument parser"""
+    parser = argparse.ArgumentParser(
+        description="Retrieve the color of a given theme scope"
+    )
+    theme_help = "user to use for authentication with the tomcat manager web application"
+    parser.add_argument("-t", "--theme", help=theme_help)
+
+    scope_help = "url of the tomcat manager web application"
+    parser.add_argument("scope", help=scope_help)
+
+    return parser
+
+
+def main(argv=None):
+
+    console = rich.console.Console()
+
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    theme_file = args.theme
+    (key, element) = args.scope.split('.')
+
+    if not theme_file:
+        try:
+            theme_file = os.environ["THEME_FILE"]
+        except KeyError:
+            console.print(f"{parser.prog}: no theme found")
+            sys.exit(1)
+
+    with open(theme_file) as file:
+        theme = json.load(file)
+
+    try:
+        color = theme["scopes"][key][element]
+    except KeyError:
+        console.print(f"{parser.prog}: '{args.scope}' not found")
+        return 1
+
+    try:
+        color = theme["styles"][color]
+    except KeyError:
+        pass
+    clr = rich.color.Color.parse(color)
+    print(clr.name)
+
+    # gum takes hex codes
+    # 
+    # THEME_FDIRS_PROMPT
+    # THEME_FDIRS_MATCH
+    # THEME_FDIRS_TEXT
+    # THEME_FDIRS_INDICATOR
+    # THEME_FDIRS_SELECTED
+    # THEME_FDIRS_UNSELECTED
+
+if __name__ == "__main__":  # pragma: nocover
+    sys.exit(main())
