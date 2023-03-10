@@ -22,8 +22,11 @@
 			"file": "foreground",
 			"link": "green"
 	    },
-	    "man": {
-			"heading": "orange"
+	    "fdirs": {
+			"text": "foreground",
+			"prompt": "green",
+			"indicator": "green",
+			"match": "pink"
 	    }
 	}
 }
