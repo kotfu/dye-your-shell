@@ -27,11 +27,24 @@ def _build_parser():
     theme_help = "user to use for authentication with the tomcat manager web application"
     parser.add_argument("-t", "--theme", help=theme_help)
 
+    format_help = "format for the output"
+    parser.add_argument("-f", "--format", default="keyvalue", choices=["keyvalue"] ,help=theme_help)
+
     scope_help = "url of the tomcat manager web application"
     parser.add_argument("scope", help=scope_help)
 
     return parser
 
+def _get_color(theme, domain, element):
+    """get a color from the theme"""
+    color = theme["scopes"][domain][element]
+
+    try:
+        color = theme["styles"][color]
+    except KeyError:
+        pass
+    clr = rich.color.Color.parse(color)
+    return clr
 
 def main(argv=None):
 
@@ -40,9 +53,8 @@ def main(argv=None):
     parser = _build_parser()
     args = parser.parse_args(argv)
 
+    # get the theme
     theme_file = args.theme
-    (key, element) = args.scope.split('.')
-
     if not theme_file:
         try:
             theme_file = os.environ["THEME_FILE"]
@@ -53,27 +65,33 @@ def main(argv=None):
     with open(theme_file) as file:
         theme = json.load(file)
 
+    if '.' in args.scope:
+        (domain, element) = args.scope.split('.')
+    else:
+        domain = args.scope
+        element = None
+
+
+    # get the list of matching scopes
+    scopes=[]
     try:
-        color = theme["scopes"][key][element]
+        if element:
+            # just get one element
+            scopes.append((f"{domain}.{element}", _get_color(theme, domain, element)))
+        else:
+            # get all the elements in the domain
+            for element in theme["scopes"][domain]:
+                scopes.append((f"{domain}.{element}", _get_color(theme, domain, element)))
     except KeyError:
         console.print(f"{parser.prog}: '{args.scope}' not found")
         return 1
 
-    try:
-        color = theme["styles"][color]
-    except KeyError:
-        pass
-    clr = rich.color.Color.parse(color)
-    print(clr.name)
 
-    # gum takes hex codes
-    # 
-    # THEME_FDIRS_PROMPT
-    # THEME_FDIRS_MATCH
-    # THEME_FDIRS_TEXT
-    # THEME_FDIRS_INDICATOR
-    # THEME_FDIRS_SELECTED
-    # THEME_FDIRS_UNSELECTED
+    # render the output
+    if args.format == "keyvalue":
+        for (scope, clr) in scopes:
+            console.print(f"{scope}:{clr.name}")
+
 
 if __name__ == "__main__":  # pragma: nocover
     sys.exit(main())
