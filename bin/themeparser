@@ -91,7 +91,7 @@ def main(argv=None):
     if args.format == "keyvalue":
         for (scope, clr) in scopes:
             console.print(f"{scope}:{clr.name}")
-
+            
 
 if __name__ == "__main__":  # pragma: nocover
     sys.exit(main())

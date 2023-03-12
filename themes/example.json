@@ -27,6 +27,11 @@
 			"prompt": "green",
 			"indicator": "green",
 			"match": "pink"
-	    }
+	    },
+		"prompt": {
+			"host": "orange",
+			"path": "cyan",
+			"symbol": "green"
+		}
 	}
 }

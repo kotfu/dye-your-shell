@@ -1,0 +1,43 @@
+#
+# gotta run this like ". prompt or it won't work
+
+unset THEME_PROMPT_HOST
+unset THEME_PROMPT_PATH
+unset THEME_PROMPT_SYMBOL
+
+# get the elements and their colors
+lines=$(bin/themeparser prompt)
+
+# set the prompt elements to plain color parts
+# if there is a color analog in the theme,
+# these variables will get updated
+host="\h"
+path="\w"
+if [ $(whoami) == 'root' ]; then
+    symbol="#"
+else
+    symbol=">"
+fi
+
+
+# see the done part of this loop for the input
+# we use this method so we don't create a subshell
+# this way the variables that we set will persist in our
+# parent shell
+while IFS= read -r line; do
+    scope=$(expr "$line" : '\(.*\):')
+    color=$(expr "$line" : '.*:\(.*\)')
+    case "$scope" in
+        prompt.host)
+            host=$(gum style '\h' --foreground=$color)
+            ;;        
+        prompt.path)
+            path=$(gum style '\w' --foreground=$color)
+            ;;
+        prompt.symbol)
+            symbol=$(gum style '>' --foreground=$color)
+            ;;
+    esac
+done <<< "$lines"
+
+PS1=$(gum join "\n" $host : $path $symbol " ")
