@@ -24,9 +24,9 @@ function theme-activate() {
         printf "no theme given"
         return 1
     elif [[ -f "$1" ]]; then
-        export THEME_FILE=$1
+        export THEME_DIR=$1
     elif [[ -f "$THEMEKIT_DIR/themes/$1/theme.json" ]]; then
-        export THEME_FILE=$THEMEKIT_DIR/themes/$1/theme.json
+        export THEME_DIR=$THEMEKIT_DIR/themes/$1
     else
         printf "theme not found"
         return 1

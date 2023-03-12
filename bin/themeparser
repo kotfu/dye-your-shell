@@ -4,7 +4,7 @@
 #
 # options:
 #   --format -- what format do you want the color in {hex, rgb, escape codes)
-#   --theme -- can be specified here, if not, uses $THEME_FILE environment
+#   --theme -- can be specified here, if not, uses $THEME_DIR environment
 #              variable
 #
 #   --default -- if the scope isn't present in the theme
@@ -14,6 +14,7 @@
 import argparse
 import json
 import os
+import pathlib
 import sys
 
 import rich.color
@@ -57,7 +58,7 @@ def main(argv=None):
     theme_file = args.theme
     if not theme_file:
         try:
-            theme_file = os.environ["THEME_FILE"]
+            theme_file = pathlib.Path(os.environ["THEME_DIR"]) / "theme.json"
         except KeyError:
             console.print(f"{parser.prog}: no theme found")
             sys.exit(1)
