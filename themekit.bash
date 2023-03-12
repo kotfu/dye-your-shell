@@ -9,7 +9,9 @@
 
 # this should be set when we initialize themekit
 # you can of course override this environment variable at any time
-export THEMEKIT_DIR=~/src/shell-themekit
+if [[ -z "$THEMEKIT_DIR" ]]; then
+    export THEMEKIT_DIR=~/src/shell-themekit
+fi
 
 # these have to be functions instead of scripts so they can add environment
 # variables to the "parent" shell
@@ -23,8 +25,8 @@ function theme-activate() {
         return 1
     elif [[ -f "$1" ]]; then
         export THEME_FILE=$1
-    elif [[ -f "$THEMEKIT_DIR/themes/$1.json" ]]; then
-        export THEME_FILE=$THEMEKIT_DIR/themes/$1.json
+    elif [[ -f "$THEMEKIT_DIR/themes/$1/theme.json" ]]; then
+        export THEME_FILE=$THEMEKIT_DIR/themes/$1/theme.json
     else
         printf "theme not found"
         return 1
@@ -41,3 +43,5 @@ function theme-reload() {
         . $THEMEKIT_DIR/theme.d/$item
     done
 }
+
+theme-activate dracula
