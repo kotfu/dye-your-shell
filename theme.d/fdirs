@@ -2,7 +2,7 @@
 # gotta run this like ". fdirs" or it won't work
 
 # get the elements and their colors
-lines=$(bin/themeparser fdirs)
+lines=$($THEMEKIT_DIR/bin/themeparser fdirs)
 
 # see the done part of this loop for the input
 # we use this method so we don't create a subshell

@@ -6,7 +6,7 @@ unset THEME_PROMPT_PATH
 unset THEME_PROMPT_SYMBOL
 
 # get the elements and their colors
-lines=$(bin/themeparser prompt)
+lines=$($THEMEKIT_DIR/bin/themeparser prompt)
 
 # set the prompt elements to plain color parts
 # if there is a color analog in the theme,
