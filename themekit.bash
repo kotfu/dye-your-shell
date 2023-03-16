@@ -23,9 +23,11 @@ function theme-activate() {
     if [[ -z "$1" ]]; then
         printf "no theme given"
         return 1
-    elif [[ -f "$1" ]]; then
+    elif [[ -d "$1" ]]; then
+        # a directory given on the command line
         export THEME_DIR=$1
     elif [[ -f "$THEMEKIT_DIR/themes/$1/theme.json" ]]; then
+        # a theme name, go find it in the themes directory
         export THEME_DIR=$THEMEKIT_DIR/themes/$1
     else
         printf "theme not found"
@@ -36,11 +38,11 @@ function theme-activate() {
 
 # reload a theme, setting all theme variables
 function theme-reload() {
-    for item in $(ls $THEMEKIT_DIR/theme.d)
+    for item in $(ls "$THEMEKIT_DIR"/theme.d/*.bash)
     do
         # source these items so they can export environment
         # variables
-        . $THEMEKIT_DIR/theme.d/$item
+        source $item
     done
 }
 
