@@ -8,10 +8,14 @@
 #
 
 # this should be set when we initialize themekit
-# you can of course override this environment variable at any time
-if [[ -z "$THEMEKIT_DIR" ]]; then
-    export THEMEKIT_DIR=~/src/shell-themekit
+if [ -z ${THEMEKIT_DIR+x} ]; then
+    THEMEKIT_DIR=~/src/shell-themekit
 fi
+if [ ! -d $THEMEKIT_DIR ]; then
+    echo "Please set THEMEKIT_DIR in ~/.profile to point to the directory of the config repo"
+    return
+fi
+export THEMEKIT_DIR
 
 # these have to be functions instead of scripts so they can add environment
 # variables to the "parent" shell
