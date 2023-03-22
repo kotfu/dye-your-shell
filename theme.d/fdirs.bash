@@ -18,17 +18,26 @@ while IFS= read -r line; do
     scope=$(expr "$line" : '\(.*\):')
     color=$(expr "$line" : '.*:\(.*\)')
     case "$scope" in
+        fdirs.label)
+            export THEME_FDIRS_LABEL=$color
+            ;;
+        fdirs.border)
+            export THEME_FDIRS_BORDER=$color
+            ;;
+        fdirs.text)
+            export THEME_FDIRS_TEXT=$color
+            ;;
         fdirs.prompt)
             export THEME_FDIRS_PROMPT=$color
             ;;        
         fdirs.match)
             export THEME_FDIRS_MATCH=$color
             ;;
-        fdirs.text)
-            export THEME_FDIRS_TEXT=$color
-            ;;
         fdirs.indicator)
             export THEME_FDIRS_INDICATOR=$color
+            ;;
+        fdirs.selected)
+            export THEME_FDIRS_SELECTED=$color
             ;;
     esac
 done <<< "$lines"

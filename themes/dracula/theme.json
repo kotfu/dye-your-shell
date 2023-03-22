@@ -24,9 +24,12 @@
 	    },
 	    "fdirs": {
 			"text": "foreground",
+			"label": "green",
+			"border": "orange",
 			"prompt": "green",
-			"indicator": "green",
-			"match": "pink"
+			"indicator": "cyan",
+			"match": "pink",
+			"selected": "current_line"
 	    },
 		"prompt": {
 			"host": "orange",
