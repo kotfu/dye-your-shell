@@ -27,3 +27,8 @@ $ jq '.ls.directory' example.json
 
 - https://superuser.com/questions/117841/when-reading-a-file-with-less-or-more-how-can-i-get-the-content-in-colors shows
   how to use lessfilter and pygmentize to highlight certain files you view
+
+- set BAT_THEME 
+- add fzf default colors to theme
+- figure out how to set emacs theme
+- figure out how to set non color variables in the theme, ie prompt character, box style, etc
