@@ -12,7 +12,7 @@
 #
 
 import argparse
-import json
+import tomllib
 import os
 import pathlib
 import sys
@@ -58,13 +58,13 @@ def main(argv=None):
     theme_file = args.theme
     if not theme_file:
         try:
-            theme_file = pathlib.Path(os.environ["THEME_DIR"]) / "theme.json"
+            theme_file = pathlib.Path(os.environ["THEME_DIR"]) / "theme.toml"
         except KeyError:
             console.print(f"{parser.prog}: no theme found")
             sys.exit(1)
 
-    with open(theme_file) as file:
-        theme = json.load(file)
+    with open(theme_file, 'rb') as file:
+        theme = tomllib.load(file)
 
     if '.' in args.scope:
         (domain, element) = args.scope.split('.')
