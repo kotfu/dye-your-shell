@@ -9,10 +9,13 @@ lines=$($THEMEKIT_DIR/bin/themeparser fdirs)
 # this way the variables that we set will persist in our
 # parent shell
 
+unset THEME_FDIRS_LABEL
+unset THEME_FDIRS_BORDER
+unset THEME_FDIRS_TEXT
 unset THEME_FDIRS_PROMPT
 unset THEME_FDIRS_MATCH
-unset THEME_FDIRS_TEXT
-unset THEME_FDITS_INDICATOR
+unset THEME_FDIRS_INDICATOR
+unset THEME_FDIRS_SELECTED
 
 while IFS= read -r line; do
     scope=$(expr "$line" : '\(.*\):')

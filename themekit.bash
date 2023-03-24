@@ -25,16 +25,16 @@ export THEMEKIT_DIR
 function theme-activate() {
 
     if [[ -z "$1" ]]; then
-        printf "no theme given"
+        printf "no theme to activate\n"
         return 1
     elif [[ -d "$1" ]]; then
         # a directory given on the command line
         export THEME_DIR=$1
-    elif [[ -f "$THEMEKIT_DIR/themes/$1/theme.json" ]]; then
+    elif [[ -f "$THEMEKIT_DIR/themes/$1/theme.toml" ]]; then
         # a theme name, go find it in the themes directory
         export THEME_DIR=$THEMEKIT_DIR/themes/$1
     else
-        printf "theme not found"
+        printf "%s: theme not found\n" "$1"
         return 1
     fi
     theme-reload
