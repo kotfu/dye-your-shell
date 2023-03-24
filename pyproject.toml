@@ -1,0 +1,77 @@
+# pyproject.toml
+[build-system]
+requires = [
+    "setuptools>=45",
+    "wheel",
+    "setuptools_scm[toml]>=6.2"
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "shell-themekit"
+description = "Use consistent color themes for a variety of command line tools."
+readme = "README.md"
+authors = [
+    {name = "Jared Crapo", email = "jared@kotfu.net"},
+]
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Topic :: Utilities",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+keywords = ["shell", "bash", "theme", "command line"]
+requires-python = ">=3.7"
+dependencies = [
+    "importlib_metadata>=1.6.0; python_version<'3.8'",
+    "rich",
+    "rich_argparse",
+]
+dynamic = ["version"]
+
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "pytest",
+    "pytest-mock",
+    "pytest-cov",
+    "codecov",
+    "pylint",
+    "black",
+    "wheel",
+    "twine",
+    "rope",
+    "invoke",
+]
+
+
+[tool.setuptools_scm]
+# empty section is the equivilent of setuptools_scm=True in setup.py
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+[tool.setuptools.package-data]
+ksc = ["py.typed"]
+
+
+[project.scripts]
+ksc = "shell_themekit.__main__:main"
+
+
+[project.urls]
+homepage = "https://github.com/kotfu/shell-themekit"
+repository = "https://github.com/kotfu/shell-themekit"
