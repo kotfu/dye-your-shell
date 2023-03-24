@@ -69,7 +69,7 @@ ksc = ["py.typed"]
 
 
 [project.scripts]
-ksc = "shell_themekit.__main__:main"
+shell-themekit = "shell_themekit.__main__:main"
 
 
 [project.urls]

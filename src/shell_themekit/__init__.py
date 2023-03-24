@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Jared Crapo
+# Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,10 +33,8 @@ except ImportError:  # pragma: nocover
     # for python < 3.8
     import importlib_metadata
 
-from .macos import (
-    MacOS,
-    MacOSKey,
-    MacOSKeyboardShortcut,
+from .themekit import (
+    ThemeKit,
 )
 
 try:

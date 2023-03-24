@@ -66,7 +66,6 @@
             
 # to get
 
-import argparse
 import tomllib
 import os
 import pathlib
@@ -75,87 +74,11 @@ import sys
 import rich.color
 import rich.console
 
-def _build_parser():
-    """Build the argument parser"""
-    parser = argparse.ArgumentParser(
-        description="Retrieve the color of a given theme scope"
-    )
-    theme_help = "user to use for authentication with the tomcat manager web application"
-    parser.add_argument("-t", "--theme", help=theme_help)
-
-    format_help = "format for the output"
-    parser.add_argument("-f", "--format", default="keyvalue", choices=["keyvalue"] ,help=theme_help)
-
-    scope_help = "url of the tomcat manager web application"
-    parser.add_argument("scope", help=scope_help)
-
-    return parser
-
-def _get_color(theme, domain, element):
-    """get a color from the theme"""
-    color = theme["scopes"][domain][element]
-
-    try:
-        color = theme["styles"][color]
-    except KeyError:
-        pass
-    clr = rich.color.Color.parse(color)
-    return clr
-
-def main(argv=None):
-
-    console = rich.console.Console()
-
-    parser = _build_parser()
-    args = parser.parse_args(argv)
-
-    # get the theme
-    theme_file = args.theme
-    if not theme_file:
-        try:
-            theme_file = pathlib.Path(os.environ["THEME_DIR"]) / "theme.toml"
-        except KeyError:
-            console.print(f"{parser.prog}: no theme found")
-            sys.exit(1)
-
-    with open(theme_file, 'rb') as file:
-        theme = tomllib.load(file)
-
-    if '.' in args.scope:
-        (domain, element) = args.scope.split('.')
-    else:
-        domain = args.scope
-        element = None
-
-
-    # get the list of matching scopes
-    scopes=[]
-    try:
-        if element:
-            # just get one element
-            scopes.append((f"{domain}.{element}", _get_color(theme, domain, element)))
-        else:
-            # get all the elements in the domain
-            for element in theme["scopes"][domain]:
-                scopes.append((f"{domain}.{element}", _get_color(theme, domain, element)))
-    except KeyError:
-        console.print(f"{parser.prog}: '{args.scope}' not found")
-        return 1
-
-
-    # render the output
-    if args.format == "keyvalue":
-        for (scope, clr) in scopes:
-            console.print(f"{scope}:{clr.name}")
-            
-
-if __name__ == "__main__":  # pragma: nocover
-    sys.exit(main())
-
-class ThemeParser():
+class ThemeKit():
     """parse and translate a theme file for various command line programs
     """
     
     def load(self):
         """load a theme from a file"""
+        pass
         
