@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Jared Crapo
+# Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,7 @@ def _build_parser():
     parser.add_argument("-t", "--theme", help=theme_help)
 
     domain_help = "domain to generate output for"
-    parser.add_argument("domain", nargs='*', help=domain_help)
+    parser.add_argument("domain", nargs="*", help=domain_help)
 
     return parser
 

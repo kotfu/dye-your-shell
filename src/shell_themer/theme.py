@@ -1,4 +1,26 @@
-#!/usr/bin/env python
+#
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2023 Jared Crapo
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 #
 #
 # options:
@@ -148,12 +170,15 @@ class Theme:
     def render(self, domains=None):
         """render the output for a given domain, or all domains if none supplied
 
-        domains can be a list of domains or None for all domains
+        domains can be a string with a single domain, a list of domains
+        or None for all domains
 
         output is suitable for bash eval $()
         """
         renders = []
-        if domains:
+        if isinstance(domains, str):
+            renders = [domains]
+        elif domains:
             for one in domains:
                 renders.append(one)
         else:
@@ -163,7 +188,8 @@ class Theme:
         for domain in renders:
             if self.has_domain(domain):
                 attribs = self.domain_attributes(domain)
-                # we must have a type attribute so we know how to render it
+                self._environment_render(attribs, self.domain_styles(domain))
+                # see if we have special rendering based on the type
                 try:
                     typ = attribs["type"]
                     if typ == "fzf":
@@ -178,6 +204,28 @@ class Theme:
                 self.error_console.print(f"{self.prog}: {domain}: no such domain")
                 return self.EXIT_ERROR
         return self.EXIT_SUCCESS
+
+    def _environment_render(self, attribs, styles):
+        """Render environment variables from a set of attributes and styles"""
+        # render the variables to unset
+        try:
+            unsets = attribs["environment"]["unset"]
+            if isinstance(unsets, str):
+                # if they used a string in the config file instead of a list
+                # process it like a single item instead of trying to process
+                # each letter in the string
+                unsets = [unsets]
+            for unset in unsets:
+                print(f"unset {unset}")
+        except KeyError:
+            pass
+        # render the variables to export
+        try:
+            exports = attribs["environment"]["export"]
+            for var, value in exports.items():
+                print(f'export {var}="{value}"')
+        except KeyError:
+            pass
 
     def _fzf_render(self, attribs, styles):
         """render attribs into a shell statement to set an environment variable"""

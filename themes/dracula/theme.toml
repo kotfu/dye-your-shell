@@ -45,6 +45,14 @@ red =  "#ff5555"
 yellow =  "#f1fa8c"
 
 
+# set up ls
+[domain.ls]
+type = "environment"
+
+environment.unset = ["SOMEVAR"]
+environment.export.LS_COLORS="ace ventura"
+
+
 # default for the fzf command
 [domain.fzf]
 type = "fzf"

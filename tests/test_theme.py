@@ -1,5 +1,28 @@
 #
+# -*- coding: utf-8 -*-
 #
+# Copyright (c) 2023 Jared Crapo
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+# pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
+# pylint: disable=missing-module-docstring, unused-variable
 
 import pytest
 import rich.style
@@ -34,6 +57,15 @@ pink =  "#ff79c6"
 purple =  "#bd93f9"
 red =  "#ff5555"
 yellow =  "#f1fa8c"
+
+[domain.ls]
+# set some environment variables
+environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+environment.export.LS_COLORS = "ace ventura"
+
+[domain.unset]
+# unset a single variable
+environment.unset = "NOLISTVAR"
 
 [domain.fzf]
 type = "fzf"
@@ -141,7 +173,7 @@ def test_get_style_plain(thm):
 def test_get_style_complex(thm):
     style = thm.get_style("bold white on red")
     assert isinstance(style, rich.style.Style)
-    assert style.bold == True
+    assert style.bold is True
     assert style.color.name == "white"
     assert style.bgcolor.name == "red"
 
@@ -224,4 +256,25 @@ def test_render_all(thm, capsys):
     out, err = capsys.readouterr()
     assert out
     assert not err
-    assert out.count("\n") == 2
+    assert out.count("\n") == 6
+
+
+def test_render_environment_unset_list(thm, capsys):
+    exit_code = thm.render(["ls"])
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert out
+    assert not err
+    assert "unset SOMEVAR" in out
+    assert "unset ANOTHERVAR" in out
+    assert 'export LS_COLORS="ace ventura"' in out
+
+
+def test_render_environment_unset_string(thm, capsys):
+    # we are testing a string domain instead of a list here on purpose
+    exit_code = thm.render("unset")
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert out
+    assert not err
+    assert "unset NOLISTVAR" in out
