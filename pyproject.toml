@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "shell-themekit"
+name = "shell-themer"
 description = "Use consistent color themes for a variety of command line tools."
 readme = "README.md"
 authors = [
@@ -69,13 +69,13 @@ ksc = ["py.typed"]
 
 
 [project.scripts]
-shell-themekit = "shell_themekit.__main__:main"
+shell-themer = "shell_themer.__main__:main"
 
 
 [project.urls]
-homepage = "https://github.com/kotfu/shell-themekit"
-repository = "https://github.com/kotfu/shell-themekit"
+homepage = "https://github.com/kotfu/shell-themer"
+repository = "https://github.com/kotfu/shell-themer"
 
 [tool.pytest.ini-options]
 testpaths = ["tests"]
-addopts = "--cov-report=term-missing --cov=src/shell_themekit"
+addopts = "--cov-report=term-missing --cov=src/shell_themer"

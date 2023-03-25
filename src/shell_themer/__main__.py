@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 """
-Entry point for 'shell-themekit' command line program.
+Entry point for 'shell-themer' command line program.
 """
 import argparse
 import pathlib
@@ -31,7 +31,7 @@ import sys
 import textwrap
 import tomllib
 
-from shell_themekit import Theme
+from shell_themer import Theme
 
 import rich.color
 import rich.console
@@ -56,7 +56,7 @@ def _build_parser():
 
 
 def main(argv=None):
-    """Entry point for 'shell-themekit' command line program.
+    """Entry point for 'shell-themer' command line program.
 
     :param argv:    pass a list of arguments to be processed. If None, sys.argv[1:]
                     will be used. To process with no arguments, pass an empty list.
