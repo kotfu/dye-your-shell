@@ -31,7 +31,7 @@ import sys
 import textwrap
 import tomllib
 
-import shell_themekit
+from shell_themekit import Theme
 
 import rich.color
 import rich.console
@@ -49,76 +49,31 @@ def _build_parser():
     theme_help = "specify a theme directory"
     parser.add_argument("-t", "--theme", help=theme_help)
 
-    format_help = "format for the output"
-    parser.add_argument("-f", "--format", default="keyvalue", choices=["keyvalue"] ,help=theme_help)
-
-    scope_help = "scope to generate color schemes for"
-    parser.add_argument("scope", help=scope_help)
+    domain_help = "domain to generate output for"
+    parser.add_argument("domain", help=domain_help)
 
     return parser
 
 
-
-
-def _get_color(theme, domain, element):
-    """get a color from the theme"""
-    color = theme["scopes"][domain][element]
-
-    try:
-        color = theme["styles"][color]
-    except KeyError:
-        pass
-    clr = rich.color.Color.parse(color)
-    return clr
-
-
-
 def main(argv=None):
+    """Entry point for 'shell-themekit' command line program.
+
+    :param argv:    pass a list of arguments to be processed. If None, sys.argv[1:]
+                    will be used. To process with no arguments, pass an empty list.
+    """
 
     console = rich.console.Console()
 
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    # get the theme
-    theme_file = args.theme
-    if not theme_file:
-        try:
-            theme_file = pathlib.Path(os.environ["THEME_DIR"]) / "theme.toml"
-        except KeyError:
-            console.print(f"{parser.prog}: no theme found")
-            sys.exit(1)
+    thm = Theme(parser.prog, console=console)
+    thm.load(args.theme)
 
-    with open(theme_file, 'rb') as file:
-        theme = tomllib.load(file)
+    out = thm.render(args.domain)
+    console.print(out)
+    return 0
 
-    if '.' in args.scope:
-        (domain, element) = args.scope.split('.')
-    else:
-        domain = args.scope
-        element = None
-
-
-    # get the list of matching scopes
-    scopes=[]
-    try:
-        if element:
-            # just get one element
-            scopes.append((f"{domain}.{element}", _get_color(theme, domain, element)))
-        else:
-            # get all the elements in the domain
-            for element in theme["scopes"][domain]:
-                scopes.append((f"{domain}.{element}", _get_color(theme, domain, element)))
-    except KeyError:
-        console.print(f"{parser.prog}: '{args.scope}' not found")
-        return 1
-
-
-    # render the output
-    if args.format == "keyvalue":
-        for (scope, clr) in scopes:
-            console.print(f"{scope}:{clr.name}")
-            
 
 if __name__ == "__main__":  # pragma: nocover
     sys.exit(main())

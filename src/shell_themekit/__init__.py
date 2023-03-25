@@ -33,8 +33,8 @@ except ImportError:  # pragma: nocover
     # for python < 3.8
     import importlib_metadata
 
-from .themekit import (
-    ThemeKit,
+from .theme import (
+    Theme,
 )
 
 try:
