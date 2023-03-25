@@ -45,7 +45,7 @@ class Theme:
 
     def __init__(self, prog, error_console=None):
         """Construct a new Theme() object
-        
+
         console
         """
 
@@ -147,7 +147,7 @@ class Theme:
 
     def render(self, domains=None):
         """render the output for a given domain, or all domains if none supplied
-        
+
         domains can be a list of domains or None for all domains
 
         output is suitable for bash eval $()
@@ -204,7 +204,7 @@ class Theme:
         try:
             colorbase = f"{attribs['colorbase']},"
         except KeyError:
-            colorbase=""
+            colorbase = ""
         if colorbase or colors:
             colorstr = f" --color='{colorbase}{','.join(colors)}'"
         else:

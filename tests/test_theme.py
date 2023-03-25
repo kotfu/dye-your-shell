@@ -11,6 +11,7 @@ from shell_themekit import Theme
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
 
+
 @pytest.fixture
 def thm_base():
     thm = Theme(prog="shell-themekit")
@@ -199,6 +200,7 @@ def test_fzf_from_style(thm, name, styledef, fzf):
     style = rich.style.Style.parse(styledef)
     assert fzf == thm._fzf_from_style(name, style)
 
+
 def test_render_single(thm, capsys):
     exit_code = thm.render(["fzf"])
     out, err = capsys.readouterr()
@@ -207,12 +209,14 @@ def test_render_single(thm, capsys):
     assert not err
     assert out.count("\n") == 1
 
+
 def test_render_unknown(thm, capsys):
     exit_code = thm.render(["unknowndomain"])
     out, err = capsys.readouterr()
     assert exit_code == EXIT_ERROR
     assert not out
     assert err
+
 
 def test_render_all(thm, capsys):
     exit_code = thm.render()
@@ -221,4 +225,3 @@ def test_render_all(thm, capsys):
     assert out
     assert not err
     assert out.count("\n") == 2
-

@@ -66,7 +66,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     thm = Theme(parser.prog)
-    thm.load(args.theme)    
+    thm.load(args.theme)
     return thm.render(args.domain)
 
 
