@@ -1,6 +1,9 @@
 #
 # definition of dracula theme
 
+version = "1.0.0"
+name = "dracula"
+
 # theme file stuff to work out
 # - how to declare a "whatever your terminal chooses" color
 #     - fzf uses -1 for this
@@ -18,7 +21,6 @@
 # - domain could be the name of an environment variable, and element could be the value
 
 # styles defined here use the syntax of the python rich library
-name = "dracula"
 
 [styles]
 # these are from https://draculatheme.com/contribute
