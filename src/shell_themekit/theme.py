@@ -155,9 +155,9 @@ class Theme:
 
         for key, value in opts.items():
             if isinstance(value, str):
-                optstr += f" --{key}={value}"
+                optstr += f" {key}='{value}'"
             elif isinstance(value, bool) and value:
-                optstr += f" --{key}"
+                optstr += f" {key}"
 
         # process all the styles
         colors = []
@@ -165,14 +165,21 @@ class Theme:
         for name, style in styles.items():
             colors.append(self._fzf_from_style(name, style))
         # turn off all the colors, and add our color strings
-        colorstr = f" --color=bw:{','.join(colors)}"
+        try:
+            colorbase = f"{attribs['colorbase']},"
+        except KeyError:
+            colorbase=""
+        if colorbase or colors:
+            colorstr = f" --color='{colorbase}{','.join(colors)}'"
+        else:
+            colorstr = ""
 
         # figure out which environment variable to put it in
         try:
             varname = attribs["varname"]
         except KeyError:
             varname = "FZF_DEFAULT_OPTS"
-        return f"export {varname}='{optstr}{colorstr}'"
+        return f'export {varname}="{optstr}{colorstr}"'
 
     def _fzf_from_style(self, name, style):
         """turn a rich.style into a valid fzf color"""
@@ -182,7 +189,7 @@ class Theme:
             if style.color:
                 fzfc = self._fzf_color_from_rich_color(style.color)
                 fzfa = self._fzf_attribs_from_style(style)
-                fzf.append(f"fg:{fzfc}{fzfa}")
+                fzf.append(f"fg:{fzfc}:{fzfa}")
             if style.bgcolor:
                 fzfc = self._fzf_color_from_rich_color(style.bgcolor)
                 fzf.append(f"bg:{fzfc}")
@@ -191,7 +198,7 @@ class Theme:
             if style.color:
                 fzfc = self._fzf_color_from_rich_color(style.color)
                 fzfa = self._fzf_attribs_from_style(style)
-                fzf.append(f"fg+:{fzfc}{fzfa}")
+                fzf.append(f"fg+:{fzfc}:{fzfa}")
             if style.bgcolor:
                 fzfc = self._fzf_color_from_rich_color(style.bgcolor)
                 fzf.append(f"bg+:{fzfc}")
@@ -200,7 +207,7 @@ class Theme:
             if style.color:
                 fzfc = self._fzf_color_from_rich_color(style.color)
                 fzfa = self._fzf_attribs_from_style(style)
-                fzf.append(f"preview-fg:{fzfc}{fzfa}")
+                fzf.append(f"preview-fg:{fzfc}:{fzfa}")
             if style.bgcolor:
                 fzfc = self._fzf_color_from_rich_color(style.bgcolor)
                 fzf.append(f"preview-bg:{fzfc}")
@@ -209,7 +216,7 @@ class Theme:
             if style.color:
                 fzfc = self._fzf_color_from_rich_color(style.color)
                 fzfa = self._fzf_attribs_from_style(style)
-                fzf.append(f"{name}:{fzfc}{fzfa}")
+                fzf.append(f"{name}:{fzfc}:{fzfa}")
 
         return ",".join(fzf)
 
@@ -231,7 +238,7 @@ class Theme:
         return fzf
 
     def _fzf_attribs_from_style(self, style):
-        attribs = ""
+        attribs = "regular"
         if style.bold:
             attribs += ":bold"
         if style.underline:

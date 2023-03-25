@@ -62,7 +62,7 @@ def main(argv=None):
                     will be used. To process with no arguments, pass an empty list.
     """
 
-    console = rich.console.Console()
+    console = rich.console.Console(soft_wrap=False, markup=False, emoji=False, highlight=False)
 
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -71,7 +71,7 @@ def main(argv=None):
     thm.load(args.theme)
 
     out = thm.render(args.domain)
-    console.print(out)
+    print(out)
     return 0
 
 

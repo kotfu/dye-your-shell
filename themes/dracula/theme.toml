@@ -48,16 +48,22 @@ type = "fzf"
 
 # attributes specific to fzf
 varname = "FZF_DEFAULT_OPTS"
+# the base color scheme from fzf to use
+colorbase = "dark"
+
 
 # command line options
-# opt.border = "single" --> --border=single
-# opt.no-sort = true --> --no-sort
-# opt.no-sort = false does not add anything to the output
-opt.border = "single"
-opt.pointer = "•"
-opt.info = "hidden"
-opt.no-sort = true
-opt.prompt = ">"
+# opt.--border = "single" --> --border='single'
+# opt.--no-sort = true --> --no-sort
+# opt."+i" = true --> +i
+# opt.--no-sort = false does not add anything to the output
+#opt.--border = "rounded"
+opt.--pointer = "•"
+#opt.--info = "hidden"
+#opt.--no-sort = true
+opt.--prompt = "> "
+opt.--bind = "ctrl-k:kill-line,ctrl-j:ignore,ctrl-u:unix-line-discard"
+
 
 # visual styles for each element
 
@@ -74,11 +80,15 @@ opt.prompt = ">"
 # background colors on all other styles are ignored
 #
 
-# these styles are special because they set
+# these styles are special because they set both foreground and background
 style.text = "text"
 style.current_line = "current_line"
 
 # no special parsing for these styles, just use the fzf color name
+# highlighted substrings
+style.hl = "pink"
+# highlighted substrings current line
+style."hl+" = "pink"
 style.label = "green"
 style.border = "orange"
 style.prompt = "green"
@@ -87,23 +97,54 @@ style.query = "pink"
 
 
 [domain.fdirs]
-# uses fzf, if you want something different than the default fzf
-# set the colors here
-text = "foreground"
-label = "green"
-border = "orange"
-prompt = "green"
-indicator = "cyan"
-match = "pink"
-selected = "current_line"
+# fdirs adds FZF_DEFAULT_OPTS and then FDIRS_FZF_OPTS to the command line
+# before executing fzf, so you can override here anything from [domain.fzf]
+type = "fzf"
+
+# select the environment variable
+varname = "FDIRS_FZF_OPTS"
+
+# command line options
+opt.--border = "rounded"
+opt.--pointer = "•"
+opt.--info = "hidden"
+opt.--no-sort = true
+opt.--prompt = "> "
+opt."+i" = true
+opt.--height = "~40%"
+opt.--layout = "reverse-list"
+
+# color styles
+style.text = "text"
+style.current_line = "current_line"
+style.label = "green"
+style.border = "orange"
+style.pointer = "cyan"
+style.prompt = "green"
+style.query = "green"
+# highlighted substrings
+style.hl = "pink"
+# highlighted substrings on current line
+style."hl+" = "pink"
+# hide the gutter
+style.gutter = "default"
+
 
 [domain.bash-control-r]
-# this uses fzf, if you want something differnet than the default fzf
-# add colors here
-text = "foreground"
-label = "green"
-border = "orange"
-prompt = "green"
-indicator = "cyan"
-match = "pink"
-selected = "current_line"
+# fzf comes with an ancillary file that rebinds Control-R to a fzf powered
+# history search. that script adds FZF_DEFAULT_OPTS to the command line before
+# executing fzf. then it adds FZF_CTRL_R_OPTS to the command line. because
+# fzf has a last-option-on-the-command-line-wins logic flow, it means
+# that Control-R inherits anyt fzf options set in FZF_DEFAILT_OPTS
+type = "fzf"
+
+# select the environment variable
+varname = "FZF_CTRL_R_OPTS"
+
+# command line options
+opt.--border = "rounded"
+opt.--border-label = "command history"
+opt.--border-label-pos = "3"
+
+# styles
+style.gutter = "default"

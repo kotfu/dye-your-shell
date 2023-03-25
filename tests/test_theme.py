@@ -38,11 +38,11 @@ type = "fzf"
 varname = "FZF_DEFAULT_OPTS"
 
 # command line options
-opt.prompt = ">"
-opt.border = "single"
-opt.pointer = "•"
-opt.info = "hidden"
-opt.no-sort = true
+opt.--prompt = ">"
+opt.--border = "single"
+opt.--pointer = "•"
+opt.--info = "hidden"
+opt.--no-sort = true
 
 # styles
 style.text = "foreground"
@@ -138,15 +138,15 @@ def test_get_style_lookup(thm):
 
 
 ATTRIBS_TO_FZF = [
-    ("bold", ":bold"),
-    ("underline", ":underline"),
-    ("reverse", ":reverse"),
-    ("dim", ":dim"),
-    ("italic", ":italic"),
-    ("strike", ":strikethrough"),
-    ("bold underline", ":bold:underline"),
-    ("underline italic", ":underline:italic"),
-    ("italic underline", ":underline:italic"),
+    ("bold", "regular:bold"),
+    ("underline", "regular:underline"),
+    ("reverse", "regular:reverse"),
+    ("dim", "regular:dim"),
+    ("italic", "regular:italic"),
+    ("strike", "regular:strikethrough"),
+    ("bold underline", "regular:bold:underline"),
+    ("underline italic", "regular:underline:italic"),
+    ("italic underline", "regular:underline:italic"),
 ]
 
 
@@ -160,18 +160,18 @@ STYLE_TO_FZF = [
     # text, current_line, and preview styles have special processing
     # for foreground and background colors
     ("text", "", ""),
-    ("text", "default", "fg:-1"),
-    ("text", "default on default", "fg:-1,bg:-1"),
-    ("text", "bold default on default underline", "fg:-1:bold:underline,bg:-1"),
-    ("text", "white on bright_red", "fg:7,bg:9"),
-    ("text", "bright_white", "fg:15"),
-    ("text", "bright_yellow on color(4)", "fg:11,bg:4"),
-    ("text", "green4", "fg:28"),
-    ("current_line", "navy_blue dim on grey82", "fg+:17:dim,bg+:252"),
+    ("text", "default", "fg:-1:regular"),
+    ("text", "default on default", "fg:-1:regular,bg:-1"),
+    ("text", "bold default on default underline", "fg:-1:regular:bold:underline,bg:-1"),
+    ("text", "white on bright_red", "fg:7:regular,bg:9"),
+    ("text", "bright_white", "fg:15:regular"),
+    ("text", "bright_yellow on color(4)", "fg:11:regular,bg:4"),
+    ("text", "green4", "fg:28:regular"),
+    ("current_line", "navy_blue dim on grey82", "fg+:17:regular:dim,bg+:252"),
     # other styles do not
-    ("preview", "#af00ff on bright_white", "preview-fg:#af00ff,preview-bg:15"),
-    ("border", "magenta", "border:5"),
-    ("query", "#2932dc", "query:#2932dc"),
+    ("preview", "#af00ff on bright_white", "preview-fg:#af00ff:regular,preview-bg:15"),
+    ("border", "magenta", "border:5:regular"),
+    ("query", "#2932dc", "query:#2932dc:regular"),
 ]
 
 
