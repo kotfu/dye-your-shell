@@ -8,6 +8,9 @@ import rich.errors
 from shell_themekit import Theme
 
 
+EXIT_SUCCESS = 0
+EXIT_ERROR = 1
+
 @pytest.fixture
 def thm_base():
     thm = Theme(prog="shell-themekit")
@@ -43,6 +46,7 @@ opt.--border = "single"
 opt.--pointer = "•"
 opt.--info = "hidden"
 opt.--no-sort = true
+opt."+i" = true
 
 # styles
 style.text = "foreground"
@@ -54,8 +58,23 @@ style.indicator = "cyan"
 style.match = "pink"
 style.localstyle = "green on black"
 
-[domain.noattribs]
 
+[domain.bash-control-r]
+type = "fzf"
+# select the environment variable
+varname = "FZF_CTRL_R_OPTS"
+
+# command line options
+opt.--border = "rounded"
+opt.--border-label = "command history"
+opt.--border-label-pos = "3"
+
+# styles
+style.gutter = "default"
+
+
+[domain.noattribs]
+# without a type defined, this will not render anything
 style.text = "foreground"
 """
     thm_base.loads(tomlstr)
@@ -179,3 +198,27 @@ STYLE_TO_FZF = [
 def test_fzf_from_style(thm, name, styledef, fzf):
     style = rich.style.Style.parse(styledef)
     assert fzf == thm._fzf_from_style(name, style)
+
+def test_render_single(thm, capsys):
+    exit_code = thm.render(["fzf"])
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert out
+    assert not err
+    assert out.count("\n") == 1
+
+def test_render_unknown(thm, capsys):
+    exit_code = thm.render(["unknowndomain"])
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_ERROR
+    assert not out
+    assert err
+
+def test_render_all(thm, capsys):
+    exit_code = thm.render()
+    assert exit_code == EXIT_SUCCESS
+    out, err = capsys.readouterr()
+    assert out
+    assert not err
+    assert out.count("\n") == 2
+

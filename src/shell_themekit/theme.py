@@ -43,14 +43,23 @@ class Theme:
     EXIT_SUCCESS = 0
     EXIT_ERROR = 1
 
-    def __init__(self, prog, console=None):
-        """Construct a new Theme() object"""
+    def __init__(self, prog, error_console=None):
+        """Construct a new Theme() object
+        
+        console
+        """
 
         self.prog = prog
-        if console:
-            self.console = console
+        if error_console:
+            self.error_console = error_console
         else:
-            self.console = rich.console.Console()
+            self.error_console = rich.console.Console(
+                stderr=True,
+                soft_wrap=True,
+                markup=False,
+                emoji=False,
+                highlight=False,
+            )
 
         self.definition = {}
         self.styles = {}
@@ -95,6 +104,14 @@ class Theme:
         except KeyError:
             pass
 
+    def has_domain(self, domain):
+        """Check if the given domain exists."""
+        try:
+            content = self.definition["domain"][domain]
+            return True
+        except KeyError:
+            return False
+
     def domain_styles(self, domain):
         "Get all the styles for a given domain, or an empty dict of there are none"
         styles = {}
@@ -128,20 +145,39 @@ class Theme:
             style = rich.style.Style.parse(styledef)
         return style
 
-    def render(self, domain=None):
+    def render(self, domains=None):
         """render the output for a given domain, or all domains if none supplied
+        
+        domains can be a list of domains or None for all domains
 
         output is suitable for bash eval $()
         """
-        attribs = self.domain_attributes(domain)
-        # we must have a type attribute so we know how to render it
-        try:
-            typ = attribs["type"]
-            if typ == "fzf":
-                return self._fzf_render(attribs, self.domain_styles(domain))
-            return None
-        except KeyError:
-            return None
+        renders = []
+        if domains:
+            for one in domains:
+                renders.append(one)
+        else:
+            for domain in self.definition["domain"].keys():
+                renders.append(domain)
+
+        for domain in renders:
+            if self.has_domain(domain):
+                attribs = self.domain_attributes(domain)
+                # we must have a type attribute so we know how to render it
+                try:
+                    typ = attribs["type"]
+                    if typ == "fzf":
+                        self._fzf_render(attribs, self.domain_styles(domain))
+                    else:
+                        # no type attribute specified in the domain, by definition, this is not
+                        # an error, but doesn't render
+                        pass
+                except KeyError:
+                    pass
+            else:
+                self.error_console.print(f"{self.prog}: {domain}: no such domain")
+                return self.EXIT_ERROR
+        return self.EXIT_SUCCESS
 
     def _fzf_render(self, attribs, styles):
         """render attribs into a shell statement to set an environment variable"""
@@ -179,7 +215,7 @@ class Theme:
             varname = attribs["varname"]
         except KeyError:
             varname = "FZF_DEFAULT_OPTS"
-        return f'export {varname}="{optstr}{colorstr}"'
+        print(f'export {varname}="{optstr}{colorstr}"')
 
     def _fzf_from_style(self, name, style):
         """turn a rich.style into a valid fzf color"""

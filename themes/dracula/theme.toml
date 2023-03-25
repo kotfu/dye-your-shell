@@ -43,6 +43,7 @@ red =  "#ff5555"
 yellow =  "#f1fa8c"
 
 
+# default for the fzf command
 [domain.fzf]
 type = "fzf"
 
@@ -97,6 +98,7 @@ style.query = "pink"
 
 
 [domain.fdirs]
+# settings for aliases in fdirs, which uses fzf
 # fdirs adds FZF_DEFAULT_OPTS and then FDIRS_FZF_OPTS to the command line
 # before executing fzf, so you can override here anything from [domain.fzf]
 type = "fzf"
@@ -148,3 +150,6 @@ opt.--border-label-pos = "3"
 
 # styles
 style.gutter = "default"
+
+[domain.null]
+# just here for testing

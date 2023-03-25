@@ -75,3 +75,7 @@ shell-themekit = "shell_themekit.__main__:main"
 [project.urls]
 homepage = "https://github.com/kotfu/shell-themekit"
 repository = "https://github.com/kotfu/shell-themekit"
+
+[tool.pytest.ini-options]
+testpaths = ["tests"]
+addopts = "--cov-report=term-missing --cov=src/shell_themekit"

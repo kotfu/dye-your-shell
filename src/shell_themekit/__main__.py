@@ -44,13 +44,13 @@ EXIT_USAGE = 2
 def _build_parser():
     """Build the argument parser"""
     parser = argparse.ArgumentParser(
-        description="Retrieve the color of a given theme scope"
+        description="Generate shell code to activate a theme"
     )
     theme_help = "specify a theme directory"
     parser.add_argument("-t", "--theme", help=theme_help)
 
     domain_help = "domain to generate output for"
-    parser.add_argument("domain", help=domain_help)
+    parser.add_argument("domain", nargs='*', help=domain_help)
 
     return parser
 
@@ -62,17 +62,12 @@ def main(argv=None):
                     will be used. To process with no arguments, pass an empty list.
     """
 
-    console = rich.console.Console(soft_wrap=False, markup=False, emoji=False, highlight=False)
-
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    thm = Theme(parser.prog, console=console)
-    thm.load(args.theme)
-
-    out = thm.render(args.domain)
-    print(out)
-    return 0
+    thm = Theme(parser.prog)
+    thm.load(args.theme)    
+    return thm.render(args.domain)
 
 
 if __name__ == "__main__":  # pragma: nocover
