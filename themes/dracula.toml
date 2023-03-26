@@ -4,22 +4,6 @@
 version = "1.0.0"
 name = "dracula"
 
-# theme file stuff to work out
-# - how to declare a "whatever your terminal chooses" color
-#     - fzf uses -1 for this
-#     - rich uses "default"
-
-# information heirarchy
-# 'styles'
-# 'domains'
-#    domain - ie fzf
-#       - domain_type
-#    element - ie label
-#    value - ie '$ff79c6'
-#
-# - domain can be the name of a  and element could be the color
-# - domain could be the name of an environment variable, and element could be the value
-
 # styles defined here use the syntax of the python rich library
 
 [styles]
@@ -45,10 +29,9 @@ red =  "#ff5555"
 yellow =  "#f1fa8c"
 
 
-
 # default for the fzf command
 [domain.fzf]
-type = "fzf"
+processor = "fzf"
 
 # attributes specific to fzf
 varname = "FZF_DEFAULT_OPTS"
@@ -104,7 +87,7 @@ style.query = "pink"
 # settings for aliases in fdirs, which uses fzf
 # fdirs adds FZF_DEFAULT_OPTS and then FDIRS_FZF_OPTS to the command line
 # before executing fzf, so you can override here anything from [domain.fzf]
-type = "fzf"
+processor = "fzf"
 
 # select the environment variable
 varname = "FDIRS_FZF_OPTS"
@@ -141,7 +124,7 @@ style.gutter = "default"
 # executing fzf. then it adds FZF_CTRL_R_OPTS to the command line. because
 # fzf has a last-option-on-the-command-line-wins logic flow, it means
 # that Control-R inherits anyt fzf options set in FZF_DEFAILT_OPTS
-type = "fzf"
+processor = "fzf"
 
 # select the environment variable
 varname = "FZF_CTRL_R_OPTS"

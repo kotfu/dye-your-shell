@@ -68,7 +68,7 @@ environment.export.LS_COLORS = "ace ventura"
 environment.unset = "NOLISTVAR"
 
 [domain.fzf]
-type = "fzf"
+processor = "fzf"
 
 # attributes specific to fzf
 varname = "FZF_DEFAULT_OPTS"
@@ -93,7 +93,7 @@ style.localstyle = "green on black"
 
 
 [domain.bash-control-r]
-type = "fzf"
+processor = "fzf"
 # select the environment variable
 varname = "FZF_CTRL_R_OPTS"
 
@@ -107,7 +107,7 @@ style.gutter = "default"
 
 
 [domain.noattribs]
-# without a type defined, this will not render anything
+# without a processor defined, this will not render anything
 style.text = "foreground"
 """
     thm_base.loads(tomlstr)
@@ -151,7 +151,7 @@ def test_domain_elements_unknown(thm):
 def test_domain_attributes(thm):
     attribs = thm.domain_attributes("fzf")
     assert isinstance(attribs, dict)
-    assert attribs["type"] == "fzf"
+    assert attribs["processor"] == "fzf"
     assert len(attribs) == 3
     with pytest.raises(KeyError):
         _ = attribs["style"]

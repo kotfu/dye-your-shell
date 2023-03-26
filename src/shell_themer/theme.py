@@ -21,34 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-#
-#
-# options:
-#   --format -- what format do you want the color in {hex, rgb, escape codes)
-#   --theme -- can be specified here, if not, uses $THEME_DIR environment
-#              variable
-#
-#   --default -- if the scope isn't present in the theme
-#     use this instead, or do we build this into the theme?
-#
-
-# approach
-# - compile the theme file into a bunch of rich.style objects, with
-#   a method get_style() that gets the style from the theme or parses
-#   it from the input
-# - make a custom python function for each type of rendered output
-#    - ie fzf render type would create an options string for fzf
-#      including --color, --border, --pointer, --prompt, --marker etc
-#    - ls render type would create a LS_COLORS string
-#    - envhex creates environment variables with hex codes in them for
-#      each variable in the scope
-# - create a scope that set an env variable, like to set BAT_THEME
-#    - the theme file just contains the name of the bat theme to use when this
-#      shell theme is selected
-# - create a scope that knows how to set an emacs theme by name
-#    - the theme file contains the name of the emacs theme
-
-
 import tomllib
 import os
 import pathlib
@@ -190,10 +162,10 @@ class Theme:
                 attribs = self.domain_attributes(domain)
                 # do the rendering that works in any domain
                 self._environment_render(attribs, self.domain_styles(domain))
-                # see if we have special rendering based on the type
+                # see if we have a processor defined for custom rendering
                 try:
-                    typ = attribs["type"]
-                    if typ == "fzf":
+                    processor = attribs["processor"]
+                    if processor == "fzf":
                         self._fzf_render(attribs, self.domain_styles(domain))
                     else:
                         # no type attribute specified in the domain, by
