@@ -4,3 +4,4 @@
   - show how to set BAT_THEME
 - make an iterm2 processor
 - figure out how to set emacs theme
+- make a processor for ls to build LS_COLORS
