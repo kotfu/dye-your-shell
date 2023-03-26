@@ -165,14 +165,19 @@ class Themer:
                 # see if we have a processor defined for custom rendering
                 try:
                     processor = attribs["processor"]
-                    if processor == "fzf":
-                        self._fzf_render(attribs, self.domain_styles(domain))
-                    else:
-                        # no type attribute specified in the domain, by
-                        # definition, this is not an error, but doesn't render
-                        pass
                 except KeyError:
-                    pass
+                    continue
+                try:
+                    if processor == "fzf":
+                        self._fzf_render(domain, attribs, self.domain_styles(domain))
+                    else:
+                        # unknown processor specified in the domain, by
+                        # definition, this is not an error, but you don't
+                        # get any special rendering
+                        pass
+                except ThemeError as exc:
+                    self.error_console.print(exc)
+                    return self.EXIT_ERROR
             else:
                 self.error_console.print(f"{self.prog}: {domain}: no such domain")
                 return self.EXIT_ERROR
@@ -200,7 +205,7 @@ class Themer:
         except KeyError:
             pass
 
-    def _fzf_render(self, attribs, styles):
+    def _fzf_render(self, domain, attribs, styles):
         """render attribs into a shell statement to set an environment variable"""
         optstr = ""
 
@@ -234,9 +239,11 @@ class Themer:
         # figure out which environment variable to put it in
         try:
             varname = attribs["varname"]
-        except KeyError:
-            varname = "FZF_DEFAULT_OPTS"
-        print(f'export {varname}="{optstr}{colorstr}"')
+            print(f'export {varname}="{optstr}{colorstr}"')
+        except KeyError as exc:
+            raise ThemeError(
+                f"{self.prog}: fzf processor requires 'varname' key to process domain '{domain}"
+            ) from exc
 
     def _fzf_from_style(self, name, style):
         """turn a rich.style into a valid fzf color"""
@@ -309,3 +316,7 @@ class Themer:
         if style.strike:
             attribs += ":strikethrough"
         return attribs
+
+
+class ThemeError(Exception):
+    """Exception for theme processing errors"""

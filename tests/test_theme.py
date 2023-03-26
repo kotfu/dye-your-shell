@@ -106,9 +106,13 @@ opt.--border-label-pos = "3"
 style.gutter = "default"
 
 
-[domain.noattribs]
+[domain.noprocessor]
 # without a processor defined, this will not render anything
 style.text = "foreground"
+
+[domain.unknownprocessor]
+processor = "unknown"
+
 """
     thm_base.loads(tomlstr)
     return thm_base
@@ -233,6 +237,9 @@ def test_fzf_from_style(thm, name, styledef, fzf):
     assert fzf == thm._fzf_from_style(name, style)
 
 
+#
+# test general rendering
+#
 def test_render_single(thm, capsys):
     exit_code = thm.render(["fzf"])
     out, err = capsys.readouterr()
@@ -259,6 +266,17 @@ def test_render_all(thm, capsys):
     assert out.count("\n") == 6
 
 
+def test_processor_unknown(thm, capsys):
+    exit_code = thm.render("unknownprocessor")
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert not out
+    assert not err
+
+
+#
+# test environment rendering
+#
 def test_render_environment_unset_list(thm, capsys):
     exit_code = thm.render(["ls"])
     out, err = capsys.readouterr()
@@ -278,3 +296,51 @@ def test_render_environment_unset_string(thm, capsys):
     assert out
     assert not err
     assert "unset NOLISTVAR" in out
+
+
+#
+# test the fzf processor
+#
+def test_fzf_opts(thm_base, capsys):
+    tomlstr = """
+[domain.fzf]
+processor = "fzf"
+varname = "QQQ"
+opt."+i" = true
+opt.--border = "rounded"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert not err
+    assert out == """export QQQ=" +i --border='rounded'"\n"""
+
+
+def test_fzf_no_opts(thm_base, capsys):
+    tomlstr = """
+[domain.fzf]
+processor = "fzf"
+varname = "QQQ"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert not err
+    assert out == """export QQQ=""\n"""
+
+
+def test_fzf_no_varname(thm_base, capsys):
+    tomlstr = """
+[domain.fzf]
+processor = "fzf"
+opt."+i" = true
+opt.--border = "rounded"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_ERROR
+    assert not out
+    assert "fzf processor requires 'varname'" in err
