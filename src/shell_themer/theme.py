@@ -89,7 +89,7 @@ class Theme:
         self.loads()
 
     def load(self, theme_file=None):
-        """Load a theme from a directory
+        """Load a theme from a file
 
         :raises:
 
@@ -98,9 +98,9 @@ class Theme:
             fname = theme_file
         else:
             try:
-                fname = pathlib.Path(os.environ["THEME_DIR"]) / "theme.toml"
+                fname = pathlib.Path(os.environ["THEME_FILE"])
             except KeyError:
-                self.error_console.print(f"{self.prog}: $THEME_DIR not set")
+                self.error_console.print(f"{self.prog}: $THEME_FILE not set")
                 sys.exit(self.EXIT_ERROR)
 
         with open(fname, "rb") as file:
@@ -188,6 +188,7 @@ class Theme:
         for domain in renders:
             if self.has_domain(domain):
                 attribs = self.domain_attributes(domain)
+                # do the rendering that works in any domain
                 self._environment_render(attribs, self.domain_styles(domain))
                 # see if we have special rendering based on the type
                 try:
@@ -195,8 +196,8 @@ class Theme:
                     if typ == "fzf":
                         self._fzf_render(attribs, self.domain_styles(domain))
                     else:
-                        # no type attribute specified in the domain, by definition, this is not
-                        # an error, but doesn't render
+                        # no type attribute specified in the domain, by
+                        # definition, this is not an error, but doesn't render
                         pass
                 except KeyError:
                     pass
