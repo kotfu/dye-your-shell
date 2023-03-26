@@ -29,32 +29,33 @@ red =  "#ff5555"
 yellow =  "#f1fa8c"
 
 
-[domain.gnuls]
-processor = "gnuls"
+[domain.ls_colors]
+processor = "ls_colors"
 environment_variable = "LS_COLORS" # should be a default
 
 # set the style to use for each file type
-type.text = "" # for non filename text
-type.file = "redd"
-type.directory = ""
-type.link = ""
-type.orphan = ""
-type.missing = ""
-type.pipe = ""
-type.socket = ""
-type.block_device = ""
-type.character_device = ""
-type.executable = ""
+style.text = "foreground" # for non filename text
+style.file = "red"
+style.directory = "green"
+#style.link = ""
+#style.orphan = ""
+#style.missing = ""
+#style.pipe = ""
+#style.socket = ""
+#style.block_device = ""
+#style.character_device = ""
+#style.executable = ""
 
 # define sets of files
-fileset.text = ['*.txt', '*.md', '*.markdown']
-fileset.config = ['*.conf', '*.config']
-fileset.image = ['*.jpg', '*.jpeg', '*.gif', '*.png']
-filset.video = ['*.mp4', '*.mkv']
+#fileset.text.globs = ['*.txt', '*.md', '*.markdown']
+#fileset.text.style = "green"
 
-# apply styles to filesets
-style.text = "green"
-style.config = "orange"
+#fileset.config.globs = ['*.conf', '*.config']
+#fileset.config.style = "orange"
+
+#fileset.image.globs = ['*.jpg', '*.jpeg', '*.gif', '*.png']
+#filset.video.globs = ['*.mp4', '*.mkv']
+
 
 [domain.bat]
 environment.export.BAT_THEME="Dracula"

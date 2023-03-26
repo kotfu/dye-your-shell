@@ -182,8 +182,8 @@ class Themer:
                     styles = self.domain_styles(domain)
                     if processor == "fzf":
                         self._fzf_render(domain, attribs, styles)
-                    elif processor == "gnuls":
-                        self._gnuls_render(domain, content)
+                    elif processor == "ls_colors":
+                        self._ls_colors_render(domain, content)
                     else:
                         # unknown processor specified in the domain, by
                         # definition, this is not an error, but you don't
@@ -331,15 +331,63 @@ class Themer:
             attribs += ":strikethrough"
         return attribs
 
-    def _gnuls_render(self, domain, content):
+    GNULS_MAP = {
+        'text': 'no',
+        'file': 'fi',
+        'directory': 'di',
+    }
+
+    def _ls_colors_render(self, domain, content):
         "Render a LS_COLORS variable suitable for GNU ls"
+        outlist = []
+        # process the styles
+        try:
+            styles = content["style"]
+        except KeyError:
+            styles = []
+        for name, styledef in styles.items():
+            try:
+                mapname = self.GNULS_MAP[name]
+            except KeyError:
+                mapname = None
+            if mapname:
+                style = self.get_style(styledef)
+                if style:
+                    outlist.append(self._ls_colors_from_style(mapname, style))
+
+        # process the filesets
 
         # figure out which environment variable to put it in
         try:
             varname = content["enviroinment_variable"]
         except KeyError:
             varname = "LS_COLORS"
-        print(f'export {varname}=""')
+        print(f'''export {varname}="{':'.join(outlist)}"''')
+
+    def _ls_colors_from_style(self, name, style):
+        """create an entry suitable for LS_COLORS from a style
+
+        name should be a valid LS_COLORS entry, could be a code representing
+        a file type, or a glob representing a file extension
+
+        style is a style object
+        """
+        colorseq = ""
+        if not style:
+            # TODO validate this is what we actually want
+            return ""
+
+        if style.color.type == rich.color.ColorType.DEFAULT:
+            colorseq = "0"
+        # elif color.type == rich.color.ColorType.STANDARD:
+        #     # python rich uses underscores, fzf uses dashes
+        #     fzf = str(color.number)
+        # elif color.type == rich.color.ColorType.EIGHT_BIT:
+        #     fzf = str(color.number)
+        # elif color.type == rich.color.ColorType.TRUECOLOR:
+        #     fzf = color.triplet.hex
+        # return fzf
+        return f"{name}={colorseq}"
 
 
 class ThemeError(Exception):

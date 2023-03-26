@@ -344,3 +344,24 @@ opt.--border = "rounded"
     assert exit_code == EXIT_ERROR
     assert not out
     assert "fzf processor requires 'varname'" in err
+
+
+#
+# test the gnuls processor
+#
+STYLE_TO_LSCOLORS = [
+    ("no", "", ""),
+    ("no", "default", "no=0"),
+#    ("default on default", "fg:-1:regular,bg:-1"),
+#    ("bold default on default underline", "fg:-1:regular:bold:underline,bg:-1"),
+#    ("white on bright_red", "fg:7:regular,bg:9"),
+#    ("bright_white", "fg:15:regular"),
+#    ("bright_yellow on color(4)", "fg:11:regular,bg:4"),
+#    ("green4", "fg:28:regular"),
+]
+
+
+@pytest.mark.parametrize("name, styledef, lsc", STYLE_TO_LSCOLORS)
+def test_ls_colors_from_style(thm_base, name, styledef, lsc):
+    style = rich.style.Style.parse(styledef)
+    assert lsc == thm_base._ls_colors_from_style(name, style)
