@@ -29,6 +29,9 @@ red =  "#ff5555"
 yellow =  "#f1fa8c"
 
 
+[domain.bat]
+environment.export.BAT_THEME="Dracula"
+
 # default for the fzf command
 [domain.fzf]
 processor = "fzf"
