@@ -100,7 +100,7 @@ class Theme:
             try:
                 fname = pathlib.Path(os.environ["THEME_DIR"]) / "theme.toml"
             except KeyError:
-                self.console.print(f"{self.prog}: $THEME_DIR not set")
+                self.error_console.print(f"{self.prog}: $THEME_DIR not set")
                 sys.exit(self.EXIT_ERROR)
 
         with open(fname, "rb") as file:
@@ -129,7 +129,7 @@ class Theme:
     def has_domain(self, domain):
         """Check if the given domain exists."""
         try:
-            content = self.definition["domain"][domain]
+            _ = self.definition["domain"][domain]
             return True
         except KeyError:
             return False
