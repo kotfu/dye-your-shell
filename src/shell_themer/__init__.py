@@ -34,7 +34,7 @@ except ImportError:  # pragma: nocover
     import importlib_metadata
 
 from .theme import (
-    Theme,
+    Themer,
 )
 
 try:

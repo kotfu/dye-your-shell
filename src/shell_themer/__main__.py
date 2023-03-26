@@ -31,7 +31,7 @@ import sys
 import textwrap
 import tomllib
 
-from shell_themer import Theme, VERSION_STRING
+from shell_themer import Themer, VERSION_STRING
 
 import rich.color
 import rich.console
@@ -73,7 +73,7 @@ def main(argv=None):
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    thm = Theme(parser.prog)
+    thm = Themer(parser.prog)
     thm.load(args.theme)
     return thm.render(args.domain)
 

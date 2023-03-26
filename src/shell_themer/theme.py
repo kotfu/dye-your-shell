@@ -31,14 +31,14 @@ import rich.console
 import rich.style
 
 
-class Theme:
+class Themer:
     """parse and translate a theme file for various command line programs"""
 
     EXIT_SUCCESS = 0
     EXIT_ERROR = 1
 
     def __init__(self, prog, error_console=None):
-        """Construct a new Theme() object
+        """Construct a new Themer object
 
         console
         """
@@ -281,7 +281,7 @@ class Theme:
         """turn a rich.color into it's fzf equivilent"""
         fzf = ""
         if not color:
-            return
+            return fzf
 
         if color.type == rich.color.ColorType.DEFAULT:
             fzf = "-1"

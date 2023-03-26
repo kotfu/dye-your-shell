@@ -28,7 +28,7 @@ import pytest
 import rich.style
 import rich.errors
 
-from shell_themer import Theme
+from shell_themer import Themer
 
 
 EXIT_SUCCESS = 0
@@ -37,7 +37,7 @@ EXIT_ERROR = 1
 
 @pytest.fixture
 def thm_base():
-    thm = Theme(prog="shell-themer")
+    thm = Themer(prog="shell-themer")
     return thm
 
 
