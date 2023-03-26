@@ -76,6 +76,6 @@ shell-themer = "shell_themer.__main__:main"
 homepage = "https://github.com/kotfu/shell-themer"
 repository = "https://github.com/kotfu/shell-themer"
 
-[tool.pytest.ini-options]
+[tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov-report=term-missing --cov=src/shell_themer"
