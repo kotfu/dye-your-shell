@@ -106,6 +106,16 @@ class Themer:
         except KeyError:
             return False
 
+    def domain_content(self, domain):
+        "Extract all the data for a given domain, or an empty dict if there is none"
+        content = {}
+        try:
+            content = self.definition["domain"][domain]
+        except KeyError:
+            # domain doesn't exist
+            pass
+        return content
+
     def domain_styles(self, domain):
         "Get all the styles for a given domain, or an empty dict of there are none"
         styles = {}
@@ -159,6 +169,7 @@ class Themer:
 
         for domain in renders:
             if self.has_domain(domain):
+                content = self.domain_content(domain)
                 attribs = self.domain_attributes(domain)
                 # do the rendering that works in any domain
                 self._environment_render(attribs, self.domain_styles(domain))
@@ -168,8 +179,11 @@ class Themer:
                 except KeyError:
                     continue
                 try:
+                    styles = self.domain_styles(domain)
                     if processor == "fzf":
-                        self._fzf_render(domain, attribs, self.domain_styles(domain))
+                        self._fzf_render(domain, attribs, styles)
+                    elif processor == "gnuls":
+                        self._gnuls_render(domain, content)
                     else:
                         # unknown processor specified in the domain, by
                         # definition, this is not an error, but you don't
@@ -316,6 +330,16 @@ class Themer:
         if style.strike:
             attribs += ":strikethrough"
         return attribs
+
+    def _gnuls_render(self, domain, content):
+        "Render a LS_COLORS variable suitable for GNU ls"
+
+        # figure out which environment variable to put it in
+        try:
+            varname = content["enviroinment_variable"]
+        except KeyError:
+            varname = "LS_COLORS"
+        print(f'export {varname}=""')
 
 
 class ThemeError(Exception):
