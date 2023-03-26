@@ -64,10 +64,6 @@ dev = [
 where = ["src"]
 
 
-[tool.setuptools.package-data]
-ksc = ["py.typed"]
-
-
 [project.scripts]
 shell-themer = "shell_themer.__main__:main"
 

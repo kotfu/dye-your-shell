@@ -31,7 +31,7 @@ import sys
 import textwrap
 import tomllib
 
-from shell_themer import Theme
+from shell_themer import Theme, VERSION_STRING
 
 import rich.color
 import rich.console
@@ -46,9 +46,17 @@ def _build_parser():
     parser = argparse.ArgumentParser(
         description="Generate shell code to activate a theme"
     )
+
+    version_help = "show the program version and exit"
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=VERSION_STRING,
+        help=version_help,
+    )
     theme_help = "specify a theme directory"
     parser.add_argument("-t", "--theme", help=theme_help)
-
     domain_help = "domain to generate output for"
     parser.add_argument("domain", nargs="*", help=domain_help)
 
