@@ -33,7 +33,7 @@ except ImportError:  # pragma: nocover
     # for python < 3.8
     import importlib_metadata
 
-from .theme import (
+from .themer import (
     Themer,
 )
 
