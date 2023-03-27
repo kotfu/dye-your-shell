@@ -464,14 +464,14 @@ class Themer:
             styledef = content["style"][style]
             styleobj = self.get_style(styledef)
         except KeyError:
-            pass
+            return
         if styleobj:
             clr = styleobj.color.get_truecolor()
             # gotta use raw strings here so the \033 and \007 don't get
             # interpreted by python
-            out = r'builtin echo -n "\033]1337;'
+            out = r'builtin echo -e "\e]1337;'
             out += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
-            out += r'\007"'
+            out += r'\a"'
             print(out)
 
 

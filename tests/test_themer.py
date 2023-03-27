@@ -460,5 +460,20 @@ style.background = "#221122"
     assert not err
     lines = out.splitlines()
     assert len(lines) == 2
-    assert lines[0] == r'builtin echo -n "\033]1337;SetColors=fg=ffeebb\007"'
-    assert lines[1] == r'builtin echo -n "\033]1337;SetColors=bg=221122\007"'
+    assert lines[0] == r'builtin echo -e "\e]1337;SetColors=fg=ffeebb\a"'
+    assert lines[1] == r'builtin echo -e "\e]1337;SetColors=bg=221122\a"'
+
+def test_iterm_bgonly(thm_base, capsys):
+    tomlstr = """
+[domain.iterm]
+processor = "iterm"
+style.background = "#b2cacd"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 1
+    assert lines[0] == r'builtin echo -e "\e]1337;SetColors=bg=b2cacd\a"'
