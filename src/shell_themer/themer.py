@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import tomllib
+import tomlkit
 import os
 import pathlib
 import re
@@ -77,7 +77,7 @@ class Themer:
                 sys.exit(self.EXIT_ERROR)
 
         with open(fname, "rb") as file:
-            self.definition = tomllib.load(file)
+            self.definition = tomlkit.load(file)
 
         self._parse_styles()
 
@@ -87,7 +87,7 @@ class Themer:
             toparse = tomlstring
         else:
             toparse = ""
-        self.definition = tomllib.loads(toparse)
+        self.definition = tomlkit.loads(toparse)
         self._parse_styles()
 
     def _parse_styles(self):

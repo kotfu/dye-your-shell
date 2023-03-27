@@ -394,6 +394,7 @@ processor = "ls_colors"
     assert not err
     assert out == 'export LS_COLORS=""\n'
 
+
 def test_ls_colors_environment_variable(thm_base, capsys):
     tomlstr = """
 [domain.lsc]

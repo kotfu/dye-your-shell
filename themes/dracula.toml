@@ -33,14 +33,16 @@ yellow =  "#f1fa8c"
 [domain.ls_colors]
 processor = "ls_colors"
 environment_variable = "LS_COLORS" # this is the default
-# set true to clear all built-in color defaults
-# if you don't want ls to use it's built-in color defaults
-# ie executables in green, you have to override it in
-# LS_COLORS. This single line is the same as putting
-# 'default' in every recognized style
+# set true to clear all built-in color defaults if you don't want ls to use it's
+# built-in color defaults ie executables in green, you have to override it in
+# LS_COLORS. This single line is the same as putting 'default' in every recognized
+# style
 clear_builtin = true
 
-# set the style to use for each file type
+# set the style to use for each file type sequence matters here, the last thing to
+# match is the style that is applied. so if you put executable_file after setuid and
+# you have a file that is both, then the executable_file style will be the one that
+# shows up
 style.text = "default" # for non filename text
 style.file = "red"
 style.directory = "green"
