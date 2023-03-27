@@ -83,7 +83,7 @@ environment.export.BAT_THEME="Dracula"
 processor = "fzf"
 
 # attributes specific to fzf
-varname = "FZF_DEFAULT_OPTS"
+environment_variable = "FZF_DEFAULT_OPTS"
 # the base color scheme from fzf to use
 colorbase = "dark"
 
@@ -139,7 +139,7 @@ style.query = "pink"
 processor = "fzf"
 
 # select the environment variable
-varname = "FDIRS_FZF_OPTS"
+environment_variable = "FDIRS_FZF_OPTS"
 
 # command line options
 opt.--border = "rounded"
@@ -176,7 +176,7 @@ style.gutter = "default"
 processor = "fzf"
 
 # select the environment variable
-varname = "FZF_CTRL_R_OPTS"
+environment_variable = "FZF_CTRL_R_OPTS"
 
 # command line options
 opt.--border = "rounded"

@@ -71,7 +71,7 @@ environment.unset = "NOLISTVAR"
 processor = "fzf"
 
 # attributes specific to fzf
-varname = "FZF_DEFAULT_OPTS"
+environment_variable = "FZF_DEFAULT_OPTS"
 
 # command line options
 opt.--prompt = ">"
@@ -95,7 +95,7 @@ style.localstyle = "green on black"
 [domain.bash-control-r]
 processor = "fzf"
 # select the environment variable
-varname = "FZF_CTRL_R_OPTS"
+environment_variable = "FZF_CTRL_R_OPTS"
 
 # command line options
 opt.--border = "rounded"
@@ -305,7 +305,7 @@ def test_fzf_opts(thm_base, capsys):
     tomlstr = """
 [domain.fzf]
 processor = "fzf"
-varname = "QQQ"
+environment_variable = "QQQ"
 opt."+i" = true
 opt.--border = "rounded"
     """
@@ -321,7 +321,7 @@ def test_fzf_no_opts(thm_base, capsys):
     tomlstr = """
 [domain.fzf]
 processor = "fzf"
-varname = "QQQ"
+environment_variable = "QQQ"
     """
     thm_base.loads(tomlstr)
     exit_code = thm_base.render()
@@ -343,7 +343,7 @@ opt.--border = "rounded"
     out, err = capsys.readouterr()
     assert exit_code == EXIT_ERROR
     assert not out
-    assert "fzf processor requires 'varname'" in err
+    assert "fzf processor requires 'environment_variable'" in err
 
 
 #

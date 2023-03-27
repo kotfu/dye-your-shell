@@ -253,11 +253,14 @@ class Themer:
 
         # figure out which environment variable to put it in
         try:
-            varname = attribs["varname"]
+            varname = attribs["environment_variable"]
             print(f'export {varname}="{optstr}{colorstr}"')
         except KeyError as exc:
             raise ThemeError(
-                f"{self.prog}: fzf processor requires 'varname' key to process domain '{domain}"
+                (
+                    f"{self.prog}: fzf processor requires 'environment_variable'"
+                    f" key to process domain '{domain}"
+                )
             ) from exc
 
     def _fzf_from_style(self, name, style):
