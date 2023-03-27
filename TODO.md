@@ -13,3 +13,6 @@
 
   if the command returns 0 then we process the domain
   if the command returns not 0 the we skip processing the domain
+
+- add a way for shell-themer to display the names and colors of all styles in the
+  [styles] section
