@@ -24,6 +24,7 @@
 import tomllib
 import os
 import pathlib
+import re
 import sys
 
 import rich.color
@@ -331,10 +332,26 @@ class Themer:
             attribs += ":strikethrough"
         return attribs
 
-    GNULS_MAP = {
-        'text': 'no',
-        'file': 'fi',
-        'directory': 'di',
+    LS_COLORS_MAP = {
+        "text": "no",
+        "file": "fi",
+        "directory": "di",
+        "symlink": "ln",
+        "multi_hard_link": "mh",
+        "pipe": "pi",
+        "socket": "so",
+        "door": "do",
+        "block_device": "bd",
+        "character_device": "cd",
+        "broken_symlink": "or",
+        "missing_symlink_target": "mi",
+        "setuid": "su",
+        "setgid": "sg",
+        "sticky": "st",
+        "other_writable": "ow",
+        "sticky_other_writable": "tw",
+        "executable_file": "ex",
+        "file_with_capability": "ca",
     }
 
     def _ls_colors_render(self, domain, content):
@@ -344,24 +361,49 @@ class Themer:
         try:
             styles = content["style"]
         except KeyError:
-            styles = []
-        for name, styledef in styles.items():
-            try:
-                mapname = self.GNULS_MAP[name]
-            except KeyError:
-                mapname = None
-            if mapname:
+            styles = {}
+        # figure out if we are clearing builtin styles
+        try:
+            clear_builtin = content["clear_builtin"]
+            if not isinstance(clear_builtin, bool):
+                errmsg = (
+                    f"{self.prog}: ls_colors processor for"
+                    f" domain '{domain}' requires 'clear_builtin' to be boolean"
+                )
+                raise ThemeError(errmsg)
+        except KeyError:
+            clear_builtin = False
+
+        if clear_builtin:
+            # iterate over all known styles
+            for name in self.LS_COLORS_MAP:
+                try:
+                    styledef = styles[name]
+                except KeyError:
+                    # style isn't in our configuration, so put the default one in
+                    styledef = "default"
                 style = self.get_style(styledef)
                 if style:
-                    outlist.append(self._ls_colors_from_style(mapname, style))
+                    outlist.append(self._ls_colors_from_style(name, style))
+        else:
+            # iterate over the styles given in our configuration
+            for name, styledef in styles.items():
+                style = self.get_style(styledef)
+                if style:
+                    outlist.append(self._ls_colors_from_style(name, style))
 
         # process the filesets
 
         # figure out which environment variable to put it in
         try:
-            varname = content["enviroinment_variable"]
+            varname = content["environment_variable"]
         except KeyError:
             varname = "LS_COLORS"
+
+        # even if outlist is empty, we have to set the variable, because
+        # when we are switching a theme, there may be contents in the
+        # environment variable already, and we need to tromp over them
+        # we chose to set the variable to empty instead of unsetting it
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
     def _ls_colors_from_style(self, name, style):
@@ -372,22 +414,32 @@ class Themer:
 
         style is a style object
         """
-        colorseq = ""
+        ansicodes = ""
         if not style:
             # TODO validate this is what we actually want
             return ""
+        try:
+            mapname = self.LS_COLORS_MAP[name]
+        except KeyError:
+            # TODO validate this is what we actually want
+            # probably we raise an exception
+            return ""
 
         if style.color.type == rich.color.ColorType.DEFAULT:
-            colorseq = "0"
-        # elif color.type == rich.color.ColorType.STANDARD:
-        #     # python rich uses underscores, fzf uses dashes
-        #     fzf = str(color.number)
-        # elif color.type == rich.color.ColorType.EIGHT_BIT:
-        #     fzf = str(color.number)
-        # elif color.type == rich.color.ColorType.TRUECOLOR:
-        #     fzf = color.triplet.hex
-        # return fzf
-        return f"{name}={colorseq}"
+            ansicodes = "0"
+        else:
+            # this works, but it uses a protected method
+            # ansicodes = style._make_ansi_codes(rich.color.ColorSystem.TRUECOLOR)
+            # here's another approach, we ask the style to render a string, then
+            # go peel the ansi codes out of the generated escape sequence
+            ansistring = style.render("-----")
+            # style.render uses this string to build it's output
+            # f"\x1b[{attrs}m{text}\x1b[0m"
+            # so let's go split it apart
+            match = re.match(r"^\x1b\[([;\d]*)m", ansistring)
+            # and get the numeric codes
+            ansicodes = match.group(1)
+        return f"{mapname}={ansicodes}"
 
 
 class ThemeError(Exception):

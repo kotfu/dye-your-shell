@@ -29,22 +29,38 @@ red =  "#ff5555"
 yellow =  "#f1fa8c"
 
 
+
 [domain.ls_colors]
 processor = "ls_colors"
-environment_variable = "LS_COLORS" # should be a default
+environment_variable = "LS_COLORS" # this is the default
+# set true to clear all built-in color defaults
+# if you don't want ls to use it's built-in color defaults
+# ie executables in green, you have to override it in
+# LS_COLORS. This single line is the same as putting
+# 'default' in every recognized style
+clear_builtin = true
 
 # set the style to use for each file type
-style.text = "foreground" # for non filename text
+style.text = "default" # for non filename text
 style.file = "red"
 style.directory = "green"
-#style.link = ""
-#style.orphan = ""
-#style.missing = ""
-#style.pipe = ""
-#style.socket = ""
-#style.block_device = ""
-#style.character_device = ""
-#style.executable = ""
+style.symlink = "blue on white"
+style.multi_hard_link = "bold sea_green2"
+# empty style is ignored, not rendered as 'default'
+style.pipe = ""
+style.socket = ""
+style.door = ""
+style.block_device = ""
+style.character_device = ""
+style.broken_symlink = ""
+style.missing_symlink_target = ""
+style.setuid = ""
+style.setgid = ""
+style.sticky = ""
+style.other_writable = ""
+style.sticky_other_writable = ""
+style.executable_file = ""
+style.file_with_capability = ""
 
 # define sets of files
 #fileset.text.globs = ['*.txt', '*.md', '*.markdown']

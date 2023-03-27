@@ -349,15 +349,30 @@ opt.--border = "rounded"
 #
 # test the gnuls processor
 #
+# we only reallly have to test that the style name maps to the right code in ls_colors
+# ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
+# so we don't really need to test much of that
 STYLE_TO_LSCOLORS = [
-    ("no", "", ""),
-    ("no", "default", "no=0"),
-#    ("default on default", "fg:-1:regular,bg:-1"),
-#    ("bold default on default underline", "fg:-1:regular:bold:underline,bg:-1"),
-#    ("white on bright_red", "fg:7:regular,bg:9"),
-#    ("bright_white", "fg:15:regular"),
-#    ("bright_yellow on color(4)", "fg:11:regular,bg:4"),
-#    ("green4", "fg:28:regular"),
+    ("text", "", ""),
+    ("text", "default", "no=0"),
+    ("file", "default", "fi=0"),
+    ("directory", "#8be9fd", "di=38;2;139;233;253"),
+    ("symlink", "green4 bold", "ln=1;38;5;28"),
+    ("multi_hard_link", "blue on white", "mh=34;47"),
+    ("pipe", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
+    ("socket", "bright_white", "so=97"),
+    ("door", "bright_white", "do=97"),
+    ("block_device", "default", "bd=0"),
+    ("character_device", "black", "cd=30"),
+    ("broken_symlink", "bright_blue", "or=94"),
+    ("missing_symlink_target", "bright_blue", "mi=94"),
+    ("setuid", "bright_blue", "su=94"),
+    ("setgid", "bright_red", "sg=91"),
+    ("sticky", "blue_violet", "st=38;5;57"),
+    ("other_writable", "blue_violet italic", "ow=3;38;5;57"),
+    ("sticky_other_writable", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
+    ("executable_file", "cornflower_blue on grey82", "ex=38;5;69;48;5;252"),
+    ("file_with_capability", "red on black", "ca=31;40"),
 ]
 
 
@@ -365,3 +380,63 @@ STYLE_TO_LSCOLORS = [
 def test_ls_colors_from_style(thm_base, name, styledef, lsc):
     style = rich.style.Style.parse(styledef)
     assert lsc == thm_base._ls_colors_from_style(name, style)
+
+
+def test_ls_colors_no_styles(thm_base, capsys):
+    tomlstr = """
+[domain.lsc]
+processor = "ls_colors"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert not err
+    assert out == 'export LS_COLORS=""\n'
+
+def test_ls_colors_environment_variable(thm_base, capsys):
+    tomlstr = """
+[domain.lsc]
+processor = "ls_colors"
+environment_variable = "OTHER_LS_COLOR"
+style.file = "default"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert not err
+    assert out == 'export OTHER_LS_COLOR="fi=0"\n'
+
+
+def test_ls_colors_clear_builtin(thm_base, capsys):
+    tomlstr = """
+[domain.lsc]
+processor = "ls_colors"
+clear_builtin = true
+style.directory = "bright_blue"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert not err
+    assert (
+        out
+        == 'export LS_COLORS="no=0:fi=0:di=94:ln=0:mh=0:pi=0:so=0:do=0:bd=0:cd=0:or=0:mi=0:su=0:sg=0:st=0:ow=0:tw=0:ex=0:ca=0"\n'
+    )
+
+
+def test_ls_colors_clear_builtin_not_boolean(thm_base, capsys):
+    tomlstr = """
+[domain.lsc]
+processor = "ls_colors"
+clear_builtin = "error"
+style.directory = "bright_blue"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_ERROR
+    assert not out
+    assert "'clear_builtin' to be boolean" in err
