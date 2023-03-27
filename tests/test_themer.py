@@ -347,7 +347,7 @@ opt.--border = "rounded"
 
 
 #
-# test the gnuls processor
+# test the ls_colors processor
 #
 # we only reallly have to test that the style name maps to the right code in ls_colors
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
@@ -441,3 +441,24 @@ style.directory = "bright_blue"
     assert exit_code == EXIT_ERROR
     assert not out
     assert "'clear_builtin' to be boolean" in err
+
+
+#
+# test the iterm processor
+#
+def test_iterm(thm_base, capsys):
+    tomlstr = """
+[domain.iterm]
+processor = "iterm"
+style.foreground = "#ffeebb"
+style.background = "#221122"
+    """
+    thm_base.loads(tomlstr)
+    exit_code = thm_base.render()
+    out, err = capsys.readouterr()
+    assert exit_code == EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 2
+    assert lines[0] == r'builtin echo -n "\033]1337;SetColors=fg=ffeebb\007"'
+    assert lines[1] == r'builtin echo -n "\033]1337;SetColors=bg=221122\007"'

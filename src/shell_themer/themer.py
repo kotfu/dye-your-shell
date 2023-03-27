@@ -178,6 +178,8 @@ class Themer:
                 try:
                     processor = attribs["processor"]
                 except KeyError:
+                    # no more to do for this domain, skip to the next iteration
+                    # of the loop
                     continue
                 try:
                     styles = self.domain_styles(domain)
@@ -185,6 +187,8 @@ class Themer:
                         self._fzf_render(domain, attribs, styles)
                     elif processor == "ls_colors":
                         self._ls_colors_render(domain, content)
+                    elif processor == "iterm":
+                        self._iterm_render(domain, content)
                     else:
                         # unknown processor specified in the domain, by
                         # definition, this is not an error, but you don't
@@ -259,7 +263,7 @@ class Themer:
             raise ThemeError(
                 (
                     f"{self.prog}: fzf processor requires 'environment_variable'"
-                    f" key to process domain '{domain}"
+                    f" key to process domain '{domain}'"
                 )
             ) from exc
 
@@ -443,6 +447,32 @@ class Themer:
             # and get the numeric codes
             ansicodes = match.group(1)
         return f"{mapname}={ansicodes}"
+
+    def _iterm_render(self, domain, content):
+        """send the special escape sequences to make the iterm2
+        terminal emulator for macos change its foreground and backgroud
+        color
+
+        echo "\033]1337;SetColors=bg=331111\007"
+        """
+        self._iterm_render_style(content, "foreground", "fg")
+        self._iterm_render_style(content, "background", "bg")
+
+    def _iterm_render_style(self, content, style, iterm_key):
+        """print an iterm escape sequence to change the color palette"""
+        try:
+            styledef = content["style"][style]
+            styleobj = self.get_style(styledef)
+        except KeyError:
+            pass
+        if styleobj:
+            clr = styleobj.color.get_truecolor()
+            # gotta use raw strings here so the \033 and \007 don't get
+            # interpreted by python
+            out = r'builtin echo -n "\033]1337;'
+            out += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
+            out += r'\007"'
+            print(out)
 
 
 class ThemeError(Exception):
