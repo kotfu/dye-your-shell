@@ -27,18 +27,9 @@
 import pytest
 
 from shell_themer import Themer
+from shell_themer.__main__ import build_parser
 
-
-@pytest.fixture
-def thm_base():
-    thm = Themer(prog="shell-themer")
-    return thm
-
-
-@pytest.fixture
-def thm(thm_base):
-    # a theme object loaded up with a robust configuration
-    tomlstr = """
+TOMLSTR = """
 [styles]
 background =  "#282a36"
 foreground =  "#f8f8f2"
@@ -106,7 +97,40 @@ style.text = "foreground"
 
 [domain.unknownprocessor]
 processor = "unknown"
-
 """
-    thm_base.loads(tomlstr)
+
+
+@pytest.fixture
+def parser():
+    return build_parser()
+
+
+@pytest.fixture
+def thm_base(mocker):
+    thm = Themer(prog="shell-themer")
+    return thm
+
+
+@pytest.fixture
+def thm(thm_base, mocker):
+    # a theme object loaded up with a robust configuration
+    thm_base.loads(TOMLSTR)
+    # now monkeypatch load_from_args() cause that won't work
+    mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
     return thm_base
+
+
+@pytest.fixture
+def thm_cmdline(thm_base, parser, mocker):
+    def _executor(cmdline, toml=None):
+        argv = cmdline.split(" ")
+        args = parser.parse_args(argv)
+        if toml:
+            thm_base.loads(toml)
+        else:
+            thm_base.loads(TOMLSTR)
+        # now monkeypatch load_from_args() cause that won't work
+        mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
+        return thm_base.dispatch(args)
+
+    return _executor

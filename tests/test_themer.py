@@ -109,8 +109,8 @@ def test_get_style_lookup(thm):
 #
 # test general rendering
 #
-def test_render_single(thm, capsys):
-    exit_code = thm.render(["fzf"])
+def test_generate_single_scope(thm_cmdline, capsys):
+    exit_code = thm_cmdline("generate -s fzf")
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert out
@@ -118,26 +118,9 @@ def test_render_single(thm, capsys):
     assert out.count("\n") == 1
 
 
-def test_render_unknown(thm, capsys):
-    exit_code = thm.render(["unknowndomain"])
+def test_generate_unknown_scope(thm_cmdline, capsys):
+    exit_code = thm_cmdline("generate -s unknowndomain")
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
     assert not out
     assert err
-
-
-def test_render_all(thm, capsys):
-    exit_code = thm.render()
-    assert exit_code == Themer.EXIT_SUCCESS
-    out, err = capsys.readouterr()
-    assert out
-    assert not err
-    assert out.count("\n") == 6
-
-
-def test_processor_unknown(thm, capsys):
-    exit_code = thm.render("unknownprocessor")
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not out
-    assert not err

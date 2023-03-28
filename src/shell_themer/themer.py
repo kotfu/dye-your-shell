@@ -87,8 +87,10 @@ class Themer:
                 return self.dispatch_themes(args)
             elif args.command == "preview":
                 return self.dispatch_preview(args)
-        except ThemeError:
-            print(ThemeError)
+            elif args.command == "generate":
+                return self.dispatch_generate(args)
+        except ThemeError as err:
+            self.error_console.print(err)
             return self.EXIT_ERROR
 
         # if we get here, we didn't know the command
@@ -121,7 +123,6 @@ class Themer:
         except KeyError:
             pass
 
-        screen_width = self.console.width
         outer_table = rich.table.Table(
             box=rich.box.SIMPLE_HEAD, expand=True, show_header=False
         )
@@ -174,19 +175,6 @@ class Themer:
         # the text style here makes the whole panel print with the foreground
         # and background colors from the style
         self.console.print(rich.panel.Panel(outer_table, style=text_style))
-
-        # set up our layout
-        # layout = rich.layout.Layout()
-        # layout.split_column(
-        #     rich.layout.Layout(summary_table, size=summary_table.row_count+1, name="upper"),
-        #     rich.layout.Layout(name="lower")
-        # )
-        # layout["lower"].split_row(
-        #     rich.layout.Layout(styles_table, name="left"),
-        #     rich.layout.Layout(name="right")
-        # )
-        # panel = rich.panel.Panel(layout, style=text_style)
-        # self.console.print(panel)
         return self.EXIT_SUCCESS
 
     def load_from_args(self, args):
@@ -294,7 +282,7 @@ class Themer:
             style = rich.style.Style.parse(styledef)
         return style
 
-    def render(self, domains=None):
+    def dispatch_generate(self, args):
         """render the output for a given domain, or all domains if none supplied
 
         domains can be a string with a single domain, a list of domains
@@ -302,15 +290,17 @@ class Themer:
 
         output is suitable for bash eval $()
         """
-        renders = []
-        if isinstance(domains, str):
-            renders = [domains]
-        elif domains:
-            for one in domains:
-                renders.append(one)
+        self.load_from_args(args)
+
+        if args.scope:
+            renders = args.scope.split(",")
         else:
-            for domain in self.definition["domain"].keys():
-                renders.append(domain)
+            renders = []
+            try:
+                for domain in self.definition["domain"].keys():
+                    renders.append(domain)
+            except KeyError:
+                pass
 
         for domain in renders:
             if self.has_domain(domain):
@@ -325,25 +315,21 @@ class Themer:
                     # no more to do for this domain, skip to the next iteration
                     # of the loop
                     continue
-                try:
-                    styles = self.domain_styles(domain)
-                    if processor == "fzf":
-                        self._fzf_render(domain, attribs, styles)
-                    elif processor == "ls_colors":
-                        self._ls_colors_render(domain, content)
-                    elif processor == "iterm":
-                        self._iterm_render(domain, content)
-                    else:
-                        # unknown processor specified in the domain, by
-                        # definition, this is not an error, but you don't
-                        # get any special rendering
-                        pass
-                except ThemeError as exc:
-                    self.error_console.print(exc)
-                    return self.EXIT_ERROR
+
+                styles = self.domain_styles(domain)
+                if processor == "fzf":
+                    self._fzf_render(domain, attribs, styles)
+                elif processor == "ls_colors":
+                    self._ls_colors_render(domain, content)
+                elif processor == "iterm":
+                    self._iterm_render(domain, content)
+                else:
+                    # unknown processor specified in the domain, by
+                    # definition, this is not an error, but you don't
+                    # get any special rendering
+                    pass
             else:
-                self.error_console.print(f"{self.prog}: {domain}: no such domain")
-                return self.EXIT_ERROR
+                raise ThemeError(f"{self.prog}: {domain}: no such domain")
         return self.EXIT_SUCCESS
 
     def _environment_render(self, attribs, styles):

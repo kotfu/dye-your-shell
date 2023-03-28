@@ -41,7 +41,7 @@ EXIT_ERROR = 1
 EXIT_USAGE = 2
 
 
-def _build_parser():
+def build_parser():
     """Build the argument parser"""
     parser = argparse.ArgumentParser(
         description="Generate shell code to activate a theme"
@@ -61,13 +61,19 @@ def _build_parser():
     file_help = "specify a file containing a theme"
     tgroup.add_argument("-f", "--file", help=file_help)
     subparsers = parser.add_subparsers(
-        dest="command", help="sub-command help and stuff"
+        dest="command", help="sub-command help and stuff", required=True
     )
 
     themes_parser = subparsers.add_parser("themes", help="list all themes")
 
     preview_parser = subparsers.add_parser("preview", help="preview styles in a theme")
 
+    generate_parser = subparsers.add_parser(
+        "generate",
+        help="generate shell code to make the theme effective in your environment",
+    )
+    scope_help = "only generate the given scope"
+    generate_parser.add_argument("-s", "--scope", help=scope_help)
     #    domain_help = "domain to generate output for"
     #    parser.add_argument("domain", nargs="*", help=domain_help)
 
@@ -81,7 +87,7 @@ def main(argv=None):
                     will be used. To process with no arguments, pass an empty list.
     """
 
-    parser = _build_parser()
+    parser = build_parser()
     args = parser.parse_args(argv)
 
     thm = Themer(parser.prog)

@@ -34,8 +34,14 @@ from shell_themer import Themer
 #
 # test environment rendering
 #
-def test_render_environment_unset_list(thm, capsys):
-    exit_code = thm.render(["ls"])
+def test_generate_environment_unset_list(thm_cmdline, capsys):
+    tomlstr = """
+    [domain.ls]
+    # set some environment variables
+    environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+    environment.export.LS_COLORS = "ace ventura"
+"""
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert out
@@ -45,9 +51,12 @@ def test_render_environment_unset_list(thm, capsys):
     assert 'export LS_COLORS="ace ventura"' in out
 
 
-def test_render_environment_unset_string(thm, capsys):
-    # we are testing a string domain instead of a list here on purpose
-    exit_code = thm.render("unset")
+def test_generate_environment_unset_string(thm_cmdline, capsys):
+    tomlstr = """
+    [domain.unset]
+    environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert out
@@ -102,7 +111,7 @@ def test_fzf_from_style(thm, name, styledef, fzf):
     assert fzf == thm._fzf_from_style(name, style)
 
 
-def test_fzf_opts(thm_base, capsys):
+def test_fzf_opts(thm_cmdline, capsys):
     tomlstr = """
 [domain.fzf]
 processor = "fzf"
@@ -110,37 +119,34 @@ environment_variable = "QQQ"
 opt."+i" = true
 opt.--border = "rounded"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert out == """export QQQ=" +i --border='rounded'"\n"""
 
 
-def test_fzf_no_opts(thm_base, capsys):
+def test_fzf_no_opts(thm_cmdline, capsys):
     tomlstr = """
 [domain.fzf]
 processor = "fzf"
 environment_variable = "QQQ"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert out == """export QQQ=""\n"""
 
 
-def test_fzf_no_varname(thm_base, capsys):
+def test_fzf_no_varname(thm_cmdline, capsys):
     tomlstr = """
 [domain.fzf]
 processor = "fzf"
 opt."+i" = true
 opt.--border = "rounded"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
     assert not out
@@ -183,43 +189,40 @@ def test_ls_colors_from_style(thm_base, name, styledef, lsc):
     assert lsc == thm_base._ls_colors_from_style(name, style)
 
 
-def test_ls_colors_no_styles(thm_base, capsys):
+def test_ls_colors_no_styles(thm_cmdline, capsys):
     tomlstr = """
 [domain.lsc]
 processor = "ls_colors"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert out == 'export LS_COLORS=""\n'
 
 
-def test_ls_colors_environment_variable(thm_base, capsys):
+def test_ls_colors_environment_variable(thm_cmdline, capsys):
     tomlstr = """
 [domain.lsc]
 processor = "ls_colors"
 environment_variable = "OTHER_LS_COLOR"
 style.file = "default"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert out == 'export OTHER_LS_COLOR="fi=0"\n'
 
 
-def test_ls_colors_clear_builtin(thm_base, capsys):
+def test_ls_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
 [domain.lsc]
 processor = "ls_colors"
 clear_builtin = true
 style.directory = "bright_blue"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
@@ -229,15 +232,14 @@ style.directory = "bright_blue"
     )
 
 
-def test_ls_colors_clear_builtin_not_boolean(thm_base, capsys):
+def test_ls_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
     tomlstr = """
 [domain.lsc]
 processor = "ls_colors"
 clear_builtin = "error"
 style.directory = "bright_blue"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
     assert not out
@@ -247,15 +249,14 @@ style.directory = "bright_blue"
 #
 # test the iterm processor
 #
-def test_iterm(thm_base, capsys):
+def test_iterm(thm_cmdline, capsys):
     tomlstr = """
 [domain.iterm]
 processor = "iterm"
 style.foreground = "#ffeebb"
 style.background = "#221122"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
@@ -265,14 +266,13 @@ style.background = "#221122"
     assert lines[1] == r'builtin echo -e "\e]1337;SetColors=bg=221122\a"'
 
 
-def test_iterm_bgonly(thm_base, capsys):
+def test_iterm_bgonly(thm_cmdline, capsys):
     tomlstr = """
 [domain.iterm]
 processor = "iterm"
 style.background = "#b2cacd"
     """
-    thm_base.loads(tomlstr)
-    exit_code = thm_base.render()
+    exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
