@@ -55,10 +55,21 @@ def _build_parser():
         version=VERSION_STRING,
         help=version_help,
     )
-    theme_help = "specify a theme directory"
-    parser.add_argument("-t", "--theme", help=theme_help)
-    domain_help = "domain to generate output for"
-    parser.add_argument("domain", nargs="*", help=domain_help)
+    tgroup = parser.add_mutually_exclusive_group()
+    theme_help = "specify a theme by name from $THEME_DIR"
+    tgroup.add_argument("-t", "--theme", help=theme_help)
+    file_help = "specify a file containing a theme"
+    tgroup.add_argument("-f", "--file", help=file_help)
+    subparsers = parser.add_subparsers(
+        dest="command", help="sub-command help and stuff"
+    )
+
+    themes_parser = subparsers.add_parser("themes", help="list all themes")
+
+    preview_parser = subparsers.add_parser("preview", help="preview styles in a theme")
+
+    #    domain_help = "domain to generate output for"
+    #    parser.add_argument("domain", nargs="*", help=domain_help)
 
     return parser
 
@@ -74,8 +85,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     thm = Themer(parser.prog)
-    thm.load(args.theme)
-    return thm.render(args.domain)
+    return thm.dispatch(args)
+    # thm.load(args.theme)
+    # return thm.render(args.domain)
 
 
 if __name__ == "__main__":  # pragma: nocover

@@ -61,6 +61,29 @@ class Themer:
 
         self.loads()
 
+    def dispatch(self, args):
+        """Figure out which subcommand to run based on the arguments provided"""
+        if args.command == 'themes':
+            return self.themes(args)
+        print(f"{prog}: unknown command")
+        return self.EXIT_ERROR
+
+    def themes(self, args):
+        """Print a list of all themes"""
+        # ignore all other args
+        try:
+            theme_dir = pathlib.Path(os.environ["THEME_DIR"])
+        except KeyError:
+            self.error_console.print(f"{self.prog}: $THEME_DIR not set")
+            return self.EXIT_ERROR
+        themeglob = theme_dir.glob('*.toml')
+        themes = []
+        for theme in themeglob:
+            themes.append(theme.stem)
+        themes.sort()
+        for theme in themes: print(theme)
+        return self.EXIT_SUCCESS
+
     def load(self, theme_file=None):
         """Load a theme from a file
 
