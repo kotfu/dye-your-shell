@@ -20,6 +20,9 @@
 - document how to load a theme
     - eval $(shell-themer) is bad, try the code from `$ starship init bash` instead
 
+- document a "magic" styles named "background", "foreground", and "text"
+  - these will be used by the preview command to show the style properly
+  - text should be foreground on background
 
 ## shell-themer subcommands
 
@@ -28,7 +31,10 @@
 
 - themes = -f and -t are ignored, shows a list of all available themes from $THEME_DIR
 - preview = show the theme name, version, and file, and all active styles from the specified theme or from $THEME_DIR
-- {activate|process|render} = process the theme and spew out all the environment variables
+- {activate|process|render|brew|make|generate} = process the theme and spew out all the environment variables
   - don't like activate because it doesn't really activate the theme
+  - don't like process because we use processors for something else
+  - generate seems the best so far, then we have generator = "fzf"
+  - maybe switch domain to scope
 - init = generate the code for the theme-activate, theme-reload, and theme-choose (using fzf)
 - help = show help

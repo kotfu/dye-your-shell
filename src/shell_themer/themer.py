@@ -27,8 +27,10 @@ import pathlib
 import re
 import sys
 
+import rich.box
 import rich.color
 import rich.console
+import rich.layout
 import rich.style
 
 
@@ -38,70 +40,189 @@ class Themer:
     EXIT_SUCCESS = 0
     EXIT_ERROR = 1
 
-    def __init__(self, prog, error_console=None):
+    def __init__(self, prog):
         """Construct a new Themer object
 
         console
         """
 
         self.prog = prog
-        if error_console:
-            self.error_console = error_console
-        else:
-            self.error_console = rich.console.Console(
-                stderr=True,
-                soft_wrap=True,
-                markup=False,
-                emoji=False,
-                highlight=False,
-            )
+        self.console = rich.console.Console(
+            soft_wrap=True,
+            markup=False,
+            emoji=False,
+            highlight=False,
+        )
+        self.error_console = rich.console.Console(
+            stderr=True,
+            soft_wrap=True,
+            markup=False,
+            emoji=False,
+            highlight=False,
+        )
 
+        # the path to the theme file if we loaded from a file
+        # note that this can be None even with a valid loaded theme
+        # because of self.loads()
+        self.theme_file = None
         self.definition = {}
         self.styles = {}
 
         self.loads()
 
+    @property
+    def theme_dir(self):
+        try:
+            tdir = pathlib.Path(os.environ["THEME_DIR"])
+        except KeyError as exc:
+            raise ThemeError(f"{self.prog}: $THEME_DIR not set") from exc
+        if not tdir.is_dir():
+            raise ThemeError(f"{self.prog}: {tdir}: no such directory")
+        return tdir
+
     def dispatch(self, args):
         """Figure out which subcommand to run based on the arguments provided"""
-        if args.command == 'themes':
-            return self.themes(args)
-        print(f"{prog}: unknown command")
+        try:
+            if args.command == "themes":
+                return self.dispatch_themes(args)
+            elif args.command == "preview":
+                return self.dispatch_preview(args)
+        except ThemeError:
+            print(ThemeError)
+            return self.EXIT_ERROR
+
+        # if we get here, we didn't know the command
+        print(f"{self.prog}: {args.command}: unknown command")
         return self.EXIT_ERROR
 
-    def themes(self, args):
+    def dispatch_themes(self, args):
         """Print a list of all themes"""
         # ignore all other args
-        try:
-            theme_dir = pathlib.Path(os.environ["THEME_DIR"])
-        except KeyError:
-            self.error_console.print(f"{self.prog}: $THEME_DIR not set")
-            return self.EXIT_ERROR
-        themeglob = theme_dir.glob('*.toml')
+        themeglob = self.theme_dir.glob("*.toml")
         themes = []
         for theme in themeglob:
             themes.append(theme.stem)
         themes.sort()
-        for theme in themes: print(theme)
+        for theme in themes:
+            print(theme)
         return self.EXIT_SUCCESS
 
-    def load(self, theme_file=None):
-        """Load a theme from a file
+    def dispatch_preview(self, args):
+        """Display a preview of the styles in a theme"""
+        self.load_from_args(args)
 
-        :raises:
+        mystyles = self.styles.copy()
+        try:
+            text_style = mystyles["text"]
+        except KeyError:
+            text_style = None
+        try:
+            del mystyles["background"]
+        except KeyError:
+            pass
+
+        screen_width = self.console.width
+        outer_table = rich.table.Table(
+            box=rich.box.SIMPLE_HEAD, expand=True, show_header=False
+        )
+
+        summary_table = rich.table.Table(box=None, expand=True, show_header=False)
+        summary_table.add_row("Theme file:", str(self.theme_file))
+        try:
+            name = self.definition["name"]
+        except KeyError:
+            name = ""
+        summary_table.add_row("Name:", name)
+        try:
+            version = self.definition["version"]
+        except KeyError:
+            version = ""
+        summary_table.add_row("Version:", version)
+        outer_table.add_row(summary_table)
+        outer_table.add_row(" ")
+
+        styles_table = rich.table.Table(
+            box=rich.box.SIMPLE_HEAD, expand=True, show_edge=False, pad_edge=False
+        )
+        styles_table.add_column("Styles")
+        for name, style in mystyles.items():
+            styles_table.add_row(name, style=style)
+
+        domains_table = rich.table.Table(
+            box=rich.box.SIMPLE_HEAD, show_edge=False, pad_edge=False
+        )
+        domains_table.add_column("Domain", ratio=0.4)
+        domains_table.add_column("Processor", ratio=0.6)
+        try:
+            for name, domain in self.definition["domain"].items():
+                try:
+                    processor = domain["processor"]
+                except KeyError:
+                    processor = ""
+                domains_table.add_row(name, processor)
+        except KeyError:
+            pass
+
+        lower_table = rich.table.Table(box=None, expand=True, show_header=False)
+        lower_table.add_column(ratio=0.45)
+        lower_table.add_column(ratio=0.1)
+        lower_table.add_column(ratio=0.45)
+        lower_table.add_row(styles_table, None, domains_table)
+
+        outer_table.add_row(lower_table)
+
+        # the text style here makes the whole panel print with the foreground
+        # and background colors from the style
+        self.console.print(rich.panel.Panel(outer_table, style=text_style))
+
+        # set up our layout
+        # layout = rich.layout.Layout()
+        # layout.split_column(
+        #     rich.layout.Layout(summary_table, size=summary_table.row_count+1, name="upper"),
+        #     rich.layout.Layout(name="lower")
+        # )
+        # layout["lower"].split_row(
+        #     rich.layout.Layout(styles_table, name="left"),
+        #     rich.layout.Layout(name="right")
+        # )
+        # panel = rich.panel.Panel(layout, style=text_style)
+        # self.console.print(panel)
+        return self.EXIT_SUCCESS
+
+    def load_from_args(self, args):
+        """Load a theme from the command line args
+
+        Resolution order:
+        1. --file from the command line
+        2. --theme from the command line
+        3. $THEME_FILE environment variable
+
+        This either loads the theme or raises an exception.
+        It doesn't return anything
+
+        :raises: ThemeError if we can't find a theme file
 
         """
-        if theme_file:
-            fname = theme_file
+        fname = None
+        if args.file:
+            fname = args.file
+        elif args.theme:
+            fname = self.theme_dir / args.theme
+            if not fname.is_file():
+                fname = self.theme_dir / f"{args.theme}.toml"
+                if not fname.is_file():
+                    raise ThemeError(f"{self.prog}: {args.theme}: theme not found")
         else:
             try:
                 fname = pathlib.Path(os.environ["THEME_FILE"])
             except KeyError:
-                self.error_console.print(f"{self.prog}: $THEME_FILE not set")
-                sys.exit(self.EXIT_ERROR)
+                pass
+        if not fname:
+            raise ThemeError(f"{self.prog}: no theme or theme file specified")
 
         with open(fname, "rb") as file:
             self.definition = tomlkit.load(file)
-
+        self.theme_file = fname
         self._parse_styles()
 
     def loads(self, tomlstring=None):
