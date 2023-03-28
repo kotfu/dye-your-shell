@@ -16,3 +16,19 @@
 
 - add a way for shell-themer to display the names and colors of all styles in the
   [styles] section
+
+- document how to load a theme
+    - eval $(shell-themer) is bad, try the code from `$ starship init bash` instead
+
+
+## shell-themer subcommands
+
+-f = option for most subcommands that specifies the theme file, else use $THEME_FILE
+-t = option exclusive of -f for a theme name from $THEME_DIR
+
+- themes = -f and -t are ignored, shows a list of all available themes from $THEME_DIR
+- preview = show the theme name, version, and file, and all active styles from the specified theme or from $THEME_DIR
+- {activate|process|render} = process the theme and spew out all the environment variables
+  - don't like activate because it doesn't really activate the theme
+- init = generate the code for the theme-activate, theme-reload, and theme-choose (using fzf)
+- help = show help
