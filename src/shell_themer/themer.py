@@ -21,17 +21,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import tomlkit
+
+import functools
 import os
 import pathlib
 import re
-import sys
 
 import rich.box
 import rich.color
 import rich.console
+import rich.errors
 import rich.layout
 import rich.style
+import tomlkit
 
 
 class Themer:
@@ -153,10 +155,12 @@ class Themer:
 
     def get_style(self, styledef):
         """convert a string into rich.style.Style object"""
+        # first check if this definition is already in our list of styles
         try:
             style = self.styles[styledef]
         except KeyError:
             style = None
+        # nope, parse the input as a style
         if not style:
             style = rich.style.Style.parse(styledef)
         return style
@@ -348,9 +352,51 @@ class Themer:
         try:
             exports = scopedef["environment"]["export"]
             for var, value in exports.items():
-                print(f'export {var}="{value}"')
+                interpolated_value = self._environment_interpolate(value)
+                print(f'export {var}="{interpolated_value}"')
         except KeyError:
             pass
+
+    def _environment_interpolate(self, value):
+        """interpolate"""
+        # this incantation gives us a callable function which is
+        # really a method on our class, and which gets self
+        # passed to the method just like any other method
+        tmpfunc = functools.partial(self._env_replacer)
+        # this regex matches any of the following:
+        #   {darkorange}
+        #   {yellow:}
+        #   {blue:format}
+        # and gives back two values for the things insides braces:
+        # 1. the thing before the colon, or if no colon present, the whole thing
+        # 2. the thing after the colon, if the colon and a word is present
+        #
+        newvalue = re.sub(r"\{([^}:]*)(?::(.*))?\}", tmpfunc, value)
+        return newvalue
+
+    def _env_replacer(self, match):
+        """another callback function"""
+        styledef = match.group(1)
+        fmt = match.group(2)
+        try:
+            style = self.get_style(styledef)
+        except rich.errors.StyleSyntaxError:
+            style = None
+
+        if not style:
+            # the style wasn't found, so don't do any replacement
+            out = match.group(0)
+        elif fmt in [None, "", "hex"]:
+            # no format, or empty string format, or hex, the match with the hex code
+            out = style.color.triplet.hex
+        elif fmt == "hexnohash":
+            # replace the match with the hex code without the hash
+            out = style.color.triplet.hex.replace("#", "")
+        else:
+            # unknown format, so don't do any replacement
+            out = match.group(0)
+
+        return out
 
     #
     # fzf generator and helpers
@@ -605,6 +651,17 @@ class Themer:
             out += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
             out += r'\a"'
             print(out)
+
+
+# def my_repl_func(match):
+#     """callback function"""
+#     styledef = match.group(1)
+#     fmt = match.group(2)
+#     return f"{fmt}|{styledef}"
+
+# def new_repl_func(match, selff=None):
+#     """another callback function"""
+#     return f"{selff.theme_dir}:{match.group(0)}"
 
 
 class ThemeError(Exception):

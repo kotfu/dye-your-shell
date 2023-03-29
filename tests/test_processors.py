@@ -34,6 +34,58 @@ from shell_themer import Themer
 #
 # test environment rendering
 #
+INTERPOLATIONS = [
+    ("{dark_orange}", "#ff6c1c"),
+    ("{dark_orange:hex}", "#ff6c1c"),
+    ("{dark_orange:hexnohash}", "ff6c1c"),
+    # for an unknown format or style, don't do any replacement
+    ("{current_line}", "{current_line}"),
+    ("{dark_orange:unknown}", "{dark_orange:unknown}"),
+]
+
+
+@pytest.mark.parametrize("phrase, interpolated", INTERPOLATIONS)
+def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpolated):
+    tomlstr = f"""
+    [styles]
+    dark_orange = "#ff6c1c"
+
+    [scope.gum]
+    environment.export.GUM_OPTS = " --cursor-foreground={phrase}"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert out == f'export GUM_OPTS=" --cursor-foreground={interpolated}"\n'
+
+
+# def test_generate_environment_interpolation_hexnohash(thm_cmdline, capsys):
+#     tomlstr = """
+#     [styles]
+#     dark_orange = "#ff6c1c"
+
+#     [scope.gum]
+#     environment.export.GUM_OPTS = " --cursor-foreground={dark_orange:hexnohash}"
+#     """
+#     exit_code = thm_cmdline("generate", tomlstr)
+#     out, err = capsys.readouterr()
+#     assert exit_code == Themer.EXIT_SUCCESS
+#     assert out == 'export GUM_OPTS=" --cursor-foreground=ff6c1c"\n'
+
+# def test_generate_environment_interpolation_nofmt(thm_cmdline, capsys):
+#     tomlstr = """
+#     [styles]
+#     dark_orange = "#ff6c1c"
+
+#     [scope.gum]
+#     environment.export.GUM_OPTS = " --cursor-foreground={dark_orange}"
+#     """
+#     exit_code = thm_cmdline("generate", tomlstr)
+#     out, err = capsys.readouterr()
+#     assert exit_code == Themer.EXIT_SUCCESS
+#     assert out == 'export GUM_OPTS=" --cursor-foreground=#ff6c1c"\n'
+
+
 def test_generate_environment_unset_list(thm_cmdline, capsys):
     tomlstr = """
     [scope.ls]

@@ -3,8 +3,8 @@
 - documentation and website
   - show how to set BAT_THEME
 - figure out how to set emacs theme
-- make a mini-language so that environment_render() can put styles
-  in various color formats into an environment variable
+[x] make a mini-language so that environment_render() can put styles
+    in various color formats into an environment variable
 - add a condition to every scope, ie
   [scope.iterm]
   if = "some shell command here"
@@ -18,6 +18,7 @@
 - document a "magic" styles named "background", "foreground", and "text"
   - these will be used by the preview command to show the style properly
   - text should be foreground on background
+- document environment interpolations
 
 ## shell-themer subcommands
 
