@@ -81,6 +81,110 @@ class Themer:
             raise ThemeError(f"{self.prog}: {tdir}: no such directory")
         return tdir
 
+    def load_from_args(self, args):
+        """Load a theme from the command line args
+
+        Resolution order:
+        1. --file from the command line
+        2. --theme from the command line
+        3. $THEME_FILE environment variable
+
+        This either loads the theme or raises an exception.
+        It doesn't return anything
+
+        :raises: ThemeError if we can't find a theme file
+
+        """
+        fname = None
+        if args.file:
+            fname = args.file
+        elif args.theme:
+            fname = self.theme_dir / args.theme
+            if not fname.is_file():
+                fname = self.theme_dir / f"{args.theme}.toml"
+                if not fname.is_file():
+                    raise ThemeError(f"{self.prog}: {args.theme}: theme not found")
+        else:
+            try:
+                fname = pathlib.Path(os.environ["THEME_FILE"])
+            except KeyError:
+                pass
+        if not fname:
+            raise ThemeError(f"{self.prog}: no theme or theme file specified")
+
+        with open(fname, "rb") as file:
+            self.definition = tomlkit.load(file)
+        self.theme_file = fname
+        self._parse_styles()
+
+    def loads(self, tomlstring=None):
+        """Load a theme from a given string"""
+        if tomlstring:
+            toparse = tomlstring
+        else:
+            # tomlkit can't parse None, so if we got it as the default
+            # or if the caller pased None intentionally...
+            toparse = ""
+        self.definition = tomlkit.loads(toparse)
+        self._parse_styles()
+
+    #
+    # style related methods
+    #
+    def _parse_styles(self):
+        """parse the styles section of the theme and put it into self.styles dict"""
+        self.styles = {}
+        try:
+            for key, value in self.definition["styles"].items():
+                self.styles[key] = rich.style.Style.parse(value)
+        except KeyError:
+            pass
+
+    def styles_from(self, scopedef):
+        "Extract a dict of all the styles present in the given scope definition"
+        styles = {}
+        try:
+            raw_styles = scopedef["style"]
+            for key, value in raw_styles.items():
+                styles[key] = self.get_style(value)
+        except KeyError:
+            pass
+        return styles
+
+    def get_style(self, styledef):
+        """convert a string into rich.style.Style object"""
+        try:
+            style = self.styles[styledef]
+        except KeyError:
+            style = None
+        if not style:
+            style = rich.style.Style.parse(styledef)
+        return style
+
+    #
+    # scope related methods
+    #
+    def has_scope(self, scope):
+        """Check if the given scope exists."""
+        try:
+            _ = self.definition["scope"][scope]
+            return True
+        except KeyError:
+            return False
+
+    def scopedef_for(self, scope):
+        "Extract all the data for a given scope, or an empty dict if there is none"
+        scopedef = {}
+        try:
+            scopedef = self.definition["scope"][scope]
+        except KeyError:
+            # scope doesn't exist
+            pass
+        return scopedef
+
+    #
+    # dispatchers
+    #
     def dispatch(self, args):
         """Figure out which subcommand to run based on the arguments provided"""
         try:
@@ -178,99 +282,6 @@ class Themer:
         self.console.print(rich.panel.Panel(outer_table, style=text_style))
         return self.EXIT_SUCCESS
 
-    def load_from_args(self, args):
-        """Load a theme from the command line args
-
-        Resolution order:
-        1. --file from the command line
-        2. --theme from the command line
-        3. $THEME_FILE environment variable
-
-        This either loads the theme or raises an exception.
-        It doesn't return anything
-
-        :raises: ThemeError if we can't find a theme file
-
-        """
-        fname = None
-        if args.file:
-            fname = args.file
-        elif args.theme:
-            fname = self.theme_dir / args.theme
-            if not fname.is_file():
-                fname = self.theme_dir / f"{args.theme}.toml"
-                if not fname.is_file():
-                    raise ThemeError(f"{self.prog}: {args.theme}: theme not found")
-        else:
-            try:
-                fname = pathlib.Path(os.environ["THEME_FILE"])
-            except KeyError:
-                pass
-        if not fname:
-            raise ThemeError(f"{self.prog}: no theme or theme file specified")
-
-        with open(fname, "rb") as file:
-            self.definition = tomlkit.load(file)
-        self.theme_file = fname
-        self._parse_styles()
-
-    def loads(self, tomlstring=None):
-        """Load a theme from a given string"""
-        if tomlstring:
-            toparse = tomlstring
-        else:
-            toparse = ""
-        self.definition = tomlkit.loads(toparse)
-        self._parse_styles()
-
-    def _parse_styles(self):
-        """parse the styles section of the theme and put it into self.styles dict"""
-        self.styles = {}
-        try:
-            for key, value in self.definition["styles"].items():
-                self.styles[key] = rich.style.Style.parse(value)
-        except KeyError:
-            pass
-
-    def has_scope(self, scope):
-        """Check if the given scope exists."""
-        try:
-            _ = self.definition["scope"][scope]
-            return True
-        except KeyError:
-            return False
-
-    def scopedef_for(self, scope):
-        "Extract all the data for a given scope, or an empty dict if there is none"
-        scopedef = {}
-        try:
-            scopedef = self.definition["scope"][scope]
-        except KeyError:
-            # scope doesn't exist
-            pass
-        return scopedef
-
-    def styles_from(self, scopedef):
-        "Extract a dict of all the styles present in the given scope definition"
-        styles = {}
-        try:
-            raw_styles = scopedef["style"]
-            for key, value in raw_styles.items():
-                styles[key] = self.get_style(value)
-        except KeyError:
-            pass
-        return styles
-
-    def get_style(self, styledef):
-        """convert a string into rich.style.Style object"""
-        try:
-            style = self.styles[styledef]
-        except KeyError:
-            style = None
-        if not style:
-            style = rich.style.Style.parse(styledef)
-        return style
-
     def dispatch_generate(self, args):
         """render the output for a given domain, or all domains if none supplied
 
@@ -295,7 +306,7 @@ class Themer:
             if self.has_scope(scope):
                 scopedef = self.scopedef_for(scope)
                 # do the rendering that works in any domain
-                self._environment_generate(scope, scopedef)
+                self._generate_environment(scope, scopedef)
                 # see if we have a generator defined for custom rendering
                 try:
                     generator = scopedef["generator"]
@@ -305,21 +316,24 @@ class Themer:
                     continue
 
                 if generator == "fzf":
-                    self._fzf_render(scope, scopedef)
+                    self._generate_fzf(scope, scopedef)
                 elif generator == "ls_colors":
-                    self._ls_colors_render(scope, scopedef)
+                    self._generate_ls_colors(scope, scopedef)
                 elif generator == "iterm":
-                    self._iterm_render(scope, scopedef)
+                    self._generate_iterm(scope, scopedef)
                 else:
-                    # unknown generator specified in the domain, by
-                    # definition, this is not an error, but you don't
-                    # get any special rendering
+                    # unknown generator specified in the scope
+                    # definition. by rule, this is not an error,
+                    # but you don't get any special rendering
                     pass
             else:
-                raise ThemeError(f"{self.prog}: {scope}: no such domain")
+                raise ThemeError(f"{self.prog}: {scope}: no such scope")
         return self.EXIT_SUCCESS
 
-    def _environment_generate(self, scope, scopedef):
+    #
+    # environment generator
+    #
+    def _generate_environment(self, scope, scopedef):
         """Render environment variables from a set of attributes and styles"""
         # render the variables to unset
         try:
@@ -341,7 +355,10 @@ class Themer:
         except KeyError:
             pass
 
-    def _fzf_render(self, scope, scopedef):
+    #
+    # fzf generator and helpers
+    #
+    def _generate_fzf(self, scope, scopedef):
         """render attribs into a shell statement to set an environment variable"""
         optstr = ""
 
@@ -456,6 +473,9 @@ class Themer:
             attribs += ":strikethrough"
         return attribs
 
+    #
+    # ls_colors generator
+    #
     LS_COLORS_MAP = {
         "text": "no",
         "file": "fi",
@@ -478,7 +498,7 @@ class Themer:
         "file_with_capability": "ca",
     }
 
-    def _ls_colors_render(self, domain, content):
+    def _generate_ls_colors(self, domain, content):
         "Render a LS_COLORS variable suitable for GNU ls"
         outlist = []
         # process the styles
@@ -565,7 +585,10 @@ class Themer:
             ansicodes = match.group(1)
         return f"{mapname}={ansicodes}"
 
-    def _iterm_render(self, domain, content):
+    #
+    # iterm generator and helpers
+    #
+    def _generate_iterm(self, domain, content):
         """send the special escape sequences to make the iterm2
         terminal emulator for macos change its foreground and backgroud
         color
