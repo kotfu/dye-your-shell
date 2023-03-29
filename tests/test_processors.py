@@ -41,6 +41,14 @@ INTERPOLATIONS = [
     # for an unknown format or style, don't do any replacement
     ("{current_line}", "{current_line}"),
     ("{dark_orange:unknown}", "{dark_orange:unknown}"),
+    # escaped opening bracket, becasue this is toml, if you want a backslash
+    # you have to you \\ because toml strings can contain escape sequences
+    (r'\\{bright_blue}', "{bright_blue}"),
+    (r'\\{ some other  things}', "{ some other  things}"),
+    # if you don't have matched brackets, don't expect the backslash
+    # to be removed. again here we have two backslashes in the first
+    # argument so that it will survive toml string escaping
+    (r'\\{escaped unmatched bracket', r'\{escaped unmatched bracket'),
 ]
 
 
