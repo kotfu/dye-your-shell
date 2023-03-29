@@ -74,8 +74,6 @@ def build_parser():
     )
     scope_help = "only generate the given scope"
     generate_parser.add_argument("-s", "--scope", help=scope_help)
-    #    domain_help = "domain to generate output for"
-    #    parser.add_argument("domain", nargs="*", help=domain_help)
 
     return parser
 

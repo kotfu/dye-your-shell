@@ -36,7 +36,7 @@ from shell_themer import Themer
 #
 def test_generate_environment_unset_list(thm_cmdline, capsys):
     tomlstr = """
-    [domain.ls]
+    [scope.ls]
     # set some environment variables
     environment.unset = ["SOMEVAR", "ANOTHERVAR"]
     environment.export.LS_COLORS = "ace ventura"
@@ -53,7 +53,7 @@ def test_generate_environment_unset_list(thm_cmdline, capsys):
 
 def test_generate_environment_unset_string(thm_cmdline, capsys):
     tomlstr = """
-    [domain.unset]
+    [scope.unset]
     environment.unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -65,7 +65,7 @@ def test_generate_environment_unset_string(thm_cmdline, capsys):
 
 
 #
-# test the fzf processor
+# test the fzf generator
 #
 ATTRIBS_TO_FZF = [
     ("bold", "regular:bold"),
@@ -113,8 +113,8 @@ def test_fzf_from_style(thm, name, styledef, fzf):
 
 def test_fzf_opts(thm_cmdline, capsys):
     tomlstr = """
-[domain.fzf]
-processor = "fzf"
+[scope.fzf]
+generator = "fzf"
 environment_variable = "QQQ"
 opt."+i" = true
 opt.--border = "rounded"
@@ -128,8 +128,8 @@ opt.--border = "rounded"
 
 def test_fzf_no_opts(thm_cmdline, capsys):
     tomlstr = """
-[domain.fzf]
-processor = "fzf"
+[scope.fzf]
+generator = "fzf"
 environment_variable = "QQQ"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -141,8 +141,8 @@ environment_variable = "QQQ"
 
 def test_fzf_no_varname(thm_cmdline, capsys):
     tomlstr = """
-[domain.fzf]
-processor = "fzf"
+[scope.fzf]
+generator = "fzf"
 opt."+i" = true
 opt.--border = "rounded"
     """
@@ -150,11 +150,11 @@ opt.--border = "rounded"
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
     assert not out
-    assert "fzf processor requires 'environment_variable'" in err
+    assert "fzf generator requires 'environment_variable'" in err
 
 
 #
-# test the ls_colors processor
+# test the ls_colors generator
 #
 # we only reallly have to test that the style name maps to the right code in ls_colors
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
@@ -191,8 +191,8 @@ def test_ls_colors_from_style(thm_base, name, styledef, lsc):
 
 def test_ls_colors_no_styles(thm_cmdline, capsys):
     tomlstr = """
-[domain.lsc]
-processor = "ls_colors"
+[scope.lsc]
+generator = "ls_colors"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -203,8 +203,8 @@ processor = "ls_colors"
 
 def test_ls_colors_environment_variable(thm_cmdline, capsys):
     tomlstr = """
-[domain.lsc]
-processor = "ls_colors"
+[scope.lsc]
+generator = "ls_colors"
 environment_variable = "OTHER_LS_COLOR"
 style.file = "default"
     """
@@ -217,8 +217,8 @@ style.file = "default"
 
 def test_ls_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
-[domain.lsc]
-processor = "ls_colors"
+[scope.lsc]
+generator = "ls_colors"
 clear_builtin = true
 style.directory = "bright_blue"
     """
@@ -234,8 +234,8 @@ style.directory = "bright_blue"
 
 def test_ls_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
     tomlstr = """
-[domain.lsc]
-processor = "ls_colors"
+[scope.lsc]
+generator = "ls_colors"
 clear_builtin = "error"
 style.directory = "bright_blue"
     """
@@ -247,12 +247,12 @@ style.directory = "bright_blue"
 
 
 #
-# test the iterm processor
+# test the iterm generator
 #
 def test_iterm(thm_cmdline, capsys):
     tomlstr = """
-[domain.iterm]
-processor = "iterm"
+[scope.iterm]
+generator = "iterm"
 style.foreground = "#ffeebb"
 style.background = "#221122"
     """
@@ -268,8 +268,8 @@ style.background = "#221122"
 
 def test_iterm_bgonly(thm_cmdline, capsys):
     tomlstr = """
-[domain.iterm]
-processor = "iterm"
+[scope.iterm]
+generator = "iterm"
 style.background = "#b2cacd"
     """
     exit_code = thm_cmdline("generate", tomlstr)

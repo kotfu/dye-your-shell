@@ -72,6 +72,7 @@ class Themer:
 
     @property
     def theme_dir(self):
+        """Get the theme directory from the shell environment"""
         try:
             tdir = pathlib.Path(os.environ["THEME_DIR"])
         except KeyError as exc:
@@ -149,18 +150,18 @@ class Themer:
         for name, style in mystyles.items():
             styles_table.add_row(name, style=style)
 
-        domains_table = rich.table.Table(
+        scopes_table = rich.table.Table(
             box=rich.box.SIMPLE_HEAD, show_edge=False, pad_edge=False
         )
-        domains_table.add_column("Domain", ratio=0.4)
-        domains_table.add_column("Processor", ratio=0.6)
+        scopes_table.add_column("Scope", ratio=0.4)
+        scopes_table.add_column("Generator", ratio=0.6)
         try:
-            for name, domain in self.definition["domain"].items():
+            for name, scopedef in self.definition["scope"].items():
                 try:
-                    processor = domain["processor"]
+                    generator = scopedef["generator"]
                 except KeyError:
-                    processor = ""
-                domains_table.add_row(name, processor)
+                    generator = ""
+                scopes_table.add_row(name, generator)
         except KeyError:
             pass
 
@@ -168,7 +169,7 @@ class Themer:
         lower_table.add_column(ratio=0.45)
         lower_table.add_column(ratio=0.1)
         lower_table.add_column(ratio=0.45)
-        lower_table.add_row(styles_table, None, domains_table)
+        lower_table.add_row(styles_table, None, scopes_table)
 
         outer_table.add_row(lower_table)
 
@@ -231,46 +232,34 @@ class Themer:
         except KeyError:
             pass
 
-    def has_domain(self, domain):
-        """Check if the given domain exists."""
+    def has_scope(self, scope):
+        """Check if the given scope exists."""
         try:
-            _ = self.definition["domain"][domain]
+            _ = self.definition["scope"][scope]
             return True
         except KeyError:
             return False
 
-    def domain_content(self, domain):
-        "Extract all the data for a given domain, or an empty dict if there is none"
-        content = {}
+    def scopedef_for(self, scope):
+        "Extract all the data for a given scope, or an empty dict if there is none"
+        scopedef = {}
         try:
-            content = self.definition["domain"][domain]
+            scopedef = self.definition["scope"][scope]
         except KeyError:
-            # domain doesn't exist
+            # scope doesn't exist
             pass
-        return content
+        return scopedef
 
-    def domain_styles(self, domain):
-        "Get all the styles for a given domain, or an empty dict of there are none"
+    def styles_from(self, scopedef):
+        "Extract a dict of all the styles present in the given scope definition"
         styles = {}
         try:
-            raw_styles = self.definition["domain"][domain]["style"]
-            # parse out the Style objects for each definition
+            raw_styles = scopedef["style"]
             for key, value in raw_styles.items():
                 styles[key] = self.get_style(value)
         except KeyError:
             pass
         return styles
-
-    def domain_attributes(self, domain):
-        "Get the non-style attributes of a domain"
-        attributes = {}
-        try:
-            attributes = self.definition["domain"][domain].copy()
-            # strip out the style subtable
-            del attributes["style"]
-        except KeyError:
-            pass
-        return attributes
 
     def get_style(self, styledef):
         """convert a string into rich.style.Style object"""
@@ -297,46 +286,44 @@ class Themer:
         else:
             renders = []
             try:
-                for domain in self.definition["domain"].keys():
-                    renders.append(domain)
+                for scope in self.definition["scope"].keys():
+                    renders.append(scope)
             except KeyError:
                 pass
 
-        for domain in renders:
-            if self.has_domain(domain):
-                content = self.domain_content(domain)
-                attribs = self.domain_attributes(domain)
+        for scope in renders:
+            if self.has_scope(scope):
+                scopedef = self.scopedef_for(scope)
                 # do the rendering that works in any domain
-                self._environment_render(attribs, self.domain_styles(domain))
-                # see if we have a processor defined for custom rendering
+                self._environment_generate(scope, scopedef)
+                # see if we have a generator defined for custom rendering
                 try:
-                    processor = attribs["processor"]
+                    generator = scopedef["generator"]
                 except KeyError:
                     # no more to do for this domain, skip to the next iteration
                     # of the loop
                     continue
 
-                styles = self.domain_styles(domain)
-                if processor == "fzf":
-                    self._fzf_render(domain, attribs, styles)
-                elif processor == "ls_colors":
-                    self._ls_colors_render(domain, content)
-                elif processor == "iterm":
-                    self._iterm_render(domain, content)
+                if generator == "fzf":
+                    self._fzf_render(scope, scopedef)
+                elif generator == "ls_colors":
+                    self._ls_colors_render(scope, scopedef)
+                elif generator == "iterm":
+                    self._iterm_render(scope, scopedef)
                 else:
-                    # unknown processor specified in the domain, by
+                    # unknown generator specified in the domain, by
                     # definition, this is not an error, but you don't
                     # get any special rendering
                     pass
             else:
-                raise ThemeError(f"{self.prog}: {domain}: no such domain")
+                raise ThemeError(f"{self.prog}: {scope}: no such domain")
         return self.EXIT_SUCCESS
 
-    def _environment_render(self, attribs, styles):
+    def _environment_generate(self, scope, scopedef):
         """Render environment variables from a set of attributes and styles"""
         # render the variables to unset
         try:
-            unsets = attribs["environment"]["unset"]
+            unsets = scopedef["environment"]["unset"]
             if isinstance(unsets, str):
                 # if they used a string in the config file instead of a list
                 # process it like a single item instead of trying to process
@@ -348,19 +335,19 @@ class Themer:
             pass
         # render the variables to export
         try:
-            exports = attribs["environment"]["export"]
+            exports = scopedef["environment"]["export"]
             for var, value in exports.items():
                 print(f'export {var}="{value}"')
         except KeyError:
             pass
 
-    def _fzf_render(self, domain, attribs, styles):
+    def _fzf_render(self, scope, scopedef):
         """render attribs into a shell statement to set an environment variable"""
         optstr = ""
 
         # process all the command line options
         try:
-            opts = attribs["opt"]
+            opts = scopedef["opt"]
         except KeyError:
             opts = {}
 
@@ -373,11 +360,11 @@ class Themer:
         # process all the styles
         colors = []
         # then add them back
-        for name, style in styles.items():
+        for name, style in self.styles_from(scopedef).items():
             colors.append(self._fzf_from_style(name, style))
         # turn off all the colors, and add our color strings
         try:
-            colorbase = f"{attribs['colorbase']},"
+            colorbase = f"{scopedef['colorbase']},"
         except KeyError:
             colorbase = ""
         if colorbase or colors:
@@ -387,13 +374,13 @@ class Themer:
 
         # figure out which environment variable to put it in
         try:
-            varname = attribs["environment_variable"]
+            varname = scopedef["environment_variable"]
             print(f'export {varname}="{optstr}{colorstr}"')
         except KeyError as exc:
             raise ThemeError(
                 (
-                    f"{self.prog}: fzf processor requires 'environment_variable'"
-                    f" key to process domain '{domain}'"
+                    f"{self.prog}: fzf generator requires 'environment_variable'"
+                    f" key to process domain '{scope}'"
                 )
             ) from exc
 
@@ -504,7 +491,7 @@ class Themer:
             clear_builtin = content["clear_builtin"]
             if not isinstance(clear_builtin, bool):
                 errmsg = (
-                    f"{self.prog}: ls_colors processor for"
+                    f"{self.prog}: ls_colors generator for"
                     f" domain '{domain}' requires 'clear_builtin' to be boolean"
                 )
                 raise ThemeError(errmsg)

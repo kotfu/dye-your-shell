@@ -43,17 +43,17 @@ purple =  "#bd93f9"
 red =  "#ff5555"
 yellow =  "#f1fa8c"
 
-[domain.ls]
+[scope.ls]
 # set some environment variables
 environment.unset = ["SOMEVAR", "ANOTHERVAR"]
 environment.export.LS_COLORS = "ace ventura"
 
-[domain.unset]
+[scope.unset]
 # unset a single variable
 environment.unset = "NOLISTVAR"
 
-[domain.fzf]
-processor = "fzf"
+[scope.fzf]
+generator = "fzf"
 
 # attributes specific to fzf
 environment_variable = "FZF_DEFAULT_OPTS"
@@ -77,8 +77,8 @@ style.match = "pink"
 style.localstyle = "green on black"
 
 
-[domain.bash-control-r]
-processor = "fzf"
+[scope.bash-control-r]
+generator = "fzf"
 # select the environment variable
 environment_variable = "FZF_CTRL_R_OPTS"
 
@@ -91,12 +91,12 @@ opt.--border-label-pos = "3"
 style.gutter = "default"
 
 
-[domain.noprocessor]
-# without a processor defined, this will not render anything
+[scope.nogenerator]
+# without a generator defined, this will not render anything
 style.text = "foreground"
 
-[domain.unknownprocessor]
-processor = "unknown"
+[scope.unknowngenerator]
+generator = "unknown"
 """
 
 
