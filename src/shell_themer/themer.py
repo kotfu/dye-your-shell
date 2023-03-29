@@ -283,10 +283,7 @@ class Themer:
         return self.EXIT_SUCCESS
 
     def dispatch_generate(self, args):
-        """render the output for a given domain, or all domains if none supplied
-
-        domains can be a string with a single domain, a list of domains
-        or None for all domains
+        """render the output for given scope(s), or all scopes if none specified
 
         output is suitable for bash eval $()
         """
@@ -305,13 +302,13 @@ class Themer:
         for scope in renders:
             if self.has_scope(scope):
                 scopedef = self.scopedef_for(scope)
-                # do the rendering that works in any domain
+                # do the rendering elements for all scopes
                 self._generate_environment(scope, scopedef)
                 # see if we have a generator defined for custom rendering
                 try:
                     generator = scopedef["generator"]
                 except KeyError:
-                    # no more to do for this domain, skip to the next iteration
+                    # no more to do for this scope, skip to the next iteration
                     # of the loop
                     continue
 
@@ -397,7 +394,7 @@ class Themer:
             raise ThemeError(
                 (
                     f"{self.prog}: fzf generator requires 'environment_variable'"
-                    f" key to process domain '{scope}'"
+                    f" key to process scope '{scope}'"
                 )
             ) from exc
 
@@ -498,21 +495,18 @@ class Themer:
         "file_with_capability": "ca",
     }
 
-    def _generate_ls_colors(self, domain, content):
+    def _generate_ls_colors(self, scope, scopedef):
         "Render a LS_COLORS variable suitable for GNU ls"
         outlist = []
         # process the styles
-        try:
-            styles = content["style"]
-        except KeyError:
-            styles = {}
+        styles = self.styles_from(scopedef)
         # figure out if we are clearing builtin styles
         try:
-            clear_builtin = content["clear_builtin"]
+            clear_builtin = scopedef["clear_builtin"]
             if not isinstance(clear_builtin, bool):
                 errmsg = (
                     f"{self.prog}: ls_colors generator for"
-                    f" domain '{domain}' requires 'clear_builtin' to be boolean"
+                    f" scope '{scope}' requires 'clear_builtin' to be boolean"
                 )
                 raise ThemeError(errmsg)
         except KeyError:
@@ -522,17 +516,15 @@ class Themer:
             # iterate over all known styles
             for name in self.LS_COLORS_MAP:
                 try:
-                    styledef = styles[name]
+                    style = styles[name]
                 except KeyError:
                     # style isn't in our configuration, so put the default one in
-                    styledef = "default"
-                style = self.get_style(styledef)
+                    style = self.get_style("default")
                 if style:
                     outlist.append(self._ls_colors_from_style(name, style))
         else:
             # iterate over the styles given in our configuration
-            for name, styledef in styles.items():
-                style = self.get_style(styledef)
+            for name, style in styles.items():
                 if style:
                     outlist.append(self._ls_colors_from_style(name, style))
 
@@ -540,7 +532,7 @@ class Themer:
 
         # figure out which environment variable to put it in
         try:
-            varname = content["environment_variable"]
+            varname = scopedef["environment_variable"]
         except KeyError:
             varname = "LS_COLORS"
 
@@ -588,25 +580,25 @@ class Themer:
     #
     # iterm generator and helpers
     #
-    def _generate_iterm(self, domain, content):
+    def _generate_iterm(self, scope, scopedef):
         """send the special escape sequences to make the iterm2
         terminal emulator for macos change its foreground and backgroud
         color
 
         echo "\033]1337;SetColors=bg=331111\007"
         """
-        self._iterm_render_style(content, "foreground", "fg")
-        self._iterm_render_style(content, "background", "bg")
+        styles = self.styles_from(scopedef)
+        self._iterm_render_style(styles, "foreground", "fg")
+        self._iterm_render_style(styles, "background", "bg")
 
-    def _iterm_render_style(self, content, style, iterm_key):
+    def _iterm_render_style(self, styles, style_name, iterm_key):
         """print an iterm escape sequence to change the color palette"""
         try:
-            styledef = content["style"][style]
-            styleobj = self.get_style(styledef)
+            style = styles[style_name]
         except KeyError:
             return
-        if styleobj:
-            clr = styleobj.color.get_truecolor()
+        if style:
+            clr = style.color.get_truecolor()
             # gotta use raw strings here so the \033 and \007 don't get
             # interpreted by python
             out = r'builtin echo -e "\e]1337;'

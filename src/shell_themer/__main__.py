@@ -90,8 +90,6 @@ def main(argv=None):
 
     thm = Themer(parser.prog)
     return thm.dispatch(args)
-    # thm.load(args.theme)
-    # return thm.render(args.domain)
 
 
 if __name__ == "__main__":  # pragma: nocover
