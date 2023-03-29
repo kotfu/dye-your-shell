@@ -184,9 +184,9 @@ STYLE_TO_LSCOLORS = [
 
 
 @pytest.mark.parametrize("name, styledef, lsc", STYLE_TO_LSCOLORS)
-def test_ls_colors_from_style(thm_base, name, styledef, lsc):
+def test_ls_colors_from_style(thm, name, styledef, lsc):
     style = rich.style.Style.parse(styledef)
-    assert lsc == thm_base._ls_colors_from_style(name, style)
+    assert lsc == thm._ls_colors_from_style(name, style)
 
 
 def test_ls_colors_no_styles(thm_cmdline, capsys):

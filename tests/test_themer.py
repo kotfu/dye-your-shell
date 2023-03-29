@@ -31,50 +31,50 @@ import rich.errors
 from shell_themer import Themer
 
 
-def test_loads_empty(thm_base):
-    thm_base.loads("")
-    assert isinstance(thm_base.definition, dict)
-    assert thm_base.definition == {}
-    assert isinstance(thm_base.styles, dict)
-    assert thm_base.styles == {}
+def test_loads_empty(thm):
+    thm.loads("")
+    assert isinstance(thm.definition, dict)
+    assert thm.definition == {}
+    assert isinstance(thm.styles, dict)
+    assert thm.styles == {}
 
 
 #
 # test style parsing
 #
-def test_get_style_plain(thm_base):
-    style = thm_base.get_style("#aaff00")
+def test_get_style_plain(thm):
+    style = thm.get_style("#aaff00")
     assert isinstance(style, rich.style.Style)
     assert style.color.name == "#aaff00"
 
 
-def test_get_style_complex(thm_base):
-    style = thm_base.get_style("bold white on red")
+def test_get_style_complex(thm):
+    style = thm.get_style("bold white on red")
     assert isinstance(style, rich.style.Style)
     assert style.bold is True
     assert style.color.name == "white"
     assert style.bgcolor.name == "red"
 
 
-def test_get_style_invalid(thm_base):
+def test_get_style_invalid(thm):
     with pytest.raises(rich.errors.StyleSyntaxError):
-        _ = thm_base.get_style("not a valid style")
+        _ = thm.get_style("not a valid style")
 
 
-def test_get_style_lookup(thm_base):
+def test_get_style_lookup(thm):
     tomlstr = """
 [styles]
 background =  "#282a36"
 foreground =  "#f8f8f2"
 current_line =  "#f8f8f2 on #44475a"
     """
-    thm_base.loads(tomlstr)
-    style = thm_base.get_style("current_line")
+    thm.loads(tomlstr)
+    style = thm.get_style("current_line")
     assert style.color.name == "#f8f8f2"
     assert style.bgcolor.name == "#44475a"
 
 
-def test_parse_styles(thm_base):
+def test_parse_styles(thm):
     tomlstr = """
 [styles]
 background =  "#282a36"
@@ -94,14 +94,14 @@ yellow =  "#f1fa8c"
 environment.unset = ["SOMEVAR", "ANOTHERVAR"]
 environment.export.LS_COLORS = "ace ventura"
     """
-    thm_base.loads(tomlstr)
-    assert isinstance(thm_base.styles, dict)
-    assert isinstance(thm_base.styles["cyan"], rich.style.Style)
-    assert thm_base.styles["cyan"].color.name == "#8be9fd"
-    assert thm_base.styles["yellow"].color.name == "#f1fa8c"
+    thm.loads(tomlstr)
+    assert isinstance(thm.styles, dict)
+    assert isinstance(thm.styles["cyan"], rich.style.Style)
+    assert thm.styles["cyan"].color.name == "#8be9fd"
+    assert thm.styles["yellow"].color.name == "#f1fa8c"
 
 
-def test_styles_from(thm_base):
+def test_styles_from(thm):
     tomlstr = """
 [styles]
 background =  "#282a36"
@@ -145,9 +145,9 @@ style.indicator = "cyan"
 style.match = "pink"
 style.localstyle = "green on black"
 """
-    thm_base.loads(tomlstr)
-    scopedef = thm_base.scopedef_for("fzf")
-    styles = thm_base.styles_from(scopedef)
+    thm.loads(tomlstr)
+    scopedef = thm.scopedef_for("fzf")
+    styles = thm.styles_from(scopedef)
     assert isinstance(styles, dict)
     assert len(styles) == 8
     assert "indicator" in styles.keys()
@@ -157,46 +157,46 @@ style.localstyle = "green on black"
     assert style.bgcolor.name == "#44475a"
 
 
-def test_styles_from_unknown(thm_base):
+def test_styles_from_unknown(thm):
     tomlstr = """
 [scope.iterm]
 generator = "iterm"
 style.foreground = "foreground"
 style.background = "background"
     """
-    thm_base.loads(tomlstr)
-    scopedef = thm_base.scopedef_for("unknown")
-    styles = thm_base.styles_from(scopedef)
+    thm.loads(tomlstr)
+    scopedef = thm.scopedef_for("unknown")
+    styles = thm.styles_from(scopedef)
     assert isinstance(styles, dict)
     assert styles == {}
 
 
-def test_scopedef(thm_base):
+def test_scopedef(thm):
     tomlstr = """
 [scope.iterm]
 generator = "iterm"
 style.foreground = "blue"
 style.background = "white"
     """
-    thm_base.loads(tomlstr)
-    scopedef = thm_base.scopedef_for("iterm")
+    thm.loads(tomlstr)
+    scopedef = thm.scopedef_for("iterm")
     assert isinstance(scopedef, dict)
     assert scopedef["generator"] == "iterm"
     assert len(scopedef) == 2
-    styles = thm_base.styles_from(scopedef)
+    styles = thm.styles_from(scopedef)
     assert len(styles) == 2
     assert isinstance(styles["foreground"], rich.style.Style)
 
 
-def test_scopedef_notfound(thm_base):
+def test_scopedef_notfound(thm):
     tomlstr = """
 [scope.iterm]
 generator = "iterm"
 style.foreground = "blue"
 style.background = "white"
     """
-    thm_base.loads(tomlstr)
-    scopedef = thm_base.scopedef_for("notfound")
+    thm.loads(tomlstr)
+    scopedef = thm.scopedef_for("notfound")
     assert isinstance(scopedef, dict)
     assert scopedef == {}
 
@@ -205,7 +205,50 @@ style.background = "white"
 # test high level generation functions
 #
 def test_generate_single_scope(thm_cmdline, capsys):
-    exit_code = thm_cmdline("generate -s fzf")
+    tomlstr = """
+[styles]
+background =  "#282a36"
+foreground =  "#f8f8f2"
+current_line =  "#f8f8f2 on #44475a"
+comment =  "#6272a4"
+cyan =  "#8be9fd"
+green =  "#50fa7b"
+orange =  "#ffb86c"
+pink =  "#ff79c6"
+purple =  "#bd93f9"
+red =  "#ff5555"
+yellow =  "#f1fa8c"
+
+[scope.iterm]
+generator = "iterm"
+style.foreground = "foreground"
+style.background = "background"
+
+[scope.fzf]
+generator = "fzf"
+
+# attributes specific to fzf
+environment_variable = "FZF_DEFAULT_OPTS"
+
+# command line options
+opt.--prompt = ">"
+opt.--border = "single"
+opt.--pointer = "•"
+opt.--info = "hidden"
+opt.--no-sort = true
+opt."+i" = true
+
+# styles
+style.text = "foreground"
+style.label = "green"
+style.border = "orange"
+style.selected = "current_line"
+style.prompt = "green"
+style.indicator = "cyan"
+style.match = "pink"
+style.localstyle = "green on black"
+    """
+    exit_code = thm_cmdline("generate -s fzf", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert out
@@ -214,7 +257,22 @@ def test_generate_single_scope(thm_cmdline, capsys):
 
 
 def test_generate_unknown_scope(thm_cmdline, capsys):
-    exit_code = thm_cmdline("generate -s unknownscope")
+    tomlstr = """
+[styles]
+background =  "#282a36"
+foreground =  "#f8f8f2"
+
+[scope.iterm]
+generator = "iterm"
+style.foreground = "foreground"
+style.background = "background"
+
+[scope.ls]
+# set some environment variables
+environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+environment.export.LS_COLORS = "ace ventura"
+    """
+    exit_code = thm_cmdline("generate -s unknownscope", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
     assert not out

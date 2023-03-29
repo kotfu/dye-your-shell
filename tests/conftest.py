@@ -29,76 +29,6 @@ import pytest
 from shell_themer import Themer
 from shell_themer.__main__ import build_parser
 
-TOMLSTR = """
-[styles]
-background =  "#282a36"
-foreground =  "#f8f8f2"
-current_line =  "#f8f8f2 on #44475a"
-comment =  "#6272a4"
-cyan =  "#8be9fd"
-green =  "#50fa7b"
-orange =  "#ffb86c"
-pink =  "#ff79c6"
-purple =  "#bd93f9"
-red =  "#ff5555"
-yellow =  "#f1fa8c"
-
-[scope.ls]
-# set some environment variables
-environment.unset = ["SOMEVAR", "ANOTHERVAR"]
-environment.export.LS_COLORS = "ace ventura"
-
-[scope.unset]
-# unset a single variable
-environment.unset = "NOLISTVAR"
-
-[scope.fzf]
-generator = "fzf"
-
-# attributes specific to fzf
-environment_variable = "FZF_DEFAULT_OPTS"
-
-# command line options
-opt.--prompt = ">"
-opt.--border = "single"
-opt.--pointer = "•"
-opt.--info = "hidden"
-opt.--no-sort = true
-opt."+i" = true
-
-# styles
-style.text = "foreground"
-style.label = "green"
-style.border = "orange"
-style.selected = "current_line"
-style.prompt = "green"
-style.indicator = "cyan"
-style.match = "pink"
-style.localstyle = "green on black"
-
-
-[scope.bash-control-r]
-generator = "fzf"
-# select the environment variable
-environment_variable = "FZF_CTRL_R_OPTS"
-
-# command line options
-opt.--border = "rounded"
-opt.--border-label = "command history"
-opt.--border-label-pos = "3"
-
-# styles
-style.gutter = "default"
-
-
-[scope.nogenerator]
-# without a generator defined, this will not render anything
-style.text = "foreground"
-
-[scope.unknowngenerator]
-generator = "unknown"
-"""
-
 
 @pytest.fixture
 def parser():
@@ -106,31 +36,21 @@ def parser():
 
 
 @pytest.fixture
-def thm_base(mocker):
+def thm():
     thm = Themer(prog="shell-themer")
     return thm
 
 
 @pytest.fixture
-def thm(thm_base, mocker):
-    # a theme object loaded up with a robust configuration
-    thm_base.loads(TOMLSTR)
-    # now monkeypatch load_from_args() cause that won't work
-    mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
-    return thm_base
-
-
-@pytest.fixture
-def thm_cmdline(thm_base, parser, mocker):
+def thm_cmdline(thm, parser, mocker):
     def _executor(cmdline, toml=None):
         argv = cmdline.split(" ")
         args = parser.parse_args(argv)
         if toml:
-            thm_base.loads(toml)
-        else:
-            thm_base.loads(TOMLSTR)
+            thm.loads(toml)
         # now monkeypatch load_from_args() cause that won't work
         mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
-        return thm_base.dispatch(args)
+        # to use this fixture you have to call thm.loads() first
+        return thm.dispatch(args)
 
     return _executor
