@@ -48,9 +48,8 @@ def thm_cmdline(thm, parser, mocker):
         args = parser.parse_args(argv)
         if toml:
             thm.loads(toml)
-        # now monkeypatch load_from_args() cause that won't work
+        # now monkeypatch load_from_args() because that won't work
         mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
-        # to use this fixture you have to call thm.loads() first
         return thm.dispatch(args)
 
     return _executor

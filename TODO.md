@@ -1,7 +1,5 @@
 # TODO list for shell-themer
 
-- documentation and website
-  - show how to set BAT_THEME
 - figure out how to set emacs theme
 [x] make a mini-language so that environment_render() can put styles
     in various color formats into an environment variable
@@ -13,10 +11,12 @@
   disable_if = "some shell command here"
   // if you have to negate the exit code, try
   // isiterm2 && [[ $? == 0 ]]
+[x] add option to generate to insert comments into the output
 
+- documentation and website
+  - show how to set BAT_THEME
 - document how to load a theme
     - eval $(shell-themer) is bad, try the code from `$ starship init bash` instead
-
 - document a "magic" styles named "background", "foreground", and "text"
   - these will be used by the preview command to show the style properly
   - text should be foreground on background

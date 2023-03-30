@@ -347,22 +347,26 @@ class Themer:
         self.load_from_args(args)
 
         if args.scope:
-            renders = args.scope.split(",")
+            to_generate = args.scope.split(",")
         else:
-            renders = []
+            to_generate = []
             try:
                 for scope in self.definition["scope"].keys():
-                    renders.append(scope)
+                    to_generate.append(scope)
             except KeyError:
                 pass
 
-        for scope in renders:
+        for scope in to_generate:
             if self.has_scope(scope):
                 scopedef = self.scopedef_for(scope)
                 # check if the scope is disabled
                 if not self.is_enabled(scope):
+                    if args.comment:
+                        print(f"# [scope.{scope}] skipped because it is not enabled")
                     continue
                 # do the rendering elements for all scopes
+                if args.comment:
+                    print(f"# [scope.{scope}]")
                 self._generate_environment(scope, scopedef)
                 # see if we have a generator defined for custom rendering
                 try:

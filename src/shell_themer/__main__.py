@@ -74,6 +74,10 @@ def build_parser():
     )
     scope_help = "only generate the given scope"
     generate_parser.add_argument("-s", "--scope", help=scope_help)
+    comment_help = "add comments to the generated output"
+    generate_parser.add_argument(
+        "-c", "--comment", action="store_true", help=comment_help
+    )
 
     return parser
 
