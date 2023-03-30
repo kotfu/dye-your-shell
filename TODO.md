@@ -30,5 +30,5 @@
   - don't like activate because it doesn't really activate the theme
   - don't like process because we use processors for something else
   - generate seems the best so far, then we have generator = "fzf"
-- init = generate the code for the theme-activate, theme-reload, and theme-choose (using fzf)
+- init = generate the code for the theme-activate (using fzf if not specified), theme-reload
 - help = show help
