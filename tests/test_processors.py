@@ -32,7 +32,7 @@ from shell_themer import Themer
 
 
 #
-# test environment rendering
+# test rendering of elements common to all scopes
 #
 INTERPOLATIONS = [
     ("{dark_orange}", "#ff6c1c"),
@@ -43,12 +43,12 @@ INTERPOLATIONS = [
     ("{dark_orange:unknown}", "{dark_orange:unknown}"),
     # escaped opening bracket, becasue this is toml, if you want a backslash
     # you have to you \\ because toml strings can contain escape sequences
-    (r'\\{bright_blue}', "{bright_blue}"),
-    (r'\\{ some other  things}', "{ some other  things}"),
+    (r"\\{bright_blue}", "{bright_blue}"),
+    (r"\\{ some other  things}", "{ some other  things}"),
     # if you don't have matched brackets, don't expect the backslash
     # to be removed. again here we have two backslashes in the first
     # argument so that it will survive toml string escaping
-    (r'\\{escaped unmatched bracket', r'\{escaped unmatched bracket'),
+    (r"\\{escaped unmatched bracket", r"\{escaped unmatched bracket"),
 ]
 
 
@@ -67,33 +67,6 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
     assert out == f'export GUM_OPTS=" --cursor-foreground={interpolated}"\n'
 
 
-# def test_generate_environment_interpolation_hexnohash(thm_cmdline, capsys):
-#     tomlstr = """
-#     [styles]
-#     dark_orange = "#ff6c1c"
-
-#     [scope.gum]
-#     environment.export.GUM_OPTS = " --cursor-foreground={dark_orange:hexnohash}"
-#     """
-#     exit_code = thm_cmdline("generate", tomlstr)
-#     out, err = capsys.readouterr()
-#     assert exit_code == Themer.EXIT_SUCCESS
-#     assert out == 'export GUM_OPTS=" --cursor-foreground=ff6c1c"\n'
-
-# def test_generate_environment_interpolation_nofmt(thm_cmdline, capsys):
-#     tomlstr = """
-#     [styles]
-#     dark_orange = "#ff6c1c"
-
-#     [scope.gum]
-#     environment.export.GUM_OPTS = " --cursor-foreground={dark_orange}"
-#     """
-#     exit_code = thm_cmdline("generate", tomlstr)
-#     out, err = capsys.readouterr()
-#     assert exit_code == Themer.EXIT_SUCCESS
-#     assert out == 'export GUM_OPTS=" --cursor-foreground=#ff6c1c"\n'
-
-
 def test_generate_environment_unset_list(thm_cmdline, capsys):
     tomlstr = """
     [scope.ls]
@@ -104,7 +77,6 @@ def test_generate_environment_unset_list(thm_cmdline, capsys):
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
-    assert out
     assert not err
     assert "unset SOMEVAR" in out
     assert "unset ANOTHERVAR" in out
@@ -119,9 +91,65 @@ def test_generate_environment_unset_string(thm_cmdline, capsys):
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
-    assert out
     assert not err
     assert "unset NOLISTVAR" in out
+
+
+def test_generate_disabled(thm_cmdline, capsys):
+    tomlstr = """
+    [scope.nolistvar]
+    disable = true
+    environment.unset = "NOLISTVAR"
+
+    [scope.somevar]
+    disable = false
+    environment.unset = "SOMEVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert "unset SOMEVAR" in out
+
+
+def test_generate_disabled_false(thm_cmdline, capsys):
+    tomlstr = """
+    [scope.unset]
+    disable = false
+    disable_if = "echo"
+    environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    # disable_if should be ignored if disable = false
+    assert "unset NOLISTVAR" in out
+
+
+DISABLED_IFS = [
+    ("", True),
+    ("echo", True),
+    ("[[ 1 == 1 ]]", True),
+    ("[[ 1 == 0 ]]", False),
+]
+
+
+@pytest.mark.parametrize("cmd, enabled", DISABLED_IFS)
+def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
+    tomlstr = f"""
+    [scope.unset]
+    enabled_if = "{cmd}"
+    environment.unset = "ENVVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    if enabled:
+        assert "unset ENVVAR" in out
+    else:
+        assert not out
 
 
 #
@@ -303,7 +331,7 @@ style.directory = "bright_blue"
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
     assert not out
-    assert "'clear_builtin' to be boolean" in err
+    assert "'clear_builtin' to be true or false" in err
 
 
 #

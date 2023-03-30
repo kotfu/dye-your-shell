@@ -26,6 +26,7 @@ import functools
 import os
 import pathlib
 import re
+import subprocess
 
 import rich.box
 import rich.color
@@ -166,7 +167,7 @@ class Themer:
         return style
 
     #
-    # scope related methods
+    # scope, parsing, and validation methods
     #
     def has_scope(self, scope):
         """Check if the given scope exists."""
@@ -185,6 +186,58 @@ class Themer:
             # scope doesn't exist
             pass
         return scopedef
+
+    def is_enabled(self, scope):
+        """Determine if the scope is enabled
+        The default is that the scope is enabled
+
+        If can be disabled by:
+
+            enabled = false
+
+        or:
+            enabled_if = "{shell cmd}" returns a non-zero exit code
+
+        if 'enabled = false' is present, then enabled_if is not checked
+        """
+        scopedef = self.scopedef_for(scope)
+        try:
+            enabled = scopedef["enabled"]
+            self._assert_bool(None, scope, "enabled", enabled)
+            # this is authoritative, if it exists, ignore enabled_if below
+            return enabled
+        except KeyError:
+            # no enabled command, but we need to still keep checking
+            pass
+
+        try:
+            enabled_if = scopedef["enabled_if"]
+            if not enabled_if:
+                # no command, by rule we say it's enabled
+                return True
+        except KeyError:
+            # no enabled_if command, so we must be enabled
+            return True
+
+        proc = subprocess.run(enabled_if, shell=True, check=False, capture_output=True)
+        if proc.returncode != 0:
+            # the shell command returned a non-zero exit code
+            # and this scope should therefore be disablee
+            return False
+        return True
+
+    def _assert_bool(self, generator, scope, key, value):
+        if not isinstance(value, bool):
+            if generator:
+                errmsg = (
+                    f"{self.prog}: {generator} generator for"
+                    f" scope '{scope}' requires '{key}' to be true or false"
+                )
+            else:
+                errmsg = (
+                    f"{self.prog}: scope '{scope}' requires '{key}' to be true or false"
+                )
+            raise ThemeError(errmsg)
 
     #
     # dispatchers
@@ -306,6 +359,9 @@ class Themer:
         for scope in renders:
             if self.has_scope(scope):
                 scopedef = self.scopedef_for(scope)
+                # check if the scope is disabled
+                if not self.is_enabled(scope):
+                    continue
                 # do the rendering elements for all scopes
                 self._generate_environment(scope, scopedef)
                 # see if we have a generator defined for custom rendering
@@ -574,12 +630,7 @@ class Themer:
         # figure out if we are clearing builtin styles
         try:
             clear_builtin = scopedef["clear_builtin"]
-            if not isinstance(clear_builtin, bool):
-                errmsg = (
-                    f"{self.prog}: ls_colors generator for"
-                    f" scope '{scope}' requires 'clear_builtin' to be boolean"
-                )
-                raise ThemeError(errmsg)
+            self._assert_bool("ls_colors", scope, "clear_builtin", clear_builtin)
         except KeyError:
             clear_builtin = False
 

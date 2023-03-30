@@ -5,12 +5,14 @@
 - figure out how to set emacs theme
 [x] make a mini-language so that environment_render() can put styles
     in various color formats into an environment variable
-- add a condition to every scope, ie
+[x] add a condition to every scope, ie
   [scope.iterm]
-  if = "some shell command here"
-
-  if the command returns 0 then we process the scope
-  if the command returns not 0 the we skip processing the scope
+  disable = true
+  // exit code 0 is true, and means to disable it
+  // any other exit code means to not disable it
+  disable_if = "some shell command here"
+  // if you have to negate the exit code, try
+  // isiterm2 && [[ $? == 0 ]]
 
 - document how to load a theme
     - eval $(shell-themer) is bad, try the code from `$ starship init bash` instead

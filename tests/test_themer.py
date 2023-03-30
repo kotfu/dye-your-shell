@@ -171,6 +171,11 @@ style.background = "background"
     assert styles == {}
 
 
+#
+# test scope, parsing, and validation methods
+#
+
+
 def test_scopedef(thm):
     tomlstr = """
 [scope.iterm]
@@ -199,6 +204,11 @@ style.background = "white"
     scopedef = thm.scopedef_for("notfound")
     assert isinstance(scopedef, dict)
     assert scopedef == {}
+
+
+# TODO test has_scope()
+# TODO test is_enabled()
+# TODO test _assert_bool()
 
 
 #
