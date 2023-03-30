@@ -1,6 +1,6 @@
 # TODO list for shell-themer
 
-- figure out how to set emacs theme
+[ ] figure out how to set emacs theme
 [x] make a mini-language so that environment_render() can put styles
     in various color formats into an environment variable
 [x] add a condition to every scope, ie
@@ -12,6 +12,8 @@
   // if you have to negate the exit code, try
   // isiterm2 && [[ $? == 0 ]]
 [x] add option to generate to insert comments into the output
+[ ] allow creation of variables with values, which can be interpolated
+    into other sections
 
 - documentation and website
   - show how to set BAT_THEME
