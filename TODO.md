@@ -23,6 +23,7 @@
   - these will be used by the preview command to show the style properly
   - text should be foreground on background
 - document environment interpolations
+- document variable interpolations
 
 ## shell-themer subcommands
 

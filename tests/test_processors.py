@@ -34,25 +34,29 @@ from shell_themer import Themer
 #
 # test rendering of elements common to all scopes
 #
-INTERPOLATIONS = [
-    ("{dark_orange}", "#ff6c1c"),
-    ("{dark_orange:hex}", "#ff6c1c"),
-    ("{dark_orange:hexnohash}", "ff6c1c"),
+STYLE_INTERPOLATIONS = [
+    ("{style:dark_orange}", "#ff6c1c"),
+    ("{style:dark_orange:hex}", "#ff6c1c"),
+    ("{style:dark_orange:hexnohash}", "ff6c1c"),
     # for an unknown format or style, don't do any replacement
-    ("{current_line}", "{current_line}"),
-    ("{dark_orange:unknown}", "{dark_orange:unknown}"),
+    ("{style:current_line}", "{style:current_line}"),
+    ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
+    # we have to have the style keyword, or it all just gets passed through
+    ("{dark_orange}", "{dark_orange}"),
+    ("{variable:green}", "{variable:green}"),
     # escaped opening bracket, becasue this is toml, if you want a backslash
     # you have to you \\ because toml strings can contain escape sequences
-    (r"\\{bright_blue}", "{bright_blue}"),
-    (r"\\{ some other  things}", "{ some other  things}"),
-    # if you don't have matched brackets, don't expect the backslash
+    (r"\\{style:bright_blue}", "{style:bright_blue}"),
+    # if you don't have matched brackets, or are missing the
+    # literal 'style:' keyword, don't expect the backslash
     # to be removed. again here we have two backslashes in the first
     # argument so that it will survive toml string escaping
+    (r"\\{ some other  things}", r"\{ some other  things}"),
     (r"\\{escaped unmatched bracket", r"\{escaped unmatched bracket"),
 ]
 
 
-@pytest.mark.parametrize("phrase, interpolated", INTERPOLATIONS)
+@pytest.mark.parametrize("phrase, interpolated", STYLE_INTERPOLATIONS)
 def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpolated):
     tomlstr = f"""
     [styles]

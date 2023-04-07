@@ -28,6 +28,10 @@ purple =  "#bd93f9"
 red =  "#ff5555"
 yellow =  "#f1fa8c"
 
+[variables]
+# any key here can be inserted into a non-style variable
+# using the {var:variable_name} syntax
+
 
 [scope.iterm]
 # for mac app iTerm2, we can change the foreground and background

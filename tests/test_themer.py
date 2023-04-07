@@ -172,6 +172,56 @@ style.background = "background"
 
 
 #
+# test variable related methods, including interpolation
+#
+VARIABLES = [
+    ("SomeVar", "Hello"),
+    ("another_var", "one,two,three"),
+    ("comment", "#6272a4"),
+    ("empty", ""),
+    ("number", 5),
+    ("bool", True),
+    ("notdefined", None),
+]
+@pytest.mark.parametrize("variable, value", VARIABLES)
+def test_value_of(thm, variable, value):
+    tomlstr = """
+[variables]
+SomeVar =  "Hello"
+another_var = "one,two,three"
+comment =  "#6272a4"
+number = 5
+bool = true
+empty = ""
+"""
+    thm.loads(tomlstr)
+    assert thm.value_of(variable) == value
+
+VARIABLE_INTERPOLATIONS = [
+    ("{variable:SomeVar} there", "Hello there"),
+    ("{variable:somevar} there", "{variable:somevar} there"),
+    ("It is {var:bool}.", "It is true."),
+    ("nothing to be done", "nothing to be done"),
+    ("fred='{var:empty}'", "fred=''"),
+    ("\{variable:SomeVar} there", "{variable:SomeVar} there"),
+    ("I have {var:number} apples.", "I have 5 apples."),
+    ("count: {variable:another_var}", "count: one,two,three"),
+]
+@pytest.mark.parametrize("value, newvalue", VARIABLE_INTERPOLATIONS)
+def test_variable_interpolate(thm, value, newvalue):
+    tomlstr = """
+[variables]
+SomeVar =  "Hello"
+another_var = "one,two,three"
+comment =  "#6272a4"
+number = 5
+bool = true
+empty = ""
+"""
+    thm.loads(tomlstr)
+    assert thm.variable_interpolate(value) == newvalue
+
+#
 # test scope, parsing, and validation methods
 #
 

@@ -132,7 +132,7 @@ class Themer:
         self._parse_styles()
 
     #
-    # style related methods
+    # style and variable related methods
     #
     def _parse_styles(self):
         """parse the styles section of the theme and put it into self.styles dict"""
@@ -165,6 +165,74 @@ class Themer:
         if not style:
             style = rich.style.Style.parse(styledef)
         return style
+
+    def value_of(self, variable):
+        """return the value or contents of a variable
+        return None if variable is not defined"""
+
+        variables = {}
+        try:
+            variables = self.definition["variables"]
+            return variables[variable]
+        except KeyError:
+            # variable not defined
+            return None
+
+    def variable_interpolate(self, value):
+        """interpolate variables in the passed value"""
+        # this incantation gives us a callable function which is
+        # really a method on our class, and which gets self
+        # passed to the method just like any other method
+        tmpfunc = functools.partial(self._var_subber)
+        # this regex matches any of the following:
+        #   {var:darkorange}
+        #   {variable:yellow}
+        #   \{variable:blue}
+        # so we can replace it with a previously defined variable.
+        #
+        # match group 1 = backslash, if present
+        # match group 2 = entire variable phrase
+        # match group 3 = 'var' or 'variable'
+        # match group 4 = name of the variable
+        newvalue = re.sub(r"(\\)?(\{(var|variable):([^}:]*)(?::(.*))?\})", tmpfunc, value)
+        return newvalue
+
+    def _var_subber(self, match):
+        """the replacement function called by re.sub() in variable_interpolate()
+
+        this decides the replacement text for the matched regular expression
+
+        the philosophy is to have the replacement string be exactly what was
+        matched in the string, unless we the variable given exists and has a
+        value, in which case we insert that value.
+        """
+        # the backslash to protect the brace, may or may not be present
+        backslash = match.group(1)
+        # the entire phrase, including the braces
+        phrase = match.group(2)
+        # match.group(3) is the literal 'var' or 'variable', we don't need that
+        # the stuff after the colon but before the closing brace
+        varname = match.group(4)
+
+        if backslash:
+            # the only thing we replace is the backslash, the rest of it gets
+            # passed through as is, which the regex conveniently has for us
+            # in match group 2
+            out = f"{phrase}"
+        else:
+            value = self.value_of(varname)
+            if value is None:
+                # we can't find the variable, so don't do a replacement
+                out = match.group(0)
+            else:
+                if isinstance(value, bool):
+                    # toml booleans are all lower case, python are not
+                    # since the source toml is all lower case, we will
+                    # make the replacement be the same
+                    out = str(value).lower()
+                else:
+                    out = str(value)
+        return out
 
     #
     # scope, parsing, and validation methods
@@ -418,24 +486,22 @@ class Themer:
             pass
 
     def _environment_interpolate(self, value):
-        """interpolate"""
+        """interpolate styles in environment variables"""
         # this incantation gives us a callable function which is
         # really a method on our class, and which gets self
         # passed to the method just like any other method
         tmpfunc = functools.partial(self._env_subber)
         # this regex matches any of the following:
-        #   {darkorange}
-        #   {yellow:}
-        #   {blue:format}
-        # so we can replace it with style information. It also matches
-        #   \{something}
-        # so we can ignore it but get rid of the backslash
+        #   {style:darkorange}
+        #   {style:yellow:}
+        #   \{style:blue:hex}
+        # so we can replace it with style information.
         #
         # match group 1 = backslash, if present
         # match group 2 = entire style/format phrase
-        # match group 3 = style
+        # match group 3 = name of the style (not the literal 'style:')
         # match group 4 = format
-        newvalue = re.sub(r"(\\)?(\{([^}:]*)(?::(.*))?\})", tmpfunc, value)
+        newvalue = re.sub(r"(\\)?(\{style:([^}:]*)(?::(.*))?\})", tmpfunc, value)
         return newvalue
 
     def _env_subber(self, match):
