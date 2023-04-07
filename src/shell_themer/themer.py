@@ -245,8 +245,8 @@ class Themer:
     def dispatch(self, args):
         """Figure out which subcommand to run based on the arguments provided"""
         try:
-            if args.command == "themes":
-                return self.dispatch_themes(args)
+            if args.command == "list":
+                return self.dispatch_list(args)
             elif args.command == "preview":
                 return self.dispatch_preview(args)
             elif args.command == "generate":
@@ -259,7 +259,7 @@ class Themer:
         print(f"{self.prog}: {args.command}: unknown command")
         return self.EXIT_ERROR
 
-    def dispatch_themes(self, args):
+    def dispatch_list(self, args):
         """Print a list of all themes"""
         # ignore all other args
         themeglob = self.theme_dir.glob("*.toml")
