@@ -61,12 +61,8 @@ def build_parser():
     file_help = "specify a file containing a theme"
     tgroup.add_argument("-f", "--file", help=file_help)
     subparsers = parser.add_subparsers(
-        dest="command", help="sub-command help and stuff", required=True
+        dest="command", title=None, metavar="<command>", required=True
     )
-
-    themes_parser = subparsers.add_parser("themes", help="list all themes")
-
-    preview_parser = subparsers.add_parser("preview", help="preview styles in a theme")
 
     generate_parser = subparsers.add_parser(
         "generate",
@@ -78,6 +74,10 @@ def build_parser():
     generate_parser.add_argument(
         "-c", "--comment", action="store_true", help=comment_help
     )
+
+    themes_parser = subparsers.add_parser("themes", help="list all themes")
+
+    preview_parser = subparsers.add_parser("preview", help="preview styles in a theme")
 
     return parser
 
