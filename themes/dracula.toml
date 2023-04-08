@@ -4,8 +4,12 @@
 version = "1.0.0"
 name = "dracula"
 
-# styles defined here use the syntax of the python rich library
+[variables]
+# any key here can be inserted anywhere
+# using the {var:variable_name} syntax
 
+
+# styles defined here use the syntax of the python rich library
 [styles]
 # These are from https://draculatheme.com/contribute
 # Even though we define the bacula background color here, we don't use
@@ -27,10 +31,6 @@ pink =  "#ff79c6"
 purple =  "#bd93f9"
 red =  "#ff5555"
 yellow =  "#f1fa8c"
-
-[variables]
-# any key here can be inserted into a non-style variable
-# using the {var:variable_name} syntax
 
 
 [scope.iterm]
