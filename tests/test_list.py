@@ -24,35 +24,33 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
+from unittest import mock
 import pytest
+import rich.style
+import rich.errors
 
 from shell_themer import Themer
-from shell_themer.__main__ import build_parser
 
 
-@pytest.fixture
-def parser():
-    return build_parser()
-
-
-@pytest.fixture
-def thm():
-    thm = Themer(prog="shell-themer")
-    return thm
-
-
-@pytest.fixture
-def thm_cmdline(thm, parser, mocker):
-    def _executor(cmdline, toml=None):
-        argv = cmdline.split(" ")
-        try:
-            args = parser.parse_args(argv)
-        except SystemExit as err:
-            return err.code
-        if toml:
-            thm.loads(toml)
-        # now monkeypatch load_from_args() because that won't work
-        mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
-        return thm.dispatch(args)
-
-    return _executor
+#
+# test the list command
+#
+def test_list(thm_cmdline, capsys, mocker, tmp_path):
+    # gotta patch the theme dir, we don't want it throwing errors if not set
+    dirmock = mocker.patch(
+        "shell_themer.Themer.theme_dir", create=True, new_callable=mock.PropertyMock
+    )
+    dirmock.return_value = tmp_path
+    # write some empty toml files into the directory
+    bases = ["one", "two", "three"]
+    for base in bases:
+        path = tmp_path / f"{base}.toml"
+        with open(path, "w") as fvar:
+            fvar.write(f"# a toml file for theme {base}")
+    # now go run the command, which should list the themes
+    exit_code = thm_cmdline("list")
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    for base in bases:
+        assert base in out

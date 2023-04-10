@@ -32,6 +32,83 @@ from shell_themer import Themer
 
 
 #
+# test high level generation functions
+#
+def test_generate_single_scope(thm_cmdline, capsys):
+    tomlstr = """
+[styles]
+background =  "#282a36"
+foreground =  "#f8f8f2"
+current_line =  "#f8f8f2 on #44475a"
+comment =  "#6272a4"
+cyan =  "#8be9fd"
+green =  "#50fa7b"
+orange =  "#ffb86c"
+pink =  "#ff79c6"
+purple =  "#bd93f9"
+red =  "#ff5555"
+yellow =  "#f1fa8c"
+
+[scope.iterm]
+generator = "iterm"
+style.foreground = "foreground"
+style.background = "background"
+
+[scope.fzf]
+generator = "fzf"
+
+# attributes specific to fzf
+environment_variable = "FZF_DEFAULT_OPTS"
+
+# command line options
+opt.--prompt = ">"
+opt.--border = "single"
+opt.--pointer = "•"
+opt.--info = "hidden"
+opt.--no-sort = true
+opt."+i" = true
+
+# styles
+style.text = "foreground"
+style.label = "green"
+style.border = "orange"
+style.selected = "current_line"
+style.prompt = "green"
+style.indicator = "cyan"
+style.match = "pink"
+style.localstyle = "green on black"
+    """
+    exit_code = thm_cmdline("generate -s fzf", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert out
+    assert not err
+    assert out.count("\n") == 1
+
+
+def test_generate_unknown_scope(thm_cmdline, capsys):
+    tomlstr = """
+[styles]
+background =  "#282a36"
+foreground =  "#f8f8f2"
+
+[scope.iterm]
+generator = "iterm"
+style.foreground = "foreground"
+style.background = "background"
+
+[scope.ls]
+# set some environment variables
+environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+environment.export.LS_COLORS = "ace ventura"
+    """
+    exit_code = thm_cmdline("generate -s unknownscope", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert not out
+    assert err
+
+#
 # test rendering of elements common to all scopes
 #
 STYLE_INTERPOLATIONS = [
@@ -143,6 +220,19 @@ def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert "unset NOLISTVAR" in out
+
+
+def test_generate_enabled_invalid_value(thm_cmdline, capsys):
+    tomlstr = """
+    [scope.unset]
+    enabled = "notaboolean"
+    environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert not out
+    assert "to be true or false" in err
 
 
 ENABLED_IFS = [

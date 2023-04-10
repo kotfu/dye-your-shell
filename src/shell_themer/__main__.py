@@ -70,7 +70,8 @@ def build_parser():
     file_help = "specify a file containing a theme"
     tgroup.add_argument("-f", "--file", metavar="<file>", help=file_help)
     subparsers = parser.add_subparsers(
-        dest="command", title="arguments", metavar="<command>", required=True
+        dest="command", title="arguments", metavar="<command>", required=False,
+        help="action to perform, which must be one of the following:"
     )
 
     generate_help = (

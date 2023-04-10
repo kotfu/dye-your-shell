@@ -27,6 +27,7 @@ import os
 import pathlib
 import re
 import subprocess
+import sys
 
 import rich.box
 import rich.color
@@ -42,6 +43,7 @@ class Themer:
 
     EXIT_SUCCESS = 0
     EXIT_ERROR = 1
+    EXIT_USAGE = 2
 
     def __init__(self, prog):
         """Construct a new Themer object
@@ -118,7 +120,7 @@ class Themer:
         with open(fname, "rb") as file:
             self.definition = tomlkit.load(file)
         self.theme_file = fname
-        self._parse_styles()
+        self._process_definition()
 
     def loads(self, tomlstring=None):
         """Load a theme from a given string"""
@@ -129,17 +131,27 @@ class Themer:
             # or if the caller pased None intentionally...
             toparse = ""
         self.definition = tomlkit.loads(toparse)
-        self._parse_styles()
+        self._process_definition()
 
     #
     # style and variable related methods
     #
-    def _parse_styles(self):
-        """parse the styles section of the theme and put it into self.styles dict"""
+    def _process_definition(self):
+        """process a newly loaded definition, including variables and styles"""
+
+        # interpolate variables in variables
+        # we avoid circular references by relying on tomlkit to keep
+        # the dictionary items in the order they were in the file
+        #for var, value in self.definition["variables"].items():
+
+        # process the styles
         self.styles = {}
         try:
-            for key, value in self.definition["styles"].items():
-                self.styles[key] = rich.style.Style.parse(value)
+            for key, styledef in self.definition["styles"].items():
+                # interpolate variables
+                interpdef = self.variable_interpolate(styledef)
+                # and parse the style definition
+                self.styles[key] = rich.style.Style.parse(interpdef)
         except KeyError:
             pass
 
@@ -168,12 +180,19 @@ class Themer:
 
     def value_of(self, variable):
         """return the value or contents of a variable
+        performs variable interpolation at access time, not at
+        parse time
         return None if variable is not defined"""
 
         variables = {}
         try:
             variables = self.definition["variables"]
-            return variables[variable]
+            definedvalue = variables[variable]
+            # we can only interpolate variables in string type values
+            if isinstance(definedvalue, str):
+                return self.variable_interpolate(definedvalue)
+            else:
+                return definedvalue
         except KeyError:
             # variable not defined
             return None
@@ -324,8 +343,8 @@ class Themer:
             return self.EXIT_ERROR
 
         # if we get here, we didn't know the command
-        print(f"{self.prog}: {args.command}: unknown command")
-        return self.EXIT_ERROR
+        print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
+        return self.EXIT_USAGE
 
     def dispatch_list(self, args):
         """Print a list of all themes"""
