@@ -125,7 +125,7 @@ foreground =  "#f8f8f2"
 #
 # test rendering of elements common to all scopes
 #
-STYLE_INTERPOLATIONS = [
+ENV_INTERPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
     ("{style:dark_orange:hex}", "#ff6c1c"),
     ("{style:dark_orange:hexnohash}", "ff6c1c"),
@@ -144,12 +144,17 @@ STYLE_INTERPOLATIONS = [
     # argument so that it will survive toml string escaping
     (r"\\{ some other  things}", r"\{ some other  things}"),
     (r"\\{escaped unmatched bracket", r"\{escaped unmatched bracket"),
+    # try a mixed variable and style interpolation
+    ("{style:dark_orange} {var:someopts}", "#ff6c1c --option=fred -v"),
 ]
 
 
-@pytest.mark.parametrize("phrase, interpolated", STYLE_INTERPOLATIONS)
+@pytest.mark.parametrize("phrase, interpolated", ENV_INTERPOLATIONS)
 def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpolated):
     tomlstr = f"""
+    [variables]
+    someopts = "--option=fred -v"
+
     [styles]
     dark_orange = "#ff6c1c"
 

@@ -186,7 +186,8 @@ class Themer:
             definedvalue = variables[variable]
             # we can only interpolate variables in string type values
             if isinstance(definedvalue, str):
-                return self.variable_interpolate(definedvalue)
+                value = self.variable_interpolate(definedvalue)
+                return self.style_interpolate(value)
             return definedvalue
         except KeyError:
             # variable not defined
@@ -248,6 +249,70 @@ class Themer:
                     out = str(value).lower()
                 else:
                     out = str(value)
+        return out
+
+    def style_interpolate(self, value):
+        """interpolate styles in a passed value"""
+        # this incantation gives us a callable function which is
+        # really a method on our class, and which gets self
+        # passed to the method just like any other method
+        tmpfunc = functools.partial(self._style_subber)
+        # this regex matches any of the following:
+        #   {style:darkorange}
+        #   {style:yellow:}
+        #   \{style:blue:hex}
+        # so we can replace it with style information.
+        #
+        # match group 1 = backslash, if present
+        # match group 2 = entire style/format phrase
+        # match group 3 = name of the style (not the literal 'style:')
+        # match group 4 = format
+        newvalue = re.sub(r"(\\)?(\{style:([^}:]*)(?::(.*))?\})", tmpfunc, value)
+        return newvalue
+
+    def _style_subber(self, match):
+        """the replacement function called by re.sub()
+
+        this decides the replacement text for the matched regular expression
+
+        the philosophy is to have the replacement string be exactly what was
+        matched in the string, unless we can successfully decode both the
+        style and the format.
+        """
+        # the backslash to protect the brace, may or may not be present
+        backslash = match.group(1)
+        # the entire phrase, including the braces
+        phrase = match.group(2)
+        # the stuff after the opening brace but before the colon
+        # this is the defition of the style
+        styledef = match.group(3)
+        # the stuff after the colon but before the closing brace
+        fmt = match.group(4)
+
+        if backslash:
+            # the only thing we replace is the backslash, the rest of it gets
+            # passed through as is, which the regex conveniently has for us
+            # in match group 2
+            out = f"{phrase}"
+        else:
+            try:
+                style = self.get_style(styledef)
+            except rich.errors.StyleSyntaxError:
+                style = None
+
+            if not style:
+                # the style wasn't found, so don't do any replacement
+                out = match.group(0)
+            elif fmt in [None, "", "hex"]:
+                # no format, or empty string format, or hex, the match with the hex code
+                out = style.color.triplet.hex
+            elif fmt == "hexnohash":
+                # replace the match with the hex code without the hash
+                out = style.color.triplet.hex.replace("#", "")
+            else:
+                # unknown format, so don't do any replacement
+                out = phrase
+
         return out
 
     #
@@ -497,74 +562,11 @@ class Themer:
         try:
             exports = scopedef["environment"]["export"]
             for var, value in exports.items():
-                interpolated_value = self._environment_interpolate(value)
-                print(f'export {var}="{interpolated_value}"')
+                value = self.variable_interpolate(value)
+                value = self.style_interpolate(value)
+                print(f'export {var}="{value}"')
         except KeyError:
             pass
-
-    def _environment_interpolate(self, value):
-        """interpolate styles in environment variables"""
-        # this incantation gives us a callable function which is
-        # really a method on our class, and which gets self
-        # passed to the method just like any other method
-        tmpfunc = functools.partial(self._env_subber)
-        # this regex matches any of the following:
-        #   {style:darkorange}
-        #   {style:yellow:}
-        #   \{style:blue:hex}
-        # so we can replace it with style information.
-        #
-        # match group 1 = backslash, if present
-        # match group 2 = entire style/format phrase
-        # match group 3 = name of the style (not the literal 'style:')
-        # match group 4 = format
-        newvalue = re.sub(r"(\\)?(\{style:([^}:]*)(?::(.*))?\})", tmpfunc, value)
-        return newvalue
-
-    def _env_subber(self, match):
-        """the replacement function called by re.sub()
-
-        this decides the replacement text for the matched regular expression
-
-        the philosophy is to have the replacement string be exactly what was
-        matched in the string, unless we can successfully decode both the
-        style and the format.
-        """
-        # the backslash to protect the brace, may or may not be present
-        backslash = match.group(1)
-        # the entire phrase, including the braces
-        phrase = match.group(2)
-        # the stuff after the opening brace but before the colon
-        # this is the defition of the style
-        styledef = match.group(3)
-        # the stuff after the colon but before the closing brace
-        fmt = match.group(4)
-
-        if backslash:
-            # the only thing we replace is the backslash, the rest of it gets
-            # passed through as is, which the regex conveniently has for us
-            # in match group 2
-            out = f"{phrase}"
-        else:
-            try:
-                style = self.get_style(styledef)
-            except rich.errors.StyleSyntaxError:
-                style = None
-
-            if not style:
-                # the style wasn't found, so don't do any replacement
-                out = match.group(0)
-            elif fmt in [None, "", "hex"]:
-                # no format, or empty string format, or hex, the match with the hex code
-                out = style.color.triplet.hex
-            elif fmt == "hexnohash":
-                # replace the match with the hex code without the hash
-                out = style.color.triplet.hex.replace("#", "")
-            else:
-                # unknown format, so don't do any replacement
-                out = phrase
-
-        return out
 
     #
     # fzf generator and helpers

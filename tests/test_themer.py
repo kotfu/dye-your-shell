@@ -59,10 +59,10 @@ def test_get_style_invalid(thm):
 
 def test_get_style_lookup(thm):
     tomlstr = """
-[styles]
-background =  "#282a36"
-foreground =  "#f8f8f2"
-current_line =  "#f8f8f2 on #44475a"
+        [styles]
+        background =  "#282a36"
+        foreground =  "#f8f8f2"
+        current_line =  "#f8f8f2 on #44475a"
     """
     thm.loads(tomlstr)
     style = thm.get_style("current_line")
@@ -72,30 +72,30 @@ current_line =  "#f8f8f2 on #44475a"
 
 def test_process_definition(thm):
     tomlstr = """
-[variables]
-replace = "{var:secondhalf}"
-firsthalf = "#ff"
-secondhalf = "5555"
-myred = "{var:firsthalf}{variable:secondhalf}"
+        [variables]
+        replace = "{var:secondhalf}"
+        firsthalf = "#ff"
+        secondhalf = "5555"
+        myred = "{var:firsthalf}{variable:secondhalf}"
+        igreen = "{style:green}"
 
+        [styles]
+        background =  "#282a36"
+        foreground =  "#f8f8f2"
+        current_line =  "#f8f8f2 on #44475a"
+        comment =  "#6272a4"
+        cyan =  "#8be9fd"
+        green =  "#50fa7b"
+        orange =  "#ffb86c"
+        pink =  "#ff79c6"
+        purple =  "#bd93f9"
+        red =  "{var:myred}"
+        yellow =  "#f1fa8c"
 
-[styles]
-background =  "#282a36"
-foreground =  "#f8f8f2"
-current_line =  "#f8f8f2 on #44475a"
-comment =  "#6272a4"
-cyan =  "#8be9fd"
-green =  "#50fa7b"
-orange =  "#ffb86c"
-pink =  "#ff79c6"
-purple =  "#bd93f9"
-red =  "{var:myred}"
-yellow =  "#f1fa8c"
-
-[scope.ls]
-# set some environment variables
-environment.unset = ["SOMEVAR", "ANOTHERVAR"]
-environment.export.LS_COLORS = "ace ventura"
+        [scope.ls]
+        # set some environment variables
+        environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+        environment.export.LS_COLORS = "ace ventura"
     """
     thm.loads(tomlstr)
     assert isinstance(thm.styles, dict)
@@ -107,52 +107,54 @@ environment.export.LS_COLORS = "ace ventura"
     # check the variable interpolation
     assert thm.value_of("replace") == "5555"
     assert thm.value_of("myred") == "#ff5555"
+    # check style interpolation in variables
+    assert thm.value_of("igreen") == "#50fa7b"
 
 
 def test_styles_from(thm):
     tomlstr = """
-[styles]
-background =  "#282a36"
-foreground =  "#f8f8f2"
-current_line =  "#f8f8f2 on #44475a"
-comment =  "#6272a4"
-cyan =  "#8be9fd"
-green =  "#50fa7b"
-orange =  "#ffb86c"
-pink =  "#ff79c6"
-purple =  "#bd93f9"
-red =  "#ff5555"
-yellow =  "#f1fa8c"
+        [styles]
+        background =  "#282a36"
+        foreground =  "#f8f8f2"
+        current_line =  "#f8f8f2 on #44475a"
+        comment =  "#6272a4"
+        cyan =  "#8be9fd"
+        green =  "#50fa7b"
+        orange =  "#ffb86c"
+        pink =  "#ff79c6"
+        purple =  "#bd93f9"
+        red =  "#ff5555"
+        yellow =  "#f1fa8c"
 
-[scope.iterm]
-generator = "iterm"
-style.foreground = "foreground"
-style.background = "background"
+        [scope.iterm]
+        generator = "iterm"
+        style.foreground = "foreground"
+        style.background = "background"
 
-[scope.fzf]
-generator = "fzf"
+        [scope.fzf]
+        generator = "fzf"
 
-# attributes specific to fzf
-environment_variable = "FZF_DEFAULT_OPTS"
+        # attributes specific to fzf
+        environment_variable = "FZF_DEFAULT_OPTS"
 
-# command line options
-opt.--prompt = ">"
-opt.--border = "single"
-opt.--pointer = "•"
-opt.--info = "hidden"
-opt.--no-sort = true
-opt."+i" = true
+        # command line options
+        opt.--prompt = ">"
+        opt.--border = "single"
+        opt.--pointer = "•"
+        opt.--info = "hidden"
+        opt.--no-sort = true
+        opt."+i" = true
 
-# styles
-style.text = "foreground"
-style.label = "green"
-style.border = "orange"
-style.selected = "current_line"
-style.prompt = "green"
-style.indicator = "cyan"
-style.match = "pink"
-style.localstyle = "green on black"
-"""
+        # styles
+        style.text = "foreground"
+        style.label = "green"
+        style.border = "orange"
+        style.selected = "current_line"
+        style.prompt = "green"
+        style.indicator = "cyan"
+        style.match = "pink"
+        style.localstyle = "green on black"
+    """
     thm.loads(tomlstr)
     scopedef = thm.scopedef_for("fzf")
     styles = thm.styles_from(scopedef)
@@ -167,10 +169,10 @@ style.localstyle = "green on black"
 
 def test_styles_from_unknown(thm):
     tomlstr = """
-[scope.iterm]
-generator = "iterm"
-style.foreground = "foreground"
-style.background = "background"
+        [scope.iterm]
+        generator = "iterm"
+        style.foreground = "foreground"
+        style.background = "background"
     """
     thm.loads(tomlstr)
     scopedef = thm.scopedef_for("unknown")
@@ -190,20 +192,29 @@ VARIABLES = [
     ("number", 5),
     ("bool", True),
     ("notdefined", None),
+    ("text", "#6272a4 on #002200"),
+    # make sure we interpolate a style into a variable
+    ("astyle", "00ff00"),
 ]
 
 
 @pytest.mark.parametrize("variable, value", VARIABLES)
 def test_value_of(thm, variable, value):
     tomlstr = """
-[variables]
-SomeVar =  "Hello"
-another_var = "one,two,three"
-comment =  "#6272a4"
-number = 5
-bool = true
-empty = ""
-"""
+        [variables]
+        SomeVar =  "Hello"
+        another_var = "one,two,three"
+        comment =  "#6272a4"
+        background = "#002200"
+        number = 5
+        bool = true
+        empty = ""
+        text = "{var:comment} on {variable:background}"
+        astyle = "{style:green:hexnohash}"
+
+        [styles]
+        green = "#00ff00"
+    """
     thm.loads(tomlstr)
     assert thm.value_of(variable) == value
 
@@ -223,14 +234,14 @@ VARIABLE_INTERPOLATIONS = [
 @pytest.mark.parametrize("value, newvalue", VARIABLE_INTERPOLATIONS)
 def test_variable_interpolate(thm, value, newvalue):
     tomlstr = """
-[variables]
-SomeVar =  "Hello"
-another_var = "one,two,three"
-comment =  "#6272a4"
-number = 5
-bool = true
-empty = ""
-"""
+        [variables]
+        SomeVar =  "Hello"
+        another_var = "one,two,three"
+        comment =  "#6272a4"
+        number = 5
+        bool = true
+        empty = ""
+    """
     thm.loads(tomlstr)
     assert thm.variable_interpolate(value) == newvalue
 
@@ -240,10 +251,10 @@ empty = ""
 #
 def test_scopedef(thm):
     tomlstr = """
-[scope.iterm]
-generator = "iterm"
-style.foreground = "blue"
-style.background = "white"
+        [scope.iterm]
+        generator = "iterm"
+        style.foreground = "blue"
+        style.background = "white"
     """
     thm.loads(tomlstr)
     scopedef = thm.scopedef_for("iterm")
@@ -257,10 +268,10 @@ style.background = "white"
 
 def test_scopedef_notfound(thm):
     tomlstr = """
-[scope.iterm]
-generator = "iterm"
-style.foreground = "blue"
-style.background = "white"
+        [scope.iterm]
+        generator = "iterm"
+        style.foreground = "blue"
+        style.background = "white"
     """
     thm.loads(tomlstr)
     scopedef = thm.scopedef_for("notfound")
@@ -268,9 +279,35 @@ style.background = "white"
     assert scopedef == {}
 
 
-# TODO test has_scope()
-# TODO test is_enabled()
-# TODO test _assert_bool()
+def test_has_scope(thm):
+    tomlstr = """
+        [scope.qqq]
+        generator = "iterm"
+        style.foreground = "blue"
+        style.background = "white"
+    """
+    thm.loads(tomlstr)
+    assert thm.has_scope("qqq")
+    assert not thm.has_scope("fred")
+
+
+BOOL_TESTS = [
+    (True, True),
+    (False, True),
+    ("something", False),
+    (0, False),
+    (1, False),
+    (0.5, False),
+]
+
+
+@pytest.mark.parametrize("val, expected", BOOL_TESTS)
+def test_assert_bool(thm, val, expected):
+    if expected:
+        thm._assert_bool("generator", "scope", "key", val)
+    else:
+        with pytest.raises(ThemeError):
+            thm._assert_bool("generator", "scope", "key", val)
 
 
 #
@@ -358,12 +395,12 @@ def test_load_from_args_invalid_filename(thm, mocker, tmp_path):
 def test_load_from_args_env(thm, mocker, tmp_path):
     # go write a theme file that we can actually open
     themefile = tmp_path / "sometheme.toml"
-    toml = """
-    [styles]
-    text = "#ffcc00 on #003322"
+    tomlstr = """
+        [styles]
+        text = "#ffcc00 on #003322"
     """
     with open(themefile, "w", encoding="utf8") as fvar:
-        fvar.write(toml)
+        fvar.write(tomlstr)
 
     mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
 
@@ -393,12 +430,12 @@ def test_load_from_args_env_invalid(thm, mocker, tmp_path):
 def test_load_from_args_theme_file(thm, mocker, tmp_path):
     # give a theme name, but the full name including the .toml
     themefile = tmp_path / "themefile.toml"
-    toml = """
-    [styles]
-    text = "#ffcc00 on #003322"
+    tomlstr = """
+        [styles]
+        text = "#ffcc00 on #003322"
     """
     with open(themefile, "w", encoding="utf8") as fvar:
-        fvar.write(toml)
+        fvar.write(tomlstr)
 
     mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)}, clear=True)
 
@@ -428,12 +465,12 @@ def test_load_from_args_theme_file_invalid(thm, mocker, tmp_path):
 def test_load_from_args_theme_name(thm, mocker, tmp_path):
     # give a theme name, but the full name including the .toml
     themefile = tmp_path / "themefile.toml"
-    toml = """
-    [styles]
-    text = "#ffcc00 on #003322"
+    tomlstr = """
+        [styles]
+        text = "#ffcc00 on #003322"
     """
     with open(themefile, "w", encoding="utf8") as fvar:
-        fvar.write(toml)
+        fvar.write(tomlstr)
 
     mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)}, clear=True)
 
