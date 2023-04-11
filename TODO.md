@@ -24,6 +24,8 @@
   - text should be foreground on background
 - document environment interpolations
 - document variable interpolations
+- document enabled and enabled_if - enabled_if shell commands should not cause side effects because
+  they can get executed on a "dry run" of generation
 
 ## shell-themer subcommands
 

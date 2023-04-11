@@ -369,10 +369,12 @@ class Themer:
             # no enabled_if command, so we must be enabled
             return True
 
+        enabled_if = self.variable_interpolate(enabled_if)
+        enabled_if = self.style_interpolate(enabled_if)
         proc = subprocess.run(enabled_if, shell=True, check=False, capture_output=True)
         if proc.returncode != 0:
             # the shell command returned a non-zero exit code
-            # and this scope should therefore be disablee
+            # and this scope should therefore be disabled
             return False
         return True
 

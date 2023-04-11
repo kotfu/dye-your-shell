@@ -259,12 +259,18 @@ ENABLED_IFS = [
     ("echo", True),
     ("[[ 1 == 1 ]]", True),
     ("[[ 1 == 0 ]]", False),
+    ("{var:echocmd} hi", True),
+    ("{variable:falsetest}", False)
 ]
 
 
 @pytest.mark.parametrize("cmd, enabled", ENABLED_IFS)
 def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
     tomlstr = f"""
+        [variables]
+        echocmd = "/bin/echo"
+        falsetest = "[[ 1 == 0]]"
+
         [scope.unset]
         enabled_if = "{cmd}"
         environment.unset = "ENVVAR"
@@ -361,11 +367,14 @@ def test_fzf_from_style(thm, name, styledef, fzf):
 
 def test_fzf_opts(thm_cmdline, capsys):
     tomlstr = """
+        [variables]
+        bstyle = "rounded"
+
         [scope.fzf]
         generator = "fzf"
         environment_variable = "QQQ"
         opt."+i" = true
-        opt.--border = "rounded"
+        opt.--border = "{var:bstyle}"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -376,15 +385,17 @@ def test_fzf_opts(thm_cmdline, capsys):
 
 def test_fzf_no_opts(thm_cmdline, capsys):
     tomlstr = """
+        [variables]
+        varname = "ZZ"
         [scope.fzf]
         generator = "fzf"
-        environment_variable = "QQQ"
+        environment_variable = "Q{var:varname}QQ"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
-    assert out == """export QQQ=""\n"""
+    assert out == """export QZZQQ=""\n"""
 
 
 def test_fzf_no_varname(thm_cmdline, capsys):
