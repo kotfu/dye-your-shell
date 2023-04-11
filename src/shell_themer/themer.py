@@ -171,7 +171,8 @@ class Themer:
             style = None
         # nope, parse the input as a style
         if not style:
-            style = rich.style.Style.parse(styledef)
+            interp = self.variable_interpolate(styledef)
+            style = rich.style.Style.parse(interp)
         return style
 
     def value_of(self, variable):
@@ -583,7 +584,8 @@ class Themer:
 
         for key, value in opts.items():
             if isinstance(value, str):
-                optstr += f" {key}='{value}'"
+                interp_value = self.variable_interpolate(value)
+                optstr += f" {key}='{interp_value}'"
             elif isinstance(value, bool) and value:
                 optstr += f" {key}"
 

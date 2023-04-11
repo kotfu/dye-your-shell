@@ -57,17 +57,23 @@ def test_get_style_invalid(thm):
         _ = thm.get_style("not a valid style")
 
 
-def test_get_style_lookup(thm):
+def test_get_style_interpolation(thm):
     tomlstr = """
+        [variables]
+        qyellow = "#ffff00"
+
         [styles]
         background =  "#282a36"
         foreground =  "#f8f8f2"
         current_line =  "#f8f8f2 on #44475a"
+        warning = "{var:qyellow}"
     """
     thm.loads(tomlstr)
     style = thm.get_style("current_line")
     assert style.color.name == "#f8f8f2"
     assert style.bgcolor.name == "#44475a"
+    style = thm.get_style("warning")
+    assert style.color.name == "#ffff00"
 
 
 def test_process_definition(thm):
