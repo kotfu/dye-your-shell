@@ -43,6 +43,20 @@ def thm():
 
 @pytest.fixture
 def thm_cmdline(thm, parser, mocker):
+    # defining a fixture that returns a function
+    # allows us to call the fixture and pass parameters to it
+    # ie:
+    #
+    # def test_generate_environment_unset_list(thm_cmdline, capsys):
+    #     tomlstr = """
+    #     [scope.ls]
+    #     # set some environment variables
+    #     environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+    #     environment.export.LS_COLORS = "ace ventura"
+    #     """
+    #     exit_code = thm_cmdline("generate", tomlstr)
+    #     ...
+
     def _executor(cmdline, toml=None):
         argv = cmdline.split(" ")
         try:
@@ -51,7 +65,7 @@ def thm_cmdline(thm, parser, mocker):
             return err.code
         if toml:
             thm.loads(toml)
-        # now monkeypatch load_from_args() because that won't work
+        # monkeypatch load_from_args() because that won't work so well
         mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
         return thm.dispatch(args)
 

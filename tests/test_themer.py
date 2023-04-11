@@ -32,14 +32,7 @@ import rich.style
 import rich.errors
 
 from shell_themer import Themer, ThemeError
-
-
-def test_loads_empty(thm):
-    thm.loads("")
-    assert isinstance(thm.definition, dict)
-    assert thm.definition == {}
-    assert isinstance(thm.styles, dict)
-    assert thm.styles == {}
+from shell_themer.__main__ import main
 
 
 #
@@ -198,6 +191,8 @@ VARIABLES = [
     ("bool", True),
     ("notdefined", None),
 ]
+
+
 @pytest.mark.parametrize("variable, value", VARIABLES)
 def test_value_of(thm, variable, value):
     tomlstr = """
@@ -212,6 +207,7 @@ empty = ""
     thm.loads(tomlstr)
     assert thm.value_of(variable) == value
 
+
 VARIABLE_INTERPOLATIONS = [
     ("{variable:SomeVar} there", "Hello there"),
     ("{variable:somevar} there", "{variable:somevar} there"),
@@ -222,6 +218,8 @@ VARIABLE_INTERPOLATIONS = [
     ("I have {var:number} apples.", "I have 5 apples."),
     ("count: {variable:another_var}", "count: one,two,three"),
 ]
+
+
 @pytest.mark.parametrize("value, newvalue", VARIABLE_INTERPOLATIONS)
 def test_variable_interpolate(thm, value, newvalue):
     tomlstr = """
@@ -235,6 +233,7 @@ empty = ""
 """
     thm.loads(tomlstr)
     assert thm.variable_interpolate(value) == newvalue
+
 
 #
 # test scope, parsing, and validation methods
@@ -273,6 +272,7 @@ style.background = "white"
 # TODO test is_enabled()
 # TODO test _assert_bool()
 
+
 #
 # test theme_dir() property
 #
@@ -281,17 +281,130 @@ def test_theme_dir_environment_variable(thm, mocker, tmp_path):
     # theme_dir should be a Path object
     assert thm.theme_dir == tmp_path
 
+
 def test_theme_dir_no_environment_variable(thm, mocker):
     # ensure no THEME_DIR environment variable exists
     mocker.patch.dict(os.environ, {}, clear=True)
     with pytest.raises(ThemeError):
         _ = thm.theme_dir
 
+
 def test_theme_dir_invalid_directory(thm, mocker, tmp_path):
     invalid = tmp_path / "doesntexist"
     mocker.patch.dict(os.environ, {"THEME_DIR": str(invalid)})
     with pytest.raises(ThemeError):
         _ = thm.theme_dir
+
+
+#
+# test all the variations of load_from_args()
+#
+def test_load_from_args_no_theme(thm, mocker):
+    # we need empty args, and empty environment, and with
+    # all of this empty, we should get an exception
+    mocker.patch.dict(os.environ, {}, clear=True)
+    args = argparse.Namespace()
+    args.file = None
+    args.theme = None
+    with pytest.raises(ThemeError):
+        thm.load_from_args(args)
+
+
+def test_load_from_args_filename(thm, mocker, tmp_path):
+    # give a bogus theme file in the environment, which should be
+    # ignored because the filename in the arguments should take
+    # precendence
+    mocker.patch.dict(os.environ, {"THEME_FILE": "nosuchfile"}, clear=True)
+
+    # go write a theme file that we can actually open
+    themefile = tmp_path / "sometheme.toml"
+    with open(themefile, "w") as fvar:
+        fvar.write("# an empty toml theme file")
+
+    args = argparse.Namespace()
+    args.file = str(themefile)
+    args.theme = None
+
+    thm.load_from_args(args)
+    assert thm.definition == {}
+    assert thm.styles == {}
+
+
+def test_load_from_args_invalid_filename(thm, mocker, tmp_path):
+    # give a real theme file in the environment, which should be
+    # ignored because the filename in the arguments should take
+    # precendence, this should generate an error because we
+    # specified a file which could not be opened
+
+    # go write a theme file that we can actually open
+    envfile = tmp_path / "sometheme.toml"
+    with open(envfile, "w") as fvar:
+        fvar.write("# an empty toml theme file")
+    mocker.patch.dict(os.environ, {"THEME_FILE": str(envfile)}, clear=True)
+
+    themefile = tmp_path / "doesntexist.toml"
+    args = argparse.Namespace()
+    args.file = str(themefile)
+    args.theme = None
+
+    with pytest.raises(FileNotFoundError):
+        thm.load_from_args(args)
+
+
+def test_load_from_args_env(thm, mocker, tmp_path):
+    # go write a theme file that we can actually open
+    themefile = tmp_path / "sometheme.toml"
+    with open(themefile, "w") as fvar:
+        fvar.write("# an empty toml theme file")
+
+    mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
+
+    args = argparse.Namespace()
+    args.file = None
+    args.theme = None
+
+    thm.load_from_args(args)
+    assert thm.definition == {}
+    assert thm.styles == {}
+
+
+def test_load_from_args_env_invalid(thm, mocker, tmp_path):
+    # a theme file in the environment variable which doesn't exist
+    # should raise an exception
+    themefile = tmp_path / "doesntexist.toml"
+    mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
+
+    args = argparse.Namespace()
+    args.file = None
+    args.theme = None
+
+    with pytest.raises(FileNotFoundError):
+        thm.load_from_args(args)
+
+def test_load_from_args_theme_file(thm, mocker, tmp_path):
+    pass
+
+def test_load_from_args_theme_file_invalid(them, mocker, tmp_path):
+    pass
+
+def test_load_from_args_theme_name(thm, mocker, tmp_path):
+    pass
+
+
+def test_load_from_args_theme_name_invalid(thm, mocker, tmp_path):
+    pass
+
+
+#
+# test loads() method
+#
+def test_loads_empty(thm):
+    thm.loads("")
+    assert isinstance(thm.definition, dict)
+    assert thm.definition == {}
+    assert isinstance(thm.styles, dict)
+    assert thm.styles == {}
+
 
 #
 # test unknown command and dispatcher
@@ -305,6 +418,7 @@ def test_unknown_command(thm_cmdline, capsys):
     assert "error" in err
     assert "invalid choice" in err
 
+
 def test_dispatch_unknown_command(thm, capsys):
     # but by calling dispatch() directly, we can get our own errors
     args = argparse.Namespace()
@@ -314,3 +428,18 @@ def test_dispatch_unknown_command(thm, capsys):
     assert exit_code == Themer.EXIT_USAGE
     assert not out
     assert "unknown command" in err
+
+
+#
+# test __main__.py:main()
+#
+def test_main(mocker):
+    # we are just testing main() here, as long as it dispatches, we don't
+    # care what the dispatch_list() function returns in this test
+    dmock = mocker.patch("shell_themer.Themer.dispatch_list")
+    dmock.return_value = Themer.EXIT_SUCCESS
+    assert main(["list"]) == Themer.EXIT_SUCCESS
+
+
+def test_main_unknown_command(mocker, capsys):
+    assert main(["unknowncommand"]) == Themer.EXIT_USAGE

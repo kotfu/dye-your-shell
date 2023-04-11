@@ -97,7 +97,7 @@ class Themer:
         This either loads the theme or raises an exception.
         It doesn't return anything
 
-        :raises: ThemeError if we can't find a theme file
+        :raises: an exception if we can't find a theme file
 
         """
         fname = None

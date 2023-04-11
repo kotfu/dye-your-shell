@@ -105,7 +105,10 @@ def main(argv=None):
     """
 
     parser = build_parser()
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as exc:
+        return exc.code
 
     thm = Themer(parser.prog)
     return thm.dispatch(args)
