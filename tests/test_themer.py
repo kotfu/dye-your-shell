@@ -318,16 +318,20 @@ def test_load_from_args_filename(thm, mocker, tmp_path):
 
     # go write a theme file that we can actually open
     themefile = tmp_path / "sometheme.toml"
-    with open(themefile, "w") as fvar:
-        fvar.write("# an empty toml theme file")
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(themefile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
 
     args = argparse.Namespace()
     args.file = str(themefile)
     args.theme = None
 
     thm.load_from_args(args)
-    assert thm.definition == {}
-    assert thm.styles == {}
+    assert thm.definition
+    assert thm.styles
 
 
 def test_load_from_args_invalid_filename(thm, mocker, tmp_path):
@@ -338,7 +342,7 @@ def test_load_from_args_invalid_filename(thm, mocker, tmp_path):
 
     # go write a theme file that we can actually open
     envfile = tmp_path / "sometheme.toml"
-    with open(envfile, "w") as fvar:
+    with open(envfile, "w", encoding="utf8") as fvar:
         fvar.write("# an empty toml theme file")
     mocker.patch.dict(os.environ, {"THEME_FILE": str(envfile)}, clear=True)
 
@@ -354,8 +358,12 @@ def test_load_from_args_invalid_filename(thm, mocker, tmp_path):
 def test_load_from_args_env(thm, mocker, tmp_path):
     # go write a theme file that we can actually open
     themefile = tmp_path / "sometheme.toml"
-    with open(themefile, "w") as fvar:
-        fvar.write("# an empty toml theme file")
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(themefile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
 
     mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
 
@@ -364,8 +372,8 @@ def test_load_from_args_env(thm, mocker, tmp_path):
     args.theme = None
 
     thm.load_from_args(args)
-    assert thm.definition == {}
-    assert thm.styles == {}
+    assert thm.definition
+    assert thm.styles
 
 
 def test_load_from_args_env_invalid(thm, mocker, tmp_path):
@@ -381,14 +389,61 @@ def test_load_from_args_env_invalid(thm, mocker, tmp_path):
     with pytest.raises(FileNotFoundError):
         thm.load_from_args(args)
 
-def test_load_from_args_theme_file(thm, mocker, tmp_path):
-    pass
 
-def test_load_from_args_theme_file_invalid(them, mocker, tmp_path):
-    pass
+def test_load_from_args_theme_file(thm, mocker, tmp_path):
+    # give a theme name, but the full name including the .toml
+    themefile = tmp_path / "themefile.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(themefile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)}, clear=True)
+
+    args = argparse.Namespace()
+    args.file = None
+    args.theme = "themefile.toml"
+
+    thm.load_from_args(args)
+    assert thm.definition
+    assert thm.styles
+
+
+def test_load_from_args_theme_file_invalid(thm, mocker, tmp_path):
+    # we have a valid theme dir, but we are going to give
+    # a filename with extension as the theme arguemtn
+    # but that filename won't exist
+    mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)}, clear=True)
+
+    args = argparse.Namespace()
+    args.file = None
+    args.theme = "notfound.toml"
+
+    with pytest.raises(ThemeError):
+        thm.load_from_args(args)
+
 
 def test_load_from_args_theme_name(thm, mocker, tmp_path):
-    pass
+    # give a theme name, but the full name including the .toml
+    themefile = tmp_path / "themefile.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(themefile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)}, clear=True)
+
+    args = argparse.Namespace()
+    args.file = None
+    args.theme = "themefile"
+
+    thm.load_from_args(args)
+    assert thm.definition
+    assert thm.styles
 
 
 def test_load_from_args_theme_name_invalid(thm, mocker, tmp_path):

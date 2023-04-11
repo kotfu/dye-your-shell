@@ -108,6 +108,7 @@ environment.export.LS_COLORS = "ace ventura"
     assert not out
     assert err
 
+
 def test_generate_no_scopes(thm_cmdline, capsys):
     tomlstr = """
 [styles]
@@ -119,6 +120,7 @@ foreground =  "#f8f8f2"
     assert exit_code == Themer.EXIT_SUCCESS
     assert not out
     assert not err
+
 
 #
 # test rendering of elements common to all scopes
@@ -291,6 +293,7 @@ def test_generate_comments(thm_cmdline, capsys):
     assert "unset SOMEVAR" in out
     assert not "unset NOLISTVAR" in out
 
+
 def test_unknown_generator(thm_cmdline, capsys):
     tomlstr = """
     [scope.myprog]
@@ -302,6 +305,7 @@ def test_unknown_generator(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_ERROR
     assert "unknown generator" in err
     assert "mrfusion" in err
+
 
 #
 # test the fzf generator
@@ -426,6 +430,7 @@ STYLE_TO_LSCOLORS = [
 def test_ls_colors_from_style(thm, name, styledef, lsc):
     style = rich.style.Style.parse(styledef)
     assert lsc == thm._ls_colors_from_style("scope", name, style)
+
 
 def test_ls_colors_no_styles(thm_cmdline, capsys):
     tomlstr = """

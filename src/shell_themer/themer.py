@@ -139,11 +139,6 @@ class Themer:
     def _process_definition(self):
         """process a newly loaded definition, including variables and styles"""
 
-        # interpolate variables in variables
-        # we avoid circular references by relying on tomlkit to keep
-        # the dictionary items in the order they were in the file
-        #for var, value in self.definition["variables"].items():
-
         # process the styles
         self.styles = {}
         try:
@@ -191,8 +186,7 @@ class Themer:
             # we can only interpolate variables in string type values
             if isinstance(definedvalue, str):
                 return self.variable_interpolate(definedvalue)
-            else:
-                return definedvalue
+            return definedvalue
         except KeyError:
             # variable not defined
             return None
@@ -213,7 +207,9 @@ class Themer:
         # match group 2 = entire variable phrase
         # match group 3 = 'var' or 'variable'
         # match group 4 = name of the variable
-        newvalue = re.sub(r"(\\)?(\{(var|variable):([^}:]*)(?::(.*))?\})", tmpfunc, value)
+        newvalue = re.sub(
+            r"(\\)?(\{(var|variable):([^}:]*)(?::(.*))?\})", tmpfunc, value
+        )
         return newvalue
 
     def _var_subber(self, match):
@@ -412,7 +408,7 @@ class Themer:
                 except KeyError:
                     generator = ""
                 scopes_table.add_row(name, generator)
-        except KeyError: # pragma: nocover
+        except KeyError:  # pragma: nocover
             # no scopes defined in the theme
             pass
 
@@ -770,7 +766,9 @@ class Themer:
             # they used a style for a file attribute that we don't know how to map
             # i.e. style.text or style.directory we know what to do with, but
             # style.bundleid we don't know how to map, so we generate an error
-            raise ThemeError(f"{self.prog}: unknown style '{name}' while processing scope '{scope}' using the 'lscolors' generator")
+            raise ThemeError(
+                f"{self.prog}: unknown style '{name}' while processing scope '{scope}' using the 'lscolors' generator"
+            )
 
         if style.color.type == rich.color.ColorType.DEFAULT:
             ansicodes = "0"
