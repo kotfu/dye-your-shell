@@ -32,25 +32,25 @@ from shell_themer import Themer
 #
 def test_preview(thm_cmdline, capsys):
     tomlstr = """
-    [styles]
-    # we intentionally don't define a "text" style, or a
-    # "foreground" or a "background" style just
-    # to make sure the preview works without it
-    current_line =  "#f8f8f2 on #44475a"
-    comment =  "#6272a4"
+        [styles]
+        # we intentionally don't define a "text" style, or a
+        # "foreground" or a "background" style just
+        # to make sure the preview works without it
+        current_line =  "#f8f8f2 on #44475a"
+        comment =  "#6272a4"
 
-    [scope.iterm]
-    generator = "iterm"
-    style.foreground = "foreground"
-    style.background = "background"
+        [scope.iterm]
+        generator = "iterm"
+        style.foreground = "foreground"
+        style.background = "background"
 
-    [scope.fzf]
-    generator = "fzf"
-    environment_variable = "FZF_DEFAULT_OPTS"
-    style.text = "foreground"
+        [scope.fzf]
+        generator = "fzf"
+        environment_variable = "FZF_DEFAULT_OPTS"
+        style.text = "foreground"
 
-    [scope.someprog]
-    environment.unset = "SOMEPROG"
+        [scope.someprog]
+        environment.unset = "SOMEPROG"
     """
     exit_code = thm_cmdline("preview", tomlstr)
     out, err = capsys.readouterr()

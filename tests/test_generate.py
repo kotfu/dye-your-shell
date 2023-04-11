@@ -36,47 +36,47 @@ from shell_themer import Themer
 #
 def test_generate_single_scope(thm_cmdline, capsys):
     tomlstr = """
-[styles]
-background =  "#282a36"
-foreground =  "#f8f8f2"
-current_line =  "#f8f8f2 on #44475a"
-comment =  "#6272a4"
-cyan =  "#8be9fd"
-green =  "#50fa7b"
-orange =  "#ffb86c"
-pink =  "#ff79c6"
-purple =  "#bd93f9"
-red =  "#ff5555"
-yellow =  "#f1fa8c"
+        [styles]
+        background =  "#282a36"
+        foreground =  "#f8f8f2"
+        current_line =  "#f8f8f2 on #44475a"
+        comment =  "#6272a4"
+        cyan =  "#8be9fd"
+        green =  "#50fa7b"
+        orange =  "#ffb86c"
+        pink =  "#ff79c6"
+        purple =  "#bd93f9"
+        red =  "#ff5555"
+        yellow =  "#f1fa8c"
 
-[scope.iterm]
-generator = "iterm"
-style.foreground = "foreground"
-style.background = "background"
+        [scope.iterm]
+        generator = "iterm"
+        style.foreground = "foreground"
+        style.background = "background"
 
-[scope.fzf]
-generator = "fzf"
+        [scope.fzf]
+        generator = "fzf"
 
-# attributes specific to fzf
-environment_variable = "FZF_DEFAULT_OPTS"
+        # attributes specific to fzf
+        environment_variable = "FZF_DEFAULT_OPTS"
 
-# command line options
-opt.--prompt = ">"
-opt.--border = "single"
-opt.--pointer = "•"
-opt.--info = "hidden"
-opt.--no-sort = true
-opt."+i" = true
+        # command line options
+        opt.--prompt = ">"
+        opt.--border = "single"
+        opt.--pointer = "•"
+        opt.--info = "hidden"
+        opt.--no-sort = true
+        opt."+i" = true
 
-# styles
-style.text = "foreground"
-style.label = "green"
-style.border = "orange"
-style.selected = "current_line"
-style.prompt = "green"
-style.indicator = "cyan"
-style.match = "pink"
-style.localstyle = "green on black"
+        # styles
+        style.text = "foreground"
+        style.label = "green"
+        style.border = "orange"
+        style.selected = "current_line"
+        style.prompt = "green"
+        style.indicator = "cyan"
+        style.match = "pink"
+        style.localstyle = "green on black"
     """
     exit_code = thm_cmdline("generate -s fzf", tomlstr)
     out, err = capsys.readouterr()
@@ -88,19 +88,19 @@ style.localstyle = "green on black"
 
 def test_generate_unknown_scope(thm_cmdline, capsys):
     tomlstr = """
-[styles]
-background =  "#282a36"
-foreground =  "#f8f8f2"
+        [styles]
+        background =  "#282a36"
+        foreground =  "#f8f8f2"
 
-[scope.iterm]
-generator = "iterm"
-style.foreground = "foreground"
-style.background = "background"
+        [scope.iterm]
+        generator = "iterm"
+        style.foreground = "foreground"
+        style.background = "background"
 
-[scope.ls]
-# set some environment variables
-environment.unset = ["SOMEVAR", "ANOTHERVAR"]
-environment.export.LS_COLORS = "ace ventura"
+        [scope.ls]
+        # set some environment variables
+        environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+        environment.export.LS_COLORS = "ace ventura"
     """
     exit_code = thm_cmdline("generate -s unknownscope", tomlstr)
     out, err = capsys.readouterr()
@@ -111,9 +111,9 @@ environment.export.LS_COLORS = "ace ventura"
 
 def test_generate_no_scopes(thm_cmdline, capsys):
     tomlstr = """
-[styles]
-background =  "#282a36"
-foreground =  "#f8f8f2"
+        [styles]
+        background =  "#282a36"
+        foreground =  "#f8f8f2"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -152,14 +152,14 @@ ENV_INTERPOLATIONS = [
 @pytest.mark.parametrize("phrase, interpolated", ENV_INTERPOLATIONS)
 def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpolated):
     tomlstr = f"""
-    [variables]
-    someopts = "--option=fred -v"
+        [variables]
+        someopts = "--option=fred -v"
 
-    [styles]
-    dark_orange = "#ff6c1c"
+        [styles]
+        dark_orange = "#ff6c1c"
 
-    [scope.gum]
-    environment.export.GUM_OPTS = " --cursor-foreground={phrase}"
+        [scope.gum]
+        environment.export.GUM_OPTS = " --cursor-foreground={phrase}"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -169,11 +169,11 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
 
 def test_generate_environment_unset_list(thm_cmdline, capsys):
     tomlstr = """
-    [scope.ls]
-    # set some environment variables
-    environment.unset = ["SOMEVAR", "ANOTHERVAR"]
-    environment.export.LS_COLORS = "ace ventura"
-"""
+        [scope.ls]
+        # set some environment variables
+        environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+        environment.export.LS_COLORS = "ace ventura"
+    """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
@@ -185,8 +185,8 @@ def test_generate_environment_unset_list(thm_cmdline, capsys):
 
 def test_generate_environment_unset_string(thm_cmdline, capsys):
     tomlstr = """
-    [scope.unset]
-    environment.unset = "NOLISTVAR"
+        [scope.unset]
+        environment.unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -197,13 +197,13 @@ def test_generate_environment_unset_string(thm_cmdline, capsys):
 
 def test_generate_enabled(thm_cmdline, capsys):
     tomlstr = """
-    [scope.nolistvar]
-    enabled = false
-    environment.unset = "NOLISTVAR"
+        [scope.nolistvar]
+        enabled = false
+        environment.unset = "NOLISTVAR"
 
-    [scope.somevar]
-    enabled = true
-    environment.unset = "SOMEVAR"
+        [scope.somevar]
+        enabled = true
+        environment.unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -215,10 +215,10 @@ def test_generate_enabled(thm_cmdline, capsys):
 
 def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
     tomlstr = """
-    [scope.unset]
-    enabled = false
-    enabled_if = "[[ 1 == 1 ]]"
-    environment.unset = "NOLISTVAR"
+        [scope.unset]
+        enabled = false
+        enabled_if = "[[ 1 == 1 ]]"
+        environment.unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -229,10 +229,10 @@ def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
 
 def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
     tomlstr = """
-    [scope.unset]
-    enabled = true
-    enabled_if = "[[ 0 == 1 ]]"
-    environment.unset = "NOLISTVAR"
+        [scope.unset]
+        enabled = true
+        enabled_if = "[[ 0 == 1 ]]"
+        environment.unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -243,9 +243,9 @@ def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
 
 def test_generate_enabled_invalid_value(thm_cmdline, capsys):
     tomlstr = """
-    [scope.unset]
-    enabled = "notaboolean"
-    environment.unset = "NOLISTVAR"
+        [scope.unset]
+        enabled = "notaboolean"
+        environment.unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -265,9 +265,9 @@ ENABLED_IFS = [
 @pytest.mark.parametrize("cmd, enabled", ENABLED_IFS)
 def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
     tomlstr = f"""
-    [scope.unset]
-    enabled_if = "{cmd}"
-    environment.unset = "ENVVAR"
+        [scope.unset]
+        enabled_if = "{cmd}"
+        environment.unset = "ENVVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -281,13 +281,13 @@ def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
 
 def test_generate_comments(thm_cmdline, capsys):
     tomlstr = """
-    [scope.nolistvar]
-    enabled = false
-    environment.unset = "NOLISTVAR"
+        [scope.nolistvar]
+        enabled = false
+        environment.unset = "NOLISTVAR"
 
-    [scope.somevar]
-    enabled = true
-    environment.unset = "SOMEVAR"
+        [scope.somevar]
+        enabled = true
+        environment.unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate --comment", tomlstr)
     out, err = capsys.readouterr()
@@ -301,9 +301,9 @@ def test_generate_comments(thm_cmdline, capsys):
 
 def test_unknown_generator(thm_cmdline, capsys):
     tomlstr = """
-    [scope.myprog]
-    generator = "mrfusion"
-    environment.unset = "SOMEVAR"
+        [scope.myprog]
+        generator = "mrfusion"
+        environment.unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -361,11 +361,11 @@ def test_fzf_from_style(thm, name, styledef, fzf):
 
 def test_fzf_opts(thm_cmdline, capsys):
     tomlstr = """
-[scope.fzf]
-generator = "fzf"
-environment_variable = "QQQ"
-opt."+i" = true
-opt.--border = "rounded"
+        [scope.fzf]
+        generator = "fzf"
+        environment_variable = "QQQ"
+        opt."+i" = true
+        opt.--border = "rounded"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -376,9 +376,9 @@ opt.--border = "rounded"
 
 def test_fzf_no_opts(thm_cmdline, capsys):
     tomlstr = """
-[scope.fzf]
-generator = "fzf"
-environment_variable = "QQQ"
+        [scope.fzf]
+        generator = "fzf"
+        environment_variable = "QQQ"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -389,10 +389,10 @@ environment_variable = "QQQ"
 
 def test_fzf_no_varname(thm_cmdline, capsys):
     tomlstr = """
-[scope.fzf]
-generator = "fzf"
-opt."+i" = true
-opt.--border = "rounded"
+        [scope.fzf]
+        generator = "fzf"
+        opt."+i" = true
+        opt.--border = "rounded"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -439,8 +439,8 @@ def test_ls_colors_from_style(thm, name, styledef, lsc):
 
 def test_ls_colors_no_styles(thm_cmdline, capsys):
     tomlstr = """
-[scope.lsc]
-generator = "ls_colors"
+        [scope.lsc]
+        generator = "ls_colors"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -451,9 +451,9 @@ generator = "ls_colors"
 
 def test_ls_colors_unknown_style(thm_cmdline, capsys):
     tomlstr = """
-    [scope.lsc]
-    generator = "ls_colors"
-    style.bundleid = "default"
+        [scope.lsc]
+        generator = "ls_colors"
+        style.bundleid = "default"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -464,10 +464,10 @@ def test_ls_colors_unknown_style(thm_cmdline, capsys):
 
 def test_ls_colors_environment_variable(thm_cmdline, capsys):
     tomlstr = """
-[scope.lsc]
-generator = "ls_colors"
-environment_variable = "OTHER_LS_COLOR"
-style.file = "default"
+        [scope.lsc]
+        generator = "ls_colors"
+        environment_variable = "OTHER_LS_COLOR"
+        style.file = "default"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -478,10 +478,10 @@ style.file = "default"
 
 def test_ls_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
-    [scope.lsc]
-    generator = "ls_colors"
-    clear_builtin = true
-    style.directory = "bright_blue"
+        [scope.lsc]
+        generator = "ls_colors"
+        clear_builtin = true
+        style.directory = "bright_blue"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -497,10 +497,10 @@ def test_ls_colors_clear_builtin(thm_cmdline, capsys):
 
 def test_ls_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
     tomlstr = """
-[scope.lsc]
-generator = "ls_colors"
-clear_builtin = "error"
-style.directory = "bright_blue"
+        [scope.lsc]
+        generator = "ls_colors"
+        clear_builtin = "error"
+        style.directory = "bright_blue"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -514,10 +514,10 @@ style.directory = "bright_blue"
 #
 def test_iterm(thm_cmdline, capsys):
     tomlstr = """
-[scope.iterm]
-generator = "iterm"
-style.foreground = "#ffeebb"
-style.background = "#221122"
+        [scope.iterm]
+        generator = "iterm"
+        style.foreground = "#ffeebb"
+        style.background = "#221122"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -531,9 +531,9 @@ style.background = "#221122"
 
 def test_iterm_bgonly(thm_cmdline, capsys):
     tomlstr = """
-[scope.iterm]
-generator = "iterm"
-style.background = "#b2cacd"
+        [scope.iterm]
+        generator = "iterm"
+        style.background = "#b2cacd"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
