@@ -63,7 +63,7 @@ namespace_clean.add_task(pytest_clean, "pytest")
 @invoke.task
 def pylint(context):
     "Check code quality using pylint"
-    context.run("pylint src/ksc tests", echo=True)
+    context.run("pylint src tests", echo=True)
 
 
 namespace.add_task(pylint)
