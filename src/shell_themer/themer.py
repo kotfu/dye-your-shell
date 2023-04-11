@@ -366,7 +366,9 @@ class Themer:
         try:
             text_style = mystyles["text"]
         except KeyError:
-            text_style = None
+            # if they didn't specify a text style, tell Rich to just use
+            # whatever the default is for the terminal
+            text_style = "default"
         try:
             del mystyles["background"]
         except KeyError:
@@ -410,7 +412,8 @@ class Themer:
                 except KeyError:
                     generator = ""
                 scopes_table.add_row(name, generator)
-        except KeyError:
+        except KeyError: # pragma: nocover
+            # no scopes defined in the theme
             pass
 
         lower_table = rich.table.Table(box=None, expand=True, show_header=False)
@@ -470,10 +473,7 @@ class Themer:
                 elif generator == "iterm":
                     self._generate_iterm(scope, scopedef)
                 else:
-                    # unknown generator specified in the scope
-                    # definition. by rule, this is not an error,
-                    # but you don't get any special rendering
-                    pass
+                    raise ThemeError(f"{self.prog}: {generator}: unknown generator")
             else:
                 raise ThemeError(f"{self.prog}: {scope}: no such scope")
         return self.EXIT_SUCCESS
@@ -645,7 +645,8 @@ class Themer:
                 fzfc = self._fzf_color_from_rich_color(style.bgcolor)
                 fzf.append(f"preview-bg:{fzfc}")
         else:
-            # no special processing for foreground and background
+            # we only use the foreground color of the style, and ignore
+            # any background color specified by the style
             if style.color:
                 fzfc = self._fzf_color_from_rich_color(style.color)
                 fzfa = self._fzf_attribs_from_style(style)
@@ -656,8 +657,6 @@ class Themer:
     def _fzf_color_from_rich_color(self, color):
         """turn a rich.color into it's fzf equivilent"""
         fzf = ""
-        if not color:
-            return fzf
 
         if color.type == rich.color.ColorType.DEFAULT:
             fzf = "-1"
@@ -732,12 +731,12 @@ class Themer:
                     # style isn't in our configuration, so put the default one in
                     style = self.get_style("default")
                 if style:
-                    outlist.append(self._ls_colors_from_style(name, style))
+                    outlist.append(self._ls_colors_from_style(scope, name, style))
         else:
             # iterate over the styles given in our configuration
             for name, style in styles.items():
                 if style:
-                    outlist.append(self._ls_colors_from_style(name, style))
+                    outlist.append(self._ls_colors_from_style(scope, name, style))
 
         # process the filesets
 
@@ -753,7 +752,7 @@ class Themer:
         # we chose to set the variable to empty instead of unsetting it
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
-    def _ls_colors_from_style(self, name, style):
+    def _ls_colors_from_style(self, scope, name, style):
         """create an entry suitable for LS_COLORS from a style
 
         name should be a valid LS_COLORS entry, could be a code representing
@@ -768,9 +767,10 @@ class Themer:
         try:
             mapname = self.LS_COLORS_MAP[name]
         except KeyError:
-            # TODO validate this is what we actually want
-            # probably we raise an exception
-            return ""
+            # they used a style for a file attribute that we don't know how to map
+            # i.e. style.text or style.directory we know what to do with, but
+            # style.bundleid we don't know how to map, so we generate an error
+            raise ThemeError(f"{self.prog}: unknown style '{name}' while processing scope '{scope}' using the 'lscolors' generator")
 
         if style.color.type == rich.color.ColorType.DEFAULT:
             ansicodes = "0"

@@ -25,11 +25,13 @@
 # pylint: disable=missing-module-docstring, unused-variable
 
 import argparse
+import os
+
 import pytest
 import rich.style
 import rich.errors
 
-from shell_themer import Themer
+from shell_themer import Themer, ThemeError
 
 
 def test_loads_empty(thm):
@@ -270,6 +272,26 @@ style.background = "white"
 # TODO test has_scope()
 # TODO test is_enabled()
 # TODO test _assert_bool()
+
+#
+# test theme_dir() property
+#
+def test_theme_dir_environment_variable(thm, mocker, tmp_path):
+    mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)})
+    # theme_dir should be a Path object
+    assert thm.theme_dir == tmp_path
+
+def test_theme_dir_no_environment_variable(thm, mocker):
+    # ensure no THEME_DIR environment variable exists
+    mocker.patch.dict(os.environ, {}, clear=True)
+    with pytest.raises(ThemeError):
+        _ = thm.theme_dir
+
+def test_theme_dir_invalid_directory(thm, mocker, tmp_path):
+    invalid = tmp_path / "doesntexist"
+    mocker.patch.dict(os.environ, {"THEME_DIR": str(invalid)})
+    with pytest.raises(ThemeError):
+        _ = thm.theme_dir
 
 #
 # test unknown command and dispatcher
