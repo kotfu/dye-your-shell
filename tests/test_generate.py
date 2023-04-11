@@ -473,19 +473,21 @@ style.file = "default"
 
 def test_ls_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
-[scope.lsc]
-generator = "ls_colors"
-clear_builtin = true
-style.directory = "bright_blue"
+    [scope.lsc]
+    generator = "ls_colors"
+    clear_builtin = true
+    style.directory = "bright_blue"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
-    assert (
-        out
-        == 'export LS_COLORS="no=0:fi=0:di=94:ln=0:mh=0:pi=0:so=0:do=0:bd=0:cd=0:or=0:mi=0:su=0:sg=0:st=0:ow=0:tw=0:ex=0:ca=0"\n'
+    expected = (
+        'export LS_COLORS="no=0:fi=0:di=94:ln=0:'
+        "mh=0:pi=0:so=0:do=0:bd=0:cd=0:or=0:mi=0:"
+        'su=0:sg=0:st=0:ow=0:tw=0:ex=0:ca=0"\n'
     )
+    assert out == expected
 
 
 def test_ls_colors_clear_builtin_not_boolean(thm_cmdline, capsys):

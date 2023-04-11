@@ -214,7 +214,7 @@ VARIABLE_INTERPOLATIONS = [
     ("It is {var:bool}.", "It is true."),
     ("nothing to be done", "nothing to be done"),
     ("fred='{var:empty}'", "fred=''"),
-    ("\{variable:SomeVar} there", "{variable:SomeVar} there"),
+    (r"\{variable:SomeVar} there", "{variable:SomeVar} there"),
     ("I have {var:number} apples.", "I have 5 apples."),
     ("count: {variable:another_var}", "count: one,two,three"),
 ]
@@ -446,10 +446,6 @@ def test_load_from_args_theme_name(thm, mocker, tmp_path):
     assert thm.styles
 
 
-def test_load_from_args_theme_name_invalid(thm, mocker, tmp_path):
-    pass
-
-
 #
 # test loads() method
 #
@@ -496,5 +492,5 @@ def test_main(mocker):
     assert main(["list"]) == Themer.EXIT_SUCCESS
 
 
-def test_main_unknown_command(mocker, capsys):
+def test_main_unknown_command():
     assert main(["unknowncommand"]) == Themer.EXIT_USAGE

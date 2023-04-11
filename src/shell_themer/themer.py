@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+"""command line tool for maintaining and switching color schemes"""
 
 import functools
 import os
@@ -342,7 +343,7 @@ class Themer:
         print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
         return self.EXIT_USAGE
 
-    def dispatch_list(self, args):
+    def dispatch_list(self, _):
         """Print a list of all themes"""
         # ignore all other args
         themeglob = self.theme_dir.glob("*.toml")
@@ -430,6 +431,7 @@ class Themer:
 
         output is suitable for bash eval $()
         """
+        # pylint: disable=too-many-branches
         self.load_from_args(args)
 
         if args.scope:
@@ -477,7 +479,7 @@ class Themer:
     #
     # environment generator
     #
-    def _generate_environment(self, scope, scopedef):
+    def _generate_environment(self, _, scopedef):
         """Render environment variables from a set of attributes and styles"""
         # render the variables to unset
         try:
@@ -762,13 +764,16 @@ class Themer:
             return ""
         try:
             mapname = self.LS_COLORS_MAP[name]
-        except KeyError:
+        except KeyError as exc:
             # they used a style for a file attribute that we don't know how to map
             # i.e. style.text or style.directory we know what to do with, but
             # style.bundleid we don't know how to map, so we generate an error
             raise ThemeError(
-                f"{self.prog}: unknown style '{name}' while processing scope '{scope}' using the 'lscolors' generator"
-            )
+                (
+                    f"{self.prog}: unknown style '{name}' while processing"
+                    f"scope '{scope}' using the 'lscolors' generator"
+                )
+            ) from exc
 
         if style.color.type == rich.color.ColorType.DEFAULT:
             ansicodes = "0"
@@ -789,7 +794,7 @@ class Themer:
     #
     # iterm generator and helpers
     #
-    def _generate_iterm(self, scope, scopedef):
+    def _generate_iterm(self, _, scopedef):
         """send the special escape sequences to make the iterm2
         terminal emulator for macos change its foreground and backgroud
         color

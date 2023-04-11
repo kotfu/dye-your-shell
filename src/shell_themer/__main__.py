@@ -25,17 +25,12 @@
 Entry point for 'shell-themer' command line program.
 """
 import argparse
-import pathlib
-import os
 import sys
-import textwrap
-import tomllib
+
+from rich_argparse import RichHelpFormatter
 
 from shell_themer import Themer, VERSION_STRING
 
-import rich.color
-import rich.console
-from rich_argparse import RichHelpFormatter
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
@@ -92,10 +87,10 @@ def build_parser():
     )
 
     list_help = "list all themes in $THEMES_DIR"
-    list_parser = subparsers.add_parser("list", help=list_help)
+    subparsers.add_parser("list", help=list_help)
 
     preview_help = "show a preview of the styles in a theme"
-    preview_parser = subparsers.add_parser("preview", help=preview_help)
+    subparsers.add_parser("preview", help=preview_help)
 
     return parser
 

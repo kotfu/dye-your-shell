@@ -24,11 +24,6 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
-from unittest import mock
-import pytest
-import rich.style
-import rich.errors
-
 from shell_themer import Themer
 
 

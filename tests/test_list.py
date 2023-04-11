@@ -25,9 +25,6 @@
 # pylint: disable=missing-module-docstring, unused-variable
 
 from unittest import mock
-import pytest
-import rich.style
-import rich.errors
 
 from shell_themer import Themer
 
@@ -45,7 +42,7 @@ def test_list(thm_cmdline, capsys, mocker, tmp_path):
     bases = ["one", "two", "three"]
     for base in bases:
         path = tmp_path / f"{base}.toml"
-        with open(path, "w") as fvar:
+        with open(path, "w", encoding="utf8") as fvar:
             fvar.write(f"# a toml file for theme {base}")
     # now go run the command, which should list the themes
     exit_code = thm_cmdline("list")
