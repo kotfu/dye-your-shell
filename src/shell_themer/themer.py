@@ -513,6 +513,8 @@ class Themer:
                 pass
 
         for scope in to_generate:
+            # checking here in case they supplied a scope on the command line that
+            # doesn't exist
             if self.has_scope(scope):
                 scopedef = self.scopedef_for(scope)
                 # check if the scope is disabled
@@ -609,6 +611,7 @@ class Themer:
         # figure out which environment variable to put it in
         try:
             varname = scopedef["environment_variable"]
+            varname = self.variable_interpolate(varname)
             print(f'export {varname}="{optstr}{colorstr}"')
         except KeyError as exc:
             raise ThemeError(
@@ -747,6 +750,7 @@ class Themer:
         # figure out which environment variable to put it in
         try:
             varname = scopedef["environment_variable"]
+            varname = self.variable_interpolate(varname)
         except KeyError:
             varname = "LS_COLORS"
 
@@ -785,7 +789,7 @@ class Themer:
             ansicodes = "0"
         else:
             # this works, but it uses a protected method
-            # ansicodes = style._make_ansi_codes(rich.color.ColorSystem.TRUECOLOR)
+            #   ansicodes = style._make_ansi_codes(rich.color.ColorSystem.TRUECOLOR)
             # here's another approach, we ask the style to render a string, then
             # go peel the ansi codes out of the generated escape sequence
             ansistring = style.render("-----")
@@ -825,17 +829,6 @@ class Themer:
             out += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
             out += r'\a"'
             print(out)
-
-
-# def my_repl_func(match):
-#     """callback function"""
-#     styledef = match.group(1)
-#     fmt = match.group(2)
-#     return f"{fmt}|{styledef}"
-
-# def new_repl_func(match, selff=None):
-#     """another callback function"""
-#     return f"{selff.theme_dir}:{match.group(0)}"
 
 
 class ThemeError(Exception):
