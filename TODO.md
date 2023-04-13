@@ -26,6 +26,7 @@
 - document variable interpolations
 - document enabled and enabled_if - enabled_if shell commands should not cause side effects because
   they can get executed on a "dry run" of generation
+- document shell generator, including multiline commands and usage with enable_if
 
 ## shell-themer subcommands
 

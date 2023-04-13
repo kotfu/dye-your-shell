@@ -540,6 +540,8 @@ class Themer:
                     self._generate_ls_colors(scope, scopedef)
                 elif generator == "iterm":
                     self._generate_iterm(scope, scopedef)
+                elif generator == "shell":
+                    self._generate_shell(scope, scopedef)
                 else:
                     raise ThemeError(f"{self.prog}: {generator}: unknown generator")
             else:
@@ -829,6 +831,19 @@ class Themer:
             out += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
             out += r'\a"'
             print(out)
+
+    #
+    # shell command generator and helpers
+    #
+    def _generate_shell(self, _, scopedef):
+        try:
+            cmds = scopedef["command"]
+            for _, cmd in cmds.items():
+                cmd = self.variable_interpolate(cmd)
+                cmd = self.style_interpolate(cmd)
+                print(cmd)
+        except KeyError:
+            pass
 
 
 class ThemeError(Exception):

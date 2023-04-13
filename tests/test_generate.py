@@ -260,7 +260,7 @@ ENABLED_IFS = [
     ("[[ 1 == 1 ]]", True),
     ("[[ 1 == 0 ]]", False),
     ("{var:echocmd} hi", True),
-    ("{variable:falsetest}", False)
+    ("{variable:falsetest}", False),
 ]
 
 
@@ -553,3 +553,87 @@ def test_iterm_bgonly(thm_cmdline, capsys):
     lines = out.splitlines()
     assert len(lines) == 1
     assert lines[0] == r'builtin echo -e "\e]1337;SetColors=bg=b2cacd\a"'
+
+
+#
+# test the shellcommand generator
+#
+def test_shell(thm_cmdline, capsys):
+    tomlstr = """
+        [variables]
+        greeting = "hello there"
+
+        [styles]
+        purple = "#A020F0"
+
+        [scope.shortcut]
+        generator = "shell"
+        command.first = "echo {var:greeting}"
+        command.next = "echo general kenobi"
+        command.last = "echo {style:purple}"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert out == "echo hello there\necho general kenobi\necho #a020f0\n"
+
+
+def test_shell_enabled_if(thm_cmdline, capsys):
+    # we have separate tests for enabled_if, but since it's super useful with the
+    # shell generator, i'm including another test here
+    tomlstr = """
+        [scope.shortcut]
+        generator = "shell"
+        enabled_if = "[[ 1 == 0 ]]"
+        command.first = "shortcuts run 'My Shortcut Name'"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert not out
+
+
+def test_shell_multiline(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.multiline]
+        generator = "shell"
+        command.long = '''
+echo hello there
+echo general kenobi
+if [[ 1 == 1 ]]; then
+  echo "yes sir"
+fi
+'''
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    # yes we have two line breaks at the end of what we expect
+    # because there are single line commands, we have to output
+    # a newline after the command
+    # but on multiline commands that might give an extra newline
+    # at the end of the day, that makes zero difference in
+    # functionality, but it matters for testing, hence this note
+    expected = """echo hello there
+echo general kenobi
+if [[ 1 == 1 ]]; then
+  echo "yes sir"
+fi
+
+"""
+    assert out == expected
+
+
+def test_shell_no_commands(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.shortcut]
+        generator = "shell"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert not out
