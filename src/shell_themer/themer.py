@@ -31,12 +31,6 @@ import re
 import subprocess
 import sys
 
-try:
-    # for python 3.8+
-    import importlib.metadata as importlib_metadata
-except ImportError:  # pragma: nocover
-    # for python < 3.8
-    import importlib_metadata
 
 import rich.box
 import rich.color
@@ -46,6 +40,8 @@ import rich.layout
 import rich.style
 from rich_argparse import RichHelpFormatter
 import tomlkit
+
+from .version import version_string
 
 
 class Themer:
@@ -80,16 +76,12 @@ class Themer:
             ),
         )
 
-        try:
-            versionstring = importlib_metadata.version("shell_themer")
-        except importlib_metadata.PackageNotFoundError:  # pragma: nocover
-            versionstring = "unknown"
         version_help = "show the program version and exit"
         parser.add_argument(
             "-v",
             "--version",
             action="version",
-            version=versionstring,
+            version=version_string(),
             help=version_help,
         )
         tgroup = parser.add_mutually_exclusive_group()
@@ -923,7 +915,7 @@ class Themer:
             print(out)
 
     #
-    # shell command generator and helpers
+    # shell command generator
     #
     def _generate_shell(self, _, scopedef):
         try:
