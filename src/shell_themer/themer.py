@@ -852,7 +852,6 @@ class Themer:
         """
         ansicodes = ""
         if not style:
-            # TODO validate this is what we actually want
             return ""
         try:
             mapname = self.LS_COLORS_MAP[name]
