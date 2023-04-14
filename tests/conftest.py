@@ -58,7 +58,10 @@ def thm_cmdline(thm, parser, mocker):
     #     ...
 
     def _executor(cmdline, toml=None):
-        argv = cmdline.split(" ")
+        if cmdline:
+            argv = cmdline.split(" ")
+        else:
+            argv = []
         try:
             args = parser.parse_args(argv)
         except SystemExit as err:
@@ -67,6 +70,6 @@ def thm_cmdline(thm, parser, mocker):
             thm.loads(toml)
         # monkeypatch load_from_args() because that won't work so well
         mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
-        return thm.dispatch(args)
+        return thm.dispatch(parser, args)
 
     return _executor

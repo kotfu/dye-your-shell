@@ -97,6 +97,9 @@ def build_parser():
     preview_help = "show a preview of the styles in a theme"
     subparsers.add_parser("preview", help=preview_help)
 
+    help_help = "display this usage message"
+    subparsers.add_parser("help", help=help_help)
+
     return parser
 
 
@@ -114,7 +117,7 @@ def main(argv=None):
         return exc.code
 
     thm = Themer(parser.prog)
-    return thm.dispatch(args)
+    return thm.dispatch(parser, args)
 
 
 if __name__ == "__main__":  # pragma: nocover

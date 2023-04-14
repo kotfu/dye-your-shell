@@ -394,10 +394,16 @@ class Themer:
     #
     # dispatchers
     #
-    def dispatch(self, args):
+    def dispatch(self, parser, args):
         """Figure out which subcommand to run based on the arguments provided"""
         try:
-            if args.command == "list":
+            if not args.command:
+                parser.print_help(sys.stderr)
+                return self.EXIT_USAGE
+            elif args.command == "help":
+                parser.print_help()
+                return self.EXIT_SUCCESS
+            elif args.command == "list":
                 return self.dispatch_list(args)
             elif args.command == "preview":
                 return self.dispatch_preview(args)
