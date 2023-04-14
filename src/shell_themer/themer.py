@@ -67,7 +67,7 @@ class Themer:
             description="generate shell code to activate a theme",
             formatter_class=RichHelpFormatter,
             epilog=(
-                "see '[argparse.prog]%(prog)s[/argparse.prog]"
+                "type '[argparse.prog]%(prog)s[/argparse.prog]"
                 " [argparse.args]<command>[/argparse.args] -h' for command"
                 " specific help"
             ),
