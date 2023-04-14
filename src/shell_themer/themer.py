@@ -31,6 +31,13 @@ import re
 import subprocess
 import sys
 
+try:
+    # for python 3.8+
+    import importlib.metadata as importlib_metadata
+except ImportError:  # pragma: nocover
+    # for python < 3.8
+    import importlib_metadata
+
 import rich.box
 import rich.color
 import rich.console
@@ -58,7 +65,7 @@ class Themer:
 
         # avoid circular import
         # pylint: disable=import-outside-toplevel
-        from shell_themer import VERSION_STRING
+        #        from shell_themer import VERSION_STRING
 
         RichHelpFormatter.usage_markup = True
         RichHelpFormatter.group_name_formatter = str.lower
@@ -67,18 +74,22 @@ class Themer:
             description="generate shell code to activate a theme",
             formatter_class=RichHelpFormatter,
             epilog=(
-                "type '[argparse.prog]%(prog)s[/argparse.prog]"
+                "type  '[argparse.prog]%(prog)s[/argparse.prog]"
                 " [argparse.args]<command>[/argparse.args] -h' for command"
                 " specific help"
             ),
         )
 
+        try:
+            versionstring = importlib_metadata.version("shell_themer")
+        except importlib_metadata.PackageNotFoundError:  # pragma: nocover
+            versionstring = "unknown"
         version_help = "show the program version and exit"
         parser.add_argument(
             "-v",
             "--version",
             action="version",
-            version=VERSION_STRING,
+            version=versionstring,
             help=version_help,
         )
         tgroup = parser.add_mutually_exclusive_group()

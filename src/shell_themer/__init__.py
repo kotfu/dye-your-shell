@@ -21,23 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""
-ksc is a library and command line program for parsing and standardizing
-keyboard shortcuts
-"""
-
-try:
-    # for python 3.8+
-    import importlib.metadata as importlib_metadata
-except ImportError:  # pragma: nocover
-    # for python < 3.8
-    import importlib_metadata
+"""command line tool for maintaining and switching color schemes"""
 
 from .themer import Themer, ThemeError
-
-try:
-    __version__ = importlib_metadata.version(__name__)
-except importlib_metadata.PackageNotFoundError:  # pragma: nocover
-    __version__ = "unknown"
-
-VERSION_STRING = __version__
