@@ -23,6 +23,7 @@
 #
 """command line tool for maintaining and switching color schemes"""
 
+import argparse
 import functools
 import os
 import pathlib
@@ -36,6 +37,7 @@ import rich.console
 import rich.errors
 import rich.layout
 import rich.style
+from rich_argparse import RichHelpFormatter
 import tomlkit
 
 
@@ -45,6 +47,77 @@ class Themer:
     EXIT_SUCCESS = 0
     EXIT_ERROR = 1
     EXIT_USAGE = 2
+
+    @classmethod
+    # copy the usage styles to the RichHelpFormatter class
+    # for style in ["prog", "groups", "args", "metavar", "help", "text", "syntax"]:
+    #    RichHelpFormatter.styles[f"argparse.{style}"] = tvalues[f"tm.usage.{style}"]
+    # set other RichHelpFormatter settings
+    def argparser(cls):
+        """Build the argument parser"""
+
+        # avoid circular import
+        # pylint: disable=import-outside-toplevel
+        from shell_themer import VERSION_STRING
+
+        RichHelpFormatter.usage_markup = True
+        RichHelpFormatter.group_name_formatter = str.lower
+
+        parser = argparse.ArgumentParser(
+            description="generate shell code to activate a theme",
+            formatter_class=RichHelpFormatter,
+            epilog=(
+                "see '[argparse.prog]%(prog)s[/argparse.prog]"
+                " [argparse.args]<command>[/argparse.args] -h' for command"
+                " specific help"
+            ),
+        )
+
+        version_help = "show the program version and exit"
+        parser.add_argument(
+            "-v",
+            "--version",
+            action="version",
+            version=VERSION_STRING,
+            help=version_help,
+        )
+        tgroup = parser.add_mutually_exclusive_group()
+        theme_help = "specify a theme by name from $THEME_DIR"
+        tgroup.add_argument("-t", "--theme", metavar="<theme>", help=theme_help)
+        file_help = "specify a file containing a theme"
+        tgroup.add_argument("-f", "--file", metavar="<file>", help=file_help)
+        subparsers = parser.add_subparsers(
+            dest="command",
+            title="arguments",
+            metavar="<command>",
+            required=False,
+            help="action to perform, which must be one of the following:",
+        )
+
+        generate_help = (
+            "generate shell code to make the theme effective in your environment"
+        )
+        generate_parser = subparsers.add_parser(
+            "generate",
+            help=generate_help,
+        )
+        scope_help = "only generate the given scope"
+        generate_parser.add_argument("-s", "--scope", help=scope_help)
+        comment_help = "add comments to the generated output"
+        generate_parser.add_argument(
+            "-c", "--comment", action="store_true", help=comment_help
+        )
+
+        list_help = "list all themes in $THEMES_DIR"
+        subparsers.add_parser("list", help=list_help)
+
+        preview_help = "show a preview of the styles in a theme"
+        subparsers.add_parser("preview", help=preview_help)
+
+        help_help = "display this usage message"
+        subparsers.add_parser("help", help=help_help)
+
+        return parser
 
     def __init__(self, prog):
         """Construct a new Themer object
@@ -394,28 +467,29 @@ class Themer:
     #
     # dispatchers
     #
-    def dispatch(self, parser, args):
+    def dispatch(self, args):
         """Figure out which subcommand to run based on the arguments provided"""
         try:
             if not args.command:
-                parser.print_help(sys.stderr)
-                return self.EXIT_USAGE
+                self.argparser().print_help(sys.stderr)
+                exit_code = self.EXIT_USAGE
             elif args.command == "help":
-                parser.print_help()
-                return self.EXIT_SUCCESS
+                self.argparser().print_help()
+                exit_code = self.EXIT_SUCCESS
             elif args.command == "list":
-                return self.dispatch_list(args)
+                exit_code = self.dispatch_list(args)
             elif args.command == "preview":
-                return self.dispatch_preview(args)
+                exit_code = self.dispatch_preview(args)
             elif args.command == "generate":
-                return self.dispatch_generate(args)
+                exit_code = self.dispatch_generate(args)
+            else:
+                print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
+                exit_code = self.EXIT_USAGE
         except ThemeError as err:
             self.error_console.print(err)
-            return self.EXIT_ERROR
+            exit_code = self.EXIT_ERROR
 
-        # if we get here, we didn't know the command
-        print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
-        return self.EXIT_USAGE
+        return exit_code
 
     def dispatch_list(self, _):
         """Print a list of all themes"""

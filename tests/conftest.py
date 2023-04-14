@@ -27,12 +27,6 @@
 import pytest
 
 from shell_themer import Themer
-from shell_themer.__main__ import build_parser
-
-
-@pytest.fixture
-def parser():
-    return build_parser()
 
 
 @pytest.fixture
@@ -42,7 +36,7 @@ def thm():
 
 
 @pytest.fixture
-def thm_cmdline(thm, parser, mocker):
+def thm_cmdline(thm, mocker):
     # defining a fixture that returns a function
     # allows us to call the fixture and pass parameters to it
     # ie:
@@ -63,13 +57,13 @@ def thm_cmdline(thm, parser, mocker):
         else:
             argv = []
         try:
-            args = parser.parse_args(argv)
+            args = thm.argparser().parse_args(argv)
         except SystemExit as err:
             return err.code
         if toml:
             thm.loads(toml)
         # monkeypatch load_from_args() because that won't work so well
         mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
-        return thm.dispatch(parser, args)
+        return thm.dispatch(args)
 
     return _executor

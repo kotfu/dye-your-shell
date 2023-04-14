@@ -535,11 +535,11 @@ def test_unknown_command(thm_cmdline, capsys):
     assert "invalid choice" in err
 
 
-def test_dispatch_unknown_command(thm, parser, capsys):
+def test_dispatch_unknown_command(thm, capsys):
     # but by calling dispatch() directly, we can get our own errors
     args = argparse.Namespace()
     args.command = "fredflintstone"
-    exit_code = thm.dispatch(parser, args)
+    exit_code = thm.dispatch(args)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_USAGE
     assert not out
