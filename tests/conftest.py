@@ -52,8 +52,10 @@ def thm_cmdline(thm, mocker):
     #     ...
 
     def _executor(cmdline, toml=None):
-        if cmdline:
+        if isinstance(cmdline, str):
             argv = cmdline.split(" ")
+        elif isinstance(cmdline, list):
+            argv = cmdline
         else:
             argv = []
         try:

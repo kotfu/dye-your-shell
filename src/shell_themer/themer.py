@@ -259,19 +259,20 @@ class Themer:
 
         # https://no-color.org/
         try:
-            env_no_color = os.environ["NO_COLOR"]
-            # overrides SHELL_THEMER_COLORS
+            _ = os.environ["NO_COLOR"]
+            # overrides SHELL_THEMER_COLORS, making it easy
+            # to turn off colors for a bunch of tools
             args.nocolor = True
         except KeyError:
             # don't do anything
             pass
 
-        if args.nocolor:
+        if args.color:
+            # overrides environment variables
+            colors = self._parse_colorspec(args.color)
+        elif args.nocolor:
             # disable the default color output
             colors = self._parse_colorspec("")
-        elif args.color:
-            # overrides environment variable
-            colors = self._parse_colorspec(args.color)
         elif env_colors:
             # was set, and was set to a non-empty string
             colors = self._parse_colorspec(env_colors)
