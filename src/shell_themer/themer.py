@@ -51,17 +51,14 @@ class Themer:
     EXIT_ERROR = 1
     EXIT_USAGE = 2
 
+    HELP_ELEMENTS = ["args", "groups", "help", "metavar", "prog", "syntax", "text"]
+
+    #
+    # methods for running from the command line
+    #
     @classmethod
-    # copy the usage styles to the RichHelpFormatter class
-    # for style in ["prog", "groups", "args", "metavar", "help", "text", "syntax"]:
-    #    RichHelpFormatter.styles[f"argparse.{style}"] = tvalues[f"tm.usage.{style}"]
-    # set other RichHelpFormatter settings
     def argparser(cls):
         """Build the argument parser"""
-
-        # avoid circular import
-        # pylint: disable=import-outside-toplevel
-        #        from shell_themer import VERSION_STRING
 
         RichHelpFormatter.usage_markup = True
         RichHelpFormatter.group_name_formatter = str.lower
@@ -69,6 +66,7 @@ class Themer:
         parser = argparse.ArgumentParser(
             description="generate shell code to activate a theme",
             formatter_class=RichHelpFormatter,
+            add_help=False,
             epilog=(
                 "type  '[argparse.prog]%(prog)s[/argparse.prog]"
                 " [argparse.args]<command>[/argparse.args] -h' for command"
@@ -76,19 +74,39 @@ class Themer:
             ),
         )
 
+        hgroup = parser.add_mutually_exclusive_group()
+        help_help = "show this help message and exit"
+        hgroup.add_argument(
+            "-h",
+            "--help",
+            action="store_true",
+            help=help_help,
+        )
         version_help = "show the program version and exit"
-        parser.add_argument(
+        hgroup.add_argument(
             "-v",
             "--version",
-            action="version",
-            version=version_string(),
+            action="store_true",
             help=version_help,
         )
+
+        # colors
+        cgroup = parser.add_mutually_exclusive_group()
+        nocolor_help = "disable color in help output"
+        cgroup.add_argument(
+            "--no-color", dest="nocolor", action="store_true", help=nocolor_help
+        )
+        color_help = "provide a color specification"
+        cgroup.add_argument("--color", metavar="<colorspec>", help=color_help)
+
+        # how to specify a theme
         tgroup = parser.add_mutually_exclusive_group()
         theme_help = "specify a theme by name from $THEME_DIR"
-        tgroup.add_argument("-t", "--theme", metavar="<theme>", help=theme_help)
+        tgroup.add_argument("-t", "--theme", metavar="<name>", help=theme_help)
         file_help = "specify a file containing a theme"
-        tgroup.add_argument("-f", "--file", metavar="<file>", help=file_help)
+        tgroup.add_argument("-f", "--file", metavar="<path>", help=file_help)
+
+        # the commands
         subparsers = parser.add_subparsers(
             dest="command",
             title="arguments",
@@ -122,47 +140,11 @@ class Themer:
 
         return parser
 
-
-    @classmethod
-    def set_output_colors(cls, args):
-        """set the colors for generated output
-
-        if args has a --colors argument, use that
-        if not, use the contents of SHELL_THEMER_COLORS env variable
-
-        SHELL_THEMER_COLORS=args=red bold on black:groups=white on red:
-
-        or --colors='args=red bold on black:groups=white on red'
-        """
-        subjects = ["args", "groups", "help", "metavar", "prog", "syntax", "text"]
-
-        colordef = ""
-
-
-        clauses = colordef.split(":")
-        colors = {}
-        for clause in clauses:
-            parts = clause.split("=", 1)
-            if len(parts) == 2:
-                subject = parts[0]
-                styledef = parts[1]
-                if subject in subjects:
-                    colors[subject] = styledef
-            else:
-                # ignore this: invalid syntax
-                pass
-
-        # now map this all into rich.styles
-        for key, value in colors.items():
-            RichHelpFormattter.styles[f"argparse.{key}"] = value
-
-
     @classmethod
     def main(cls, argv=None):
         """Entry point from the command line
 
-        returns an exit code integer
-
+        parse arguments and call dispatch() for processing
         """
 
         parser = cls.argparser()
@@ -171,14 +153,13 @@ class Themer:
         except SystemExit as exc:
             return exc.code
 
-        # set output colors
-        #cls.set_output_colors(args)
-
         # create an instance of ourselves
         thm = cls(parser.prog)
         return thm.dispatch(args)
 
-
+    #
+    # initialization and properties
+    #
     def __init__(self, prog):
         """Construct a new Themer object
 
@@ -220,6 +201,109 @@ class Themer:
             raise ThemeError(f"{self.prog}: {tdir}: no such directory")
         return tdir
 
+    #
+    # methods to process command line arguments and dispatch them
+    # to the appropriate methods for execution
+    #
+    def dispatch(self, args):
+        """process and execute all the arguments and options"""
+        # set the color output options
+        self.set_output_colors(args)
+
+        # now go process everything
+        try:
+            if args.help or args.command == "help":
+                self.argparser().print_help()
+                exit_code = self.EXIT_SUCCESS
+            elif args.version:
+                print(f"{self.prog} {version_string()}")
+                exit_code = self.EXIT_SUCCESS
+            elif not args.command:
+                self.argparser().print_help(sys.stderr)
+                exit_code = self.EXIT_USAGE
+            elif args.command == "list":
+                exit_code = self.dispatch_list(args)
+            elif args.command == "preview":
+                exit_code = self.dispatch_preview(args)
+            elif args.command == "generate":
+                exit_code = self.dispatch_generate(args)
+            else:
+                print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
+                exit_code = self.EXIT_USAGE
+        except ThemeError as err:
+            self.error_console.print(err)
+            exit_code = self.EXIT_ERROR
+
+        return exit_code
+
+    def set_output_colors(self, args):
+        """set the colors for generated output
+
+        if args has a --colors argument, use that
+        if not, use the contents of SHELL_THEMER_COLORS env variable
+
+        SHELL_THEMER_COLORS=args=red bold on black:groups=white on red:
+
+        or --colors='args=red bold on black:groups=white on red'
+        """
+        colors = {}
+        try:
+            env_colors = os.environ["SHELL_THEMER_COLORS"]
+            if not env_colors:
+                # if it's set to an empty string that means we shouldn't
+                # show any colors
+                args.nocolor = True
+        except KeyError:
+            # wasn't set
+            env_colors = None
+
+        # https://no-color.org/
+        try:
+            env_no_color = os.environ["NO_COLOR"]
+            # overrides SHELL_THEMER_COLORS
+            args.nocolor = True
+        except KeyError:
+            # don't do anything
+            pass
+
+        if args.nocolor:
+            # disable the default color output
+            colors = self._parse_colorspec("")
+        elif args.color:
+            # overrides environment variable
+            colors = self._parse_colorspec(args.color)
+        elif env_colors:
+            # was set, and was set to a non-empty string
+            colors = self._parse_colorspec(env_colors)
+
+        # now map this all into rich.styles
+        for key, value in colors.items():
+            RichHelpFormatter.styles[f"argparse.{key}"] = value
+
+    def _parse_colorspec(self, colorspec):
+        "parse colorspec into a dictionary"
+        colors = {}
+        # set everything to default, ie smash all the default colors
+        for element in self.HELP_ELEMENTS:
+            colors[element] = "default"
+
+        clauses = colorspec.split(":")
+        for clause in clauses:
+            parts = clause.split("=", 1)
+            if len(parts) == 2:
+                element = parts[0]
+                styledef = parts[1]
+                if element in self.HELP_ELEMENTS:
+                    colors[element] = styledef
+            else:
+                # invalid syntax, too many equals signs
+                # ignore this clause
+                pass
+        return colors
+
+    #
+    # loading a theme
+    #
     def load_from_args(self, args):
         """Load a theme from the command line args
 
@@ -267,9 +351,6 @@ class Themer:
         self.definition = tomlkit.loads(toparse)
         self._process_definition()
 
-    #
-    # style and variable related methods
-    #
     def _process_definition(self):
         """process a newly loaded definition, including variables and styles"""
 
@@ -284,6 +365,9 @@ class Themer:
         except KeyError:
             pass
 
+    #
+    # style and variable related methods
+    #
     def styles_from(self, scopedef):
         "Extract a dict of all the styles present in the given scope definition"
         styles = {}
@@ -527,30 +611,6 @@ class Themer:
     #
     # dispatchers
     #
-    def dispatch(self, args):
-        """Figure out which subcommand to run based on the arguments provided"""
-        try:
-            if not args.command:
-                self.argparser().print_help(sys.stderr)
-                exit_code = self.EXIT_USAGE
-            elif args.command == "help":
-                self.argparser().print_help()
-                exit_code = self.EXIT_SUCCESS
-            elif args.command == "list":
-                exit_code = self.dispatch_list(args)
-            elif args.command == "preview":
-                exit_code = self.dispatch_preview(args)
-            elif args.command == "generate":
-                exit_code = self.dispatch_generate(args)
-            else:
-                print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
-                exit_code = self.EXIT_USAGE
-        except ThemeError as err:
-            self.error_console.print(err)
-            exit_code = self.EXIT_ERROR
-
-        return exit_code
-
     def dispatch_list(self, _):
         """Print a list of all themes"""
         # ignore all other args

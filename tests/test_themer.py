@@ -33,6 +33,7 @@ import rich.errors
 
 from shell_themer import Themer, ThemeError
 
+
 #
 # test style parsing
 #
@@ -535,7 +536,10 @@ def test_unknown_command(thm_cmdline, capsys):
 
 def test_dispatch_unknown_command(thm, capsys):
     # but by calling dispatch() directly, we can get our own errors
-    args = argparse.Namespace()
+    # first we have to parse valid args
+    parser = thm.argparser()
+    args = parser.parse_args(["list"])
+    # and then substitute a fake command
     args.command = "fredflintstone"
     exit_code = thm.dispatch(args)
     out, err = capsys.readouterr()

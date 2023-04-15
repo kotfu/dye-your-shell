@@ -37,4 +37,7 @@
   - don't like process because we use processors for something else
   - generate seems the best so far, then we have generator = "fzf"
 - init = generate the code for the theme-activate (using fzf if not specified), theme-reload
-- help = show help
+[x] honor NO_COLOR env variable
+[x] add --no-color option
+[x] add --colors= option
+[x] add SHELL_THEMER_COLORS env variable

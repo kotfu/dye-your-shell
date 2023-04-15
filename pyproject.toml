@@ -66,7 +66,7 @@ where = ["src"]
 
 
 [project.scripts]
-shell-themer = "shell_themer.__main__:main"
+shell-themer = "shell_themer.themer:Themer.main"
 
 
 [project.urls]
