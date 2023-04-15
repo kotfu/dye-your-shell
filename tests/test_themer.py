@@ -32,8 +32,6 @@ import rich.style
 import rich.errors
 
 from shell_themer import Themer, ThemeError
-from shell_themer.__main__ import main
-
 
 #
 # test style parsing
@@ -554,8 +552,8 @@ def test_main(mocker):
     # care what the dispatch_list() function returns in this test
     dmock = mocker.patch("shell_themer.Themer.dispatch_list")
     dmock.return_value = Themer.EXIT_SUCCESS
-    assert main(["list"]) == Themer.EXIT_SUCCESS
+    assert Themer.main(["list"]) == Themer.EXIT_SUCCESS
 
 
 def test_main_unknown_command():
-    assert main(["unknowncommand"]) == Themer.EXIT_USAGE
+    assert Themer.main(["unknowncommand"]) == Themer.EXIT_USAGE

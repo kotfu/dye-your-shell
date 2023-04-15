@@ -30,22 +30,5 @@ import sys
 from shell_themer import Themer
 
 
-def main(argv=None):
-    """Entry point for 'shell-themer' command line program.
-
-    :param argv:    pass a list of arguments to be processed. If None, sys.argv[1:]
-                    will be used. To process with no arguments, pass an empty list.
-    """
-
-    parser = Themer.argparser()
-    try:
-        args = parser.parse_args(argv)
-    except SystemExit as exc:
-        return exc.code
-
-    thm = Themer(parser.prog)
-    return thm.dispatch(args)
-
-
 if __name__ == "__main__":  # pragma: nocover
-    sys.exit(main())
+    sys.exit(Themer.main())

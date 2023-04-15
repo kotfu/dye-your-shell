@@ -122,6 +122,28 @@ class Themer:
 
         return parser
 
+    @classmethod
+    def main(cls, argv=None):
+        """Entry point from the command line
+
+        returns an exit code integer
+
+        """
+
+        parser = cls.argparser()
+        try:
+            args = parser.parse_args(argv)
+        except SystemExit as exc:
+            return exc.code
+
+        # set output colors
+        #cls.set_output_colors(args)
+
+        # create an instance of ourselves
+        thm = cls(parser.prog)
+        return thm.dispatch(args)
+
+
     def __init__(self, prog):
         """Construct a new Themer object
 
