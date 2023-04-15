@@ -29,9 +29,11 @@ import sys
 
 from shell_themer import Themer
 
+
 def doit():
     """made this so we can test it"""
     if __name__ == "__main__":
         sys.exit(Themer.main())
+
 
 doit()

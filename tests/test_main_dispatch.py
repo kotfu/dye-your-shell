@@ -188,8 +188,10 @@ def test_themer_main(mocker):
 def test_themer_main_unknown_command():
     assert Themer.main(["unknowncommand"]) == Themer.EXIT_USAGE
 
+
 def test___main__(mocker):
     from shell_themer import __main__ as mainmodule
+
     mocker.patch("shell_themer.Themer.main", return_value=42)
     mocker.patch.object(mainmodule, "__name__", "__main__")
     with pytest.raises(SystemExit) as excinfo:
