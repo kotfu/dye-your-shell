@@ -122,6 +122,41 @@ class Themer:
 
         return parser
 
+
+    @classmethod
+    def set_output_colors(cls, args):
+        """set the colors for generated output
+
+        if args has a --colors argument, use that
+        if not, use the contents of SHELL_THEMER_COLORS env variable
+
+        SHELL_THEMER_COLORS=args=red bold on black:groups=white on red:
+
+        or --colors='args=red bold on black:groups=white on red'
+        """
+        subjects = ["args", "groups", "help", "metavar", "prog", "syntax", "text"]
+
+        colordef = ""
+
+
+        clauses = colordef.split(":")
+        colors = {}
+        for clause in clauses:
+            parts = clause.split("=", 1)
+            if len(parts) == 2:
+                subject = parts[0]
+                styledef = parts[1]
+                if subject in subjects:
+                    colors[subject] = styledef
+            else:
+                # ignore this: invalid syntax
+                pass
+
+        # now map this all into rich.styles
+        for key, value in colors.items():
+            RichHelpFormattter.styles[f"argparse.{key}"] = value
+
+
     @classmethod
     def main(cls, argv=None):
         """Entry point from the command line
