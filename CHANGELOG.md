@@ -9,3 +9,20 @@ format of this file follows recommendations from
 
 
 ## [Unreleased]
+
+### Added
+
+- variable and style interpolation
+- shell generator to run any shell command when activating a theme
+- add `--color` command line option and `SHELL_THEMER_COLORS` environment
+  variable to change colors of help output
+- support for NO_COLOR (see https://no-color.org/)
+
+
+## [0.1.0] - 2023-04-01
+
+### Added
+
+- generators for fzf, LS_COLORS, and iterm
+
+
