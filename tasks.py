@@ -183,7 +183,7 @@ namespace.add_task(build)
 @invoke.task(pre=[build])
 def pypi(context):
     "Build and upload a distribution to pypi"
-    context.run("twine upload --respository pypi dist/*")
+    context.run("twine upload --repository pypi dist/*")
 
 
 namespace.add_task(pypi)
