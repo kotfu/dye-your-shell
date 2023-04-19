@@ -8,7 +8,7 @@ format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [0.2.0] - 2023-04-19
 
 ### Added
 
@@ -16,7 +16,7 @@ format of this file follows recommendations from
 - shell generator to run any shell command when activating a theme
 - add `--color` command line option and `SHELL_THEMER_COLORS` environment
   variable to change colors of help output
-- support for NO_COLOR (see https://no-color.org/)
+- support for NO_COLOR, see [https://no-color.org/](https://no-color.org)
 
 
 ## [0.1.0] - 2023-04-01

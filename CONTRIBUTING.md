@@ -2,42 +2,37 @@
 
 ## Get Source Code
 
-Clone the repo from github::
-
-   $ git clone git@github.com:kotfu/shell-themer.git
+Clone the repo from github:
+```
+$ git clone git@github.com:kotfu/shell-themer.git
+```
 
 
 ## Install Dependencies
 
-You'll need python 3.7 or higher.
+You'll need python 3.7 or higher. You should probably create a virtual
+environment first too.
 
-Install all the development dependencies::
-
-   $ pip install -e .[dev]
+Install all the development dependencies:
+```
+$ pip install -e .[dev]
+```
 
 This installs the tomcatmanager package "in-place", so the package points to the
-source code instead of copying files to the python ``site-packages`` folder.
-
-All the dependencies now have been installed in the ``tomcatmanager-3.11`` virtualenv.
-If you want to work in other virtualenvs, you'll need to manually select it, and
-install again::
-
-   $ pyenv shell tomcatmanager-3.9
-   $ pip install -e .[dev]
+source code instead of copying files to the python `site-packages` folder.
 
 
 ## Branches, Tags, and Versions
 
-This project uses a simplified version of the `git flow branching strategy
-<http://nvie.com/posts/a-successful-git-branching-model/>`_. We don't use release
+This project uses a simplified version of the [git flow branching strategy](http://nvie.com/posts/a-successful-git-branching-model/). We don't use release
 branches, and we generally don't do hotfixes, so we don't have any of those branches
-either. The ``main`` branch always contains the latest release of the code uploaded to
+either. The `main` branch always contains the latest release of the code uploaded to
 PyPI, with a tag for the version number of that release.
 
-The ``develop`` branch is where all the action occurs. Feature branches are welcome.
-When it's time for a release, we merge ``develop`` into ``main``.
+The `develop` branch is where all the action occurs. Feature branches are welcome.
+When it's time for a release, we merge `develop` into `main`.
 
-This project uses `semantic versioning <https://semver.org/>`_.
+This project uses [semantic versioning](https://semver.org/).
 
 
 ## Invoking Common Development Tasks
@@ -47,31 +42,34 @@ testing, rendering documentation, and building and distributing releases. These
 modules can be configured many different ways, which can make it difficult to learn
 the specific incantations required for each project you are familiar with.
 
-This project uses `invoke <http://www.pyinvoke.org>`_ to provide a clean, high level
-interface for these development tasks. To see the full list of functions available::
+This project uses [invoke](http://www.pyinvoke.org) to provide a clean, high level
+interface for these development tasks. To see the full list of functions available:
+```
+$ invoke -l
+```
 
-   $ invoke -l
-
-You can run multiple tasks in a single invocation, for example::
-
-   $ invoke clean build
+You can run multiple tasks in a single invocation, for example:
+```
+$ invoke clean build
+```
 
 That one command will remove all superflous cache, testing, and build files, then
 build a source distribution and a wheel distribution.
 
-To make it easy to check everything before you commit, you can just type::
-
-   $ invoke check
-   ...
-   $ echo $?
-   0
+To make it easy to check everything before you commit, you can just type:
+```
+$ invoke check
+...
+$ echo $?
+0
+```
 
 and it will test, lint, and check the format of all the code. If this doesn't complete
 everything successfully then you still need to fix some stuff before you commit or
 submit a pull request. In this context, complete everything successfully means: all
 tests pass, lint returns a perfect score, etc.
 
-To see what is actually getting executed by ``invoke``, check the ``tasks.py`` file.
+To see what is actually getting executed by `invoke`, check the `tasks.py` file.
 
 
 ## Testing
@@ -80,17 +78,19 @@ Unit testing provides reliability and consistency in released software. This pro
 has 100% unit test coverage. Pull requests which reduce test coverage will not
 be merged.
 
-Run the tests in your current python environment, use pytest::
-
-   $ pytest
+Run the tests in your current python environment, use pytest:
+```
+$ pytest
+```
 
 
 ## Code Quality
 
-Use ``pylint`` to check code quality. The pylint config is in `pyproject.toml`
-can be used for both the tests and package::
-
-   $ pylint src tests
+Use `pylint` to check code quality. The pylint config is in `pyproject.toml`
+can be used for both the tests and package:
+```
+$ pylint src tests
+```
 
 You are welcome to use the pylint comment directives to disable certain messages in
 the code, but pull requests containing these directives will be carefully scrutinized.
@@ -98,16 +98,18 @@ the code, but pull requests containing these directives will be carefully scruti
 
 ## Code Formatting
 
-Use `black <https://black.readthedocs.io/en/stable/index.html>`_ to format your code.
+Use [black](https://black.readthedocs.io/en/stable/index.html) to format your code.
 We use the default configuration, including a line length of 88 characters.
 
-To format all the code in the project using `black`, do::
+To format all the code in the project using `black`, do:
+```
+$ black *.py tests src
+```
 
-   $ black *.py tests src
-
-You can check whether `black` would make any changes to the source code by::
-
-   $ black --check *.py tests src
+You can check whether `black` would make any changes to the source code by:
+```
+$ black --check *.py tests src
+```
 
 Black integrates with many common editors and IDE's, that's the easiest way to ensure
 that your code is always formatted.
@@ -117,33 +119,20 @@ Please format the code in your PR using `black` before submitting it.
 
 ## Punctuation and Capitalization for Users
 
-Messages generated by ``InteractiveTomcatManager`` are intended for consumption
-by users, rather than developers.
-
 Usage messages for individual commands are in all lower case letters with no periods.
 If the help for a particular option contains multiple phrases, separate them with
-a semi-colon. This matches the style of ``argparse.ArgumentParser``. For example the
-message generated for the ``-h`` option is an uncapitalized phrase with no period.
-``ArgumentParser`` epilogs should be sentences with capitalized first letters.
+a semi-colon. This matches the style of `argparse.ArgumentParser`. For example the
+message generated for the `-h` option is an uncapitalized phrase with no period.
+`ArgumentParser` epilogs should be sentences with capitalized first letters.
 
 Error messages are in all lower case letters with no periods. This matches the style
-of the errors generated by ``argparse.ArgumentParser``.
-
-Command descriptions as shown by the ``help`` command come from the docstring for
-the associated method. For example the description shown for the ``deploy`` command
-comes from the the docstring for ``do_deploy``. The code assumes these docstrings
-are a single line. These command descriptions are all lower case letters with no
-periods. ``ArgumentParser`` objects should get the first line of the docstring to
-use for the description, so that ``connect -h`` always shows the same description
-as ``help``.
-
-Documentation in ``/docs`` is written in sentences with capitalized first letters.
+of the errors generated by `argparse.ArgumentParser`.
 
 
 ## Make a Release
 
 
-To make a release and deploy it to `PyPI <https://pypi.python.org/pypi>`_, do the
+To make a release and deploy it to [PyPI](https://pypi.python.org/pypi), do the
 following:
 
 1. Merge everything to be included in the release into the **develop** branch.
@@ -167,13 +156,15 @@ following:
 
 9.  Create a new release on Github.
 
-10. Build source distribution, wheel distribution, and upload them to testpypi::
+10. Build source distribution, wheel distribution, and upload them to testpypi:
+```
+$ invoke testpypi
+```
 
-       $ invoke testpypi
-
-11. Build source distribution, wheel distribution, and upload them to pypi::
-
-       $ invoke pypi
+11. Build source distribution, wheel distribution, and upload them to pypi:
+```
+$ invoke pypi
+```
 
 12. Switch back to the **develop** branch.
 
