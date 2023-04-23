@@ -739,6 +739,8 @@ class Themer:
                     self._generate_fzf(scope, scopedef)
                 elif generator == "ls_colors":
                     self._generate_ls_colors(scope, scopedef)
+                elif generator == "exa_colors":
+                    self._generate_exa_colors(scope, scopedef)
                 elif generator == "iterm":
                     self._generate_iterm(scope, scopedef)
                 elif generator == "shell":
@@ -899,25 +901,45 @@ class Themer:
     # ls_colors generator
     #
     LS_COLORS_MAP = {
+        # map both a friendly name and the "real" name
         "text": "no",
+        "no": "no",
         "file": "fi",
+        "fi": "fi",
         "directory": "di",
+        "di": "di",
         "symlink": "ln",
+        "ln": "ln",
         "multi_hard_link": "mh",
+        "mh": "mh",
         "pipe": "pi",
+        "pi": "pi",
         "socket": "so",
+        "so": "so",
         "door": "do",
+        "do": "do",
         "block_device": "bd",
+        "bd": "bd",
         "character_device": "cd",
+        "cd": "cd",
         "broken_symlink": "or",
+        "or": "or",
         "missing_symlink_target": "mi",
+        "mi": "mi",
         "setuid": "su",
+        "su": "su",
         "setgid": "sg",
+        "sg": "sg",
         "sticky": "st",
+        "st": "st",
         "other_writable": "ow",
+        "ow": "ow",
         "sticky_other_writable": "tw",
+        "tw": "tw",
         "executable_file": "ex",
+        "ex": "ex",
         "file_with_capability": "ca",
+        "ca": "ca",
     }
 
     def _generate_ls_colors(self, scope, scopedef):
@@ -983,7 +1005,7 @@ class Themer:
             raise ThemeError(
                 (
                     f"{self.prog}: unknown style '{name}' while processing"
-                    f"scope '{scope}' using the 'lscolors' generator"
+                    f" scope '{scope}' using the 'ls_colors' generator"
                 )
             ) from exc
 
@@ -1002,6 +1024,149 @@ class Themer:
             # and get the numeric codes
             ansicodes = match.group(1)
         return f"{mapname}={ansicodes}"
+
+    #
+    # exa color generator
+    #
+    EXA_COLORS_BASE_MAP = {
+        # map both a friendly name and the "real" name
+        "text": "no",
+        "file": "fi",
+        "directory": "di",
+        "symlink": "ln",
+        "multi_hard_link": "mh",
+        "pipe": "pi",
+        "socket": "so",
+        "door": "do",
+        "block_device": "bd",
+        "character_device": "cd",
+        "broken_symlink": "or",
+        "missing_symlink_target": "mi",
+        "setuid": "su",
+        "setgid": "sg",
+        "sticky": "st",
+        "other_writable": "ow",
+        "sticky_other_writable": "tw",
+        "executable_file": "ex",
+        "file_with_capability": "ca",
+        "perms_user_read": "ur",
+        "perms_user_write": "uw",
+        "perms_user_execute_files": "ux",
+        "perms_user_execute_directories": "ue",
+        "perms_group_read": "gr",
+        "perms_group_write": "gw",
+        "perms_group_execute": "gx",
+        "perms_other_read": "tr",
+        "perms_other_write": "tw",
+        "perms_other_execute": "tx",
+        "perms_suid_files": "su",
+        "perms_sticky_directories": "sf",
+        "perms_extended_attribute": "xa",
+        "size_number": "sn",
+        "size_unit": "sb",
+        "df": "df",
+        "ds": "ds",
+        "uu": "uu",
+        "un": "un",
+        "gu": "gu",
+        "gn": "gn",
+        "lc": "lc",
+        "lm": "lm",
+        "ga": "ga",
+        "gm": "gm",
+        "gd": "gd",
+        "gv": "gv",
+        "gt": "gt",
+        "punctuation": "xx",
+        "date_time": "da",
+        "in": "in",
+        "bl": "bl",
+        "column_headers": "hd",
+        "lp": "lp",
+        "cc": "cc",
+        "b0": "b0",
+    }
+    EXA_COLORS_MAP = {}
+    for friendly, actual in EXA_COLORS_BASE_MAP.items():
+        EXA_COLORS_MAP[friendly] = actual
+        EXA_COLORS_MAP[actual] = actual
+
+    def _generate_exa_colors(self, scope, scopedef):
+        "Render a EXA_COLORS variable suitable for exa"
+        outlist = []
+        # process the styles
+        styles = self.styles_from(scopedef)
+        # figure out if we are clearing builtin styles
+        try:
+            clear_builtin = scopedef["clear_builtin"]
+            self._assert_bool("exa_colors", scope, "clear_builtin", clear_builtin)
+        except KeyError:
+            clear_builtin = False
+
+        if clear_builtin:
+            # this tells exa to not use any built-in/hardcoded colors
+            outlist.append("reset")
+
+        # iterate over the styles given in our configuration
+        for name, style in styles.items():
+            if style:
+                _, render = self._exa_colors_from_style(scope, name, style)
+                outlist.append(render)
+
+        # process the filesets
+
+        # figure out which environment variable to put it in
+        try:
+            varname = scopedef["environment_variable"]
+            varname = self.variable_interpolate(varname)
+        except KeyError:
+            varname = "EXA_COLORS"
+
+        # even if outlist is empty, we have to set the variable, because
+        # when we are switching a theme, there may be contents in the
+        # environment variable already, and we need to tromp over them
+        # we chose to set the variable to empty instead of unsetting it
+        print(f'''export {varname}="{':'.join(outlist)}"''')
+
+    def _exa_colors_from_style(self, scope, name, style):
+        """create an entry suitable for EXA_COLORS from a style
+
+        name should be a valid EXA_COLORS entry, could be a code representing
+        a file type, or a glob representing a file extension
+
+        style is a style object
+        """
+        ansicodes = ""
+        if not style:
+            return ""
+        try:
+            mapname = self.EXA_COLORS_MAP[name]
+        except KeyError as exc:
+            # they used a style for a file attribute that we don't know how to map
+            # i.e. style.text or style.directory we know what to do with, but
+            # style.bundleid we don't know how to map, so we generate an error
+            raise ThemeError(
+                (
+                    f"{self.prog}: unknown style '{name}' while processing"
+                    f" scope '{scope}' using the 'exa_colors' generator"
+                )
+            ) from exc
+
+        if style.color.type == rich.color.ColorType.DEFAULT:
+            ansicodes = "0"
+        else:
+            # this works, but it uses a protected method
+            #   ansicodes = style._make_ansi_codes(rich.color.ColorSystem.TRUECOLOR)
+            # here's another approach, we ask the style to render a string, then
+            # go peel the ansi codes out of the generated escape sequence
+            ansistring = style.render("-----")
+            # style.render uses this string to build it's output
+            # f"\x1b[{attrs}m{text}\x1b[0m"
+            # so let's go split it apart
+            match = re.match(r"^\x1b\[([;\d]*)m", ansistring)
+            # and get the numeric codes
+            ansicodes = match.group(1)
+        return mapname, f"{mapname}={ansicodes}"
 
     #
     # iterm generator and helpers
