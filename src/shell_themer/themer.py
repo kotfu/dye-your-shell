@@ -571,7 +571,7 @@ class Themer:
         scopedef = self.scopedef_for(scope)
         try:
             enabled = scopedef["enabled"]
-            self._assert_bool(None, scope, "enabled", enabled)
+            self._assert_bool(enabled, None, scope, "enabled")
             # this is authoritative, if it exists, ignore enabled_if below
             return enabled
         except KeyError:
@@ -596,7 +596,7 @@ class Themer:
             return False
         return True
 
-    def _assert_bool(self, generator, scope, key, value):
+    def _assert_bool(self, value, generator, scope, key):
         if not isinstance(value, bool):
             if generator:
                 errmsg = (
@@ -938,7 +938,7 @@ class Themer:
         # figure out if we are clearing builtin styles
         try:
             clear_builtin = scopedef["clear_builtin"]
-            self._assert_bool("ls_colors", scope, "clear_builtin", clear_builtin)
+            self._assert_bool(clear_builtin, "ls_colors", scope, "clear_builtin")
         except KeyError:
             clear_builtin = False
 
@@ -1100,7 +1100,7 @@ class Themer:
         # figure out if we are clearing builtin styles
         try:
             clear_builtin = scopedef["clear_builtin"]
-            self._assert_bool("exa_colors", scope, "clear_builtin", clear_builtin)
+            self._assert_bool(clear_builtin, "exa_colors", scope, "clear_builtin")
         except KeyError:
             clear_builtin = False
 
