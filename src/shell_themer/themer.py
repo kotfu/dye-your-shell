@@ -942,21 +942,10 @@ class Themer:
         except KeyError:
             clear_builtin = False
 
-        # if clear_builtin:
-        #     # iterate over all known styles
-        #     for name in self.LS_COLORS_MAP:
-        #         try:
-        #             style = styles[name]
-        #         except KeyError:
-        #             # style isn't in our configuration, so put the default one in
-        #             style = self.get_style("default")
-        #         if style:
-        #             outlist.append(self._ls_colors_from_style(scope, name, style))
-        # else:
         # iterate over the styles given in our configuration
         for name, style in styles.items():
             if style:
-                mapcode, render = self._ls_colors_from_style(scope, name, style)
+                mapcode, render = self._ls_colors_from_style(name, style, scope)
                 havecodes.append(mapcode)
                 outlist.append(render)
 
@@ -966,7 +955,7 @@ class Themer:
             # 'default' style and add them to the output
             for name, code in self.LS_COLORS_BASE_MAP.items():
                 if not code in havecodes:
-                    _, render = self._ls_colors_from_style(scope, name, style)
+                    _, render = self._ls_colors_from_style(name, style, scope)
                     outlist.append(render)
 
         # process the filesets
@@ -984,7 +973,7 @@ class Themer:
         # we chose to set the variable to empty instead of unsetting it
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
-    def _ls_colors_from_style(self, scope, name, style):
+    def _ls_colors_from_style(self, name, style, scope):
         """create an entry suitable for LS_COLORS from a style
 
         name should be a valid LS_COLORS entry, could be a code representing
