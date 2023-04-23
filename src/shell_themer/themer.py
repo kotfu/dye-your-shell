@@ -1109,7 +1109,9 @@ class Themer:
         # iterate over the styles given in our configuration
         for name, style in styles.items():
             if style:
-                _, render = self._exa_colors_from_style(name, style, scope)
+                _, render = self._ls_colors_from_style(
+                    name, style, self.EXA_COLORS_MAP, scope
+                )
                 outlist.append(render)
 
         # process the filesets
@@ -1126,46 +1128,6 @@ class Themer:
         # environment variable already, and we need to tromp over them
         # we chose to set the variable to empty instead of unsetting it
         print(f'''export {varname}="{':'.join(outlist)}"''')
-
-    def _exa_colors_from_style(self, name, style, scope):
-        """create an entry suitable for EXA_COLORS from a style
-
-        name should be a valid EXA_COLORS entry, could be a code representing
-        a file type, or a glob representing a file extension
-
-        style is a style object
-        """
-        ansicodes = ""
-        if not style:
-            return "", ""
-        try:
-            mapname = self.EXA_COLORS_MAP[name]
-        except KeyError as exc:
-            # they used a style for a file attribute that we don't know how to map
-            # i.e. style.text or style.directory we know what to do with, but
-            # style.bundleid we don't know how to map, so we generate an error
-            raise ThemeError(
-                (
-                    f"{self.prog}: unknown style '{name}' while processing"
-                    f" scope '{scope}' using the 'exa_colors' generator"
-                )
-            ) from exc
-
-        if style.color.type == rich.color.ColorType.DEFAULT:
-            ansicodes = "0"
-        else:
-            # this works, but it uses a protected method
-            #   ansicodes = style._make_ansi_codes(rich.color.ColorSystem.TRUECOLOR)
-            # here's another approach, we ask the style to render a string, then
-            # go peel the ansi codes out of the generated escape sequence
-            ansistring = style.render("-----")
-            # style.render uses this string to build it's output
-            # f"\x1b[{attrs}m{text}\x1b[0m"
-            # so let's go split it apart
-            match = re.match(r"^\x1b\[([;\d]*)m", ansistring)
-            # and get the numeric codes
-            ansicodes = match.group(1)
-        return mapname, f"{mapname}={ansicodes}"
 
     #
     # iterm generator and helpers

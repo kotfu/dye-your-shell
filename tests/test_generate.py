@@ -556,8 +556,9 @@ STYLE_TO_EXACOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EXACOLORS)
 def test_exa_colors_from_style(thm, name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    code, render = thm._exa_colors_from_style(name, style, "scope")
-    assert expected == render
+    code, render = thm._ls_colors_from_style(name, style, thm.EXA_COLORS_MAP, "scope")
+    assert render == expected
+    assert code == expected[0:2]
 
 
 def test_exa_colors_no_styles(thm_cmdline, capsys):
