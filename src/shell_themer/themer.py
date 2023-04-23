@@ -1139,7 +1139,7 @@ class Themer:
         """
         ansicodes = ""
         if not style:
-            return ""
+            return "", ""
         try:
             mapname = self.EXA_COLORS_MAP[name]
         except KeyError as exc:

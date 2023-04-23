@@ -522,6 +522,114 @@ def test_ls_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
 
 
 #
+# test the exa_colors generator
+#
+# we only reallly have to test that the style name maps to the right code in ls_colors
+# ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
+# so we don't really need to test much of that
+STYLE_TO_EXACOLORS = [
+    ("text", "", ""),
+    ("text", "default", "no=0"),
+    ("file", "default", "fi=0"),
+    ("directory", "#8be9fd", "di=38;2;139;233;253"),
+    ("symlink", "green4 bold", "ln=1;38;5;28"),
+    ("multi_hard_link", "blue on white", "mh=34;47"),
+    ("pipe", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
+    ("socket", "bright_white", "so=97"),
+    ("door", "bright_white", "do=97"),
+    ("block_device", "default", "bd=0"),
+    ("character_device", "black", "cd=30"),
+    ("broken_symlink", "bright_blue", "or=94"),
+    ("missing_symlink_target", "bright_blue", "mi=94"),
+    ("setuid", "bright_blue", "su=94"),
+    ("setgid", "bright_red", "sg=91"),
+    ("sticky", "blue_violet", "st=38;5;57"),
+    ("other_writable", "blue_violet italic", "ow=3;38;5;57"),
+    ("sticky_other_writable", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
+    ("executable_file", "cornflower_blue on grey82", "ex=38;5;69;48;5;252"),
+    ("file_with_capability", "red on black", "ca=31;40"),
+]
+
+
+@pytest.mark.parametrize("name, styledef, lsc", STYLE_TO_EXACOLORS)
+def test_exa_colors_from_style(thm, name, styledef, lsc):
+    style = rich.style.Style.parse(styledef)
+    code, render = thm._exa_colors_from_style("scope", name, style)
+    assert lsc == render
+
+
+def test_exa_colors_no_styles(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert out == 'export EXA_COLORS=""\n'
+
+
+def test_exa_colors_unknown_style(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+        style.bundleid = "default"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert "unknown style" in err
+    assert "exac" in err
+
+
+def test_exa_colors_environment_variable(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+        environment_variable = "OTHER_EXA_COLOR"
+        style.file = "default"
+        style.size_number = "#7060eb"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert out == 'export OTHER_EXA_COLOR="fi=0:sn=38;2;112;96;235"\n'
+
+
+def test_exa_colors_clear_builtin(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+        clear_builtin = true
+        style.directory = "bright_blue"
+        style.uu = "bright_red"
+        style.punctuation = "#555555"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    expected = 'export EXA_COLORS="reset:di=94:uu=91:xx=38;2;85;85;85"\n'
+    assert out == expected
+
+
+def test_exa_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+        clear_builtin = "error"
+        style.directory = "bright_blue"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert not out
+    assert "'clear_builtin' to be true or false" in err
+
+
+#
 # test the iterm generator
 #
 def test_iterm(thm_cmdline, capsys):
