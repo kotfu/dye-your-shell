@@ -1086,6 +1086,8 @@ class Themer:
         "cc": "cc",
         "b0": "b0",
     }
+    # this map allows you to either use the 'native' exa code, or the
+    # 'friendly' name defined by shell-themer
     EXA_COLORS_MAP = {}
     for friendly, actual in EXA_COLORS_BASE_MAP.items():
         EXA_COLORS_MAP[friendly] = actual
