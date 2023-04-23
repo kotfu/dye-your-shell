@@ -426,7 +426,7 @@ STYLE_TO_LSCOLORS = [
     ("symlink", "green4 bold", "ln=1;38;5;28"),
     ("multi_hard_link", "blue on white", "mh=34;47"),
     ("pipe", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
-    ("socket", "bright_white", "so=97"),
+    ("so", "bright_white", "so=97"),
     ("door", "bright_white", "do=97"),
     ("block_device", "default", "bd=0"),
     ("character_device", "black", "cd=30"),
@@ -534,7 +534,7 @@ STYLE_TO_EXACOLORS = [
     ("directory", "#8be9fd", "di=38;2;139;233;253"),
     ("symlink", "green4 bold", "ln=1;38;5;28"),
     ("multi_hard_link", "blue on white", "mh=34;47"),
-    ("pipe", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
+    ("pi", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
     ("socket", "bright_white", "so=97"),
     ("door", "bright_white", "do=97"),
     ("block_device", "default", "bd=0"),
@@ -548,6 +548,7 @@ STYLE_TO_EXACOLORS = [
     ("sticky_other_writable", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
     ("executable_file", "cornflower_blue on grey82", "ex=38;5;69;48;5;252"),
     ("file_with_capability", "red on black", "ca=31;40"),
+    ("sn", "#7060eb", "sn=38;2;112;96;235")
 ]
 
 
