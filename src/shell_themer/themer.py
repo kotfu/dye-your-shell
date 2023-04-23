@@ -900,51 +900,39 @@ class Themer:
     #
     # ls_colors generator
     #
-    LS_COLORS_MAP = {
+    LS_COLORS_BASE_MAP = {
         # map both a friendly name and the "real" name
         "text": "no",
-        "no": "no",
         "file": "fi",
-        "fi": "fi",
         "directory": "di",
-        "di": "di",
         "symlink": "ln",
-        "ln": "ln",
         "multi_hard_link": "mh",
-        "mh": "mh",
         "pipe": "pi",
-        "pi": "pi",
         "socket": "so",
-        "so": "so",
         "door": "do",
-        "do": "do",
         "block_device": "bd",
-        "bd": "bd",
         "character_device": "cd",
-        "cd": "cd",
         "broken_symlink": "or",
-        "or": "or",
         "missing_symlink_target": "mi",
-        "mi": "mi",
         "setuid": "su",
-        "su": "su",
         "setgid": "sg",
-        "sg": "sg",
         "sticky": "st",
-        "st": "st",
         "other_writable": "ow",
-        "ow": "ow",
         "sticky_other_writable": "tw",
-        "tw": "tw",
         "executable_file": "ex",
-        "ex": "ex",
         "file_with_capability": "ca",
-        "ca": "ca",
     }
+    # this map allows you to either use the 'native' color code, or the
+    # 'friendly' name defined by shell-themer
+    LS_COLORS_MAP = {}
+    for friendly, actual in LS_COLORS_BASE_MAP.items():
+        LS_COLORS_MAP[friendly] = actual
+        LS_COLORS_MAP[actual] = actual
 
     def _generate_ls_colors(self, scope, scopedef):
         "Render a LS_COLORS variable suitable for GNU ls"
         outlist = []
+        havecodes = []
         # process the styles
         styles = self.styles_from(scopedef)
         # figure out if we are clearing builtin styles
@@ -954,21 +942,32 @@ class Themer:
         except KeyError:
             clear_builtin = False
 
+        # if clear_builtin:
+        #     # iterate over all known styles
+        #     for name in self.LS_COLORS_MAP:
+        #         try:
+        #             style = styles[name]
+        #         except KeyError:
+        #             # style isn't in our configuration, so put the default one in
+        #             style = self.get_style("default")
+        #         if style:
+        #             outlist.append(self._ls_colors_from_style(scope, name, style))
+        # else:
+        # iterate over the styles given in our configuration
+        for name, style in styles.items():
+            if style:
+                mapcode, render = self._ls_colors_from_style(scope, name, style)
+                havecodes.append(mapcode)
+                outlist.append(render)
+
         if clear_builtin:
-            # iterate over all known styles
-            for name in self.LS_COLORS_MAP:
-                try:
-                    style = styles[name]
-                except KeyError:
-                    # style isn't in our configuration, so put the default one in
-                    style = self.get_style("default")
-                if style:
-                    outlist.append(self._ls_colors_from_style(scope, name, style))
-        else:
-            # iterate over the styles given in our configuration
-            for name, style in styles.items():
-                if style:
-                    outlist.append(self._ls_colors_from_style(scope, name, style))
+            style = self.get_style("default")
+            # go through all the color codes, and render them with the
+            # 'default' style and add them to the output
+            for name, code in self.LS_COLORS_BASE_MAP.items():
+                if not code in havecodes:
+                    _, render = self._ls_colors_from_style(scope, name, style)
+                    outlist.append(render)
 
         # process the filesets
 
@@ -995,7 +994,7 @@ class Themer:
         """
         ansicodes = ""
         if not style:
-            return ""
+            return "", ""
         try:
             mapname = self.LS_COLORS_MAP[name]
         except KeyError as exc:
@@ -1023,7 +1022,7 @@ class Themer:
             match = re.match(r"^\x1b\[([;\d]*)m", ansistring)
             # and get the numeric codes
             ansicodes = match.group(1)
-        return f"{mapname}={ansicodes}"
+        return mapname, f"{mapname}={ansicodes}"
 
     #
     # exa color generator
