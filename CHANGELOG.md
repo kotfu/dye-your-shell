@@ -10,6 +10,9 @@ format of this file follows recommendations from
 
 ## [Unreleased]
 
+### Added
+
+- generator for exa colors
 
 
 ## [0.2.0] - 2023-04-19
