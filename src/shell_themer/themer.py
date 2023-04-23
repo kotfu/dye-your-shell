@@ -1111,7 +1111,7 @@ class Themer:
         # iterate over the styles given in our configuration
         for name, style in styles.items():
             if style:
-                _, render = self._exa_colors_from_style(scope, name, style)
+                _, render = self._exa_colors_from_style(name, style, scope)
                 outlist.append(render)
 
         # process the filesets
@@ -1129,7 +1129,7 @@ class Themer:
         # we chose to set the variable to empty instead of unsetting it
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
-    def _exa_colors_from_style(self, scope, name, style):
+    def _exa_colors_from_style(self, name, style, scope):
         """create an entry suitable for EXA_COLORS from a style
 
         name should be a valid EXA_COLORS entry, could be a code representing

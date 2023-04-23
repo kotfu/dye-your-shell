@@ -442,11 +442,11 @@ STYLE_TO_LSCOLORS = [
 ]
 
 
-@pytest.mark.parametrize("name, styledef, lsc", STYLE_TO_LSCOLORS)
-def test_ls_colors_from_style(thm, name, styledef, lsc):
+@pytest.mark.parametrize("name, styledef, expected", STYLE_TO_LSCOLORS)
+def test_ls_colors_from_style(thm, name, styledef, expected):
     style = rich.style.Style.parse(styledef)
     code, render = thm._ls_colors_from_style("scope", name, style)
-    assert lsc == render
+    assert expected == render
 
 
 def test_ls_colors_no_styles(thm_cmdline, capsys):
@@ -552,11 +552,11 @@ STYLE_TO_EXACOLORS = [
 ]
 
 
-@pytest.mark.parametrize("name, styledef, lsc", STYLE_TO_EXACOLORS)
-def test_exa_colors_from_style(thm, name, styledef, lsc):
+@pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EXACOLORS)
+def test_exa_colors_from_style(thm, name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    code, render = thm._exa_colors_from_style("scope", name, style)
-    assert lsc == render
+    code, render = thm._exa_colors_from_style(name, style, "scope")
+    assert expected == render
 
 
 def test_exa_colors_no_styles(thm_cmdline, capsys):
