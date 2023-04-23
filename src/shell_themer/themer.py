@@ -945,7 +945,9 @@ class Themer:
         # iterate over the styles given in our configuration
         for name, style in styles.items():
             if style:
-                mapcode, render = self._ls_colors_from_style(name, style, scope)
+                mapcode, render = self._ls_colors_from_style(
+                    name, style, self.LS_COLORS_MAP, scope
+                )
                 havecodes.append(mapcode)
                 outlist.append(render)
 
@@ -955,7 +957,9 @@ class Themer:
             # 'default' style and add them to the output
             for name, code in self.LS_COLORS_BASE_MAP.items():
                 if not code in havecodes:
-                    _, render = self._ls_colors_from_style(name, style, scope)
+                    _, render = self._ls_colors_from_style(
+                        name, style, self.LS_COLORS_MAP, scope
+                    )
                     outlist.append(render)
 
         # process the filesets
@@ -973,19 +977,24 @@ class Themer:
         # we chose to set the variable to empty instead of unsetting it
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
-    def _ls_colors_from_style(self, name, style, scope):
+    def _ls_colors_from_style(self, name, style, mapp, scope):
         """create an entry suitable for LS_COLORS from a style
 
         name should be a valid LS_COLORS entry, could be a code representing
         a file type, or a glob representing a file extension
 
         style is a style object
+
+        mapp is a dictionary of friendly color names to native color names
+            ie map['directory'] = 'di'
+
+        scope is the scope where this mapped occured, used for error message
         """
         ansicodes = ""
         if not style:
             return "", ""
         try:
-            mapname = self.LS_COLORS_MAP[name]
+            mapname = mapp[name]
         except KeyError as exc:
             # they used a style for a file attribute that we don't know how to map
             # i.e. style.text or style.directory we know what to do with, but

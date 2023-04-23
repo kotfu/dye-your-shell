@@ -445,7 +445,7 @@ STYLE_TO_LSCOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_LSCOLORS)
 def test_ls_colors_from_style(thm, name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    code, render = thm._ls_colors_from_style(name, style, "scope")
+    code, render = thm._ls_colors_from_style(name, style, thm.LS_COLORS_MAP, "scope")
     assert render == expected
     assert code == expected[0:2]
 
@@ -549,7 +549,7 @@ STYLE_TO_EXACOLORS = [
     ("sticky_other_writable", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
     ("executable_file", "cornflower_blue on grey82", "ex=38;5;69;48;5;252"),
     ("file_with_capability", "red on black", "ca=31;40"),
-    ("sn", "#7060eb", "sn=38;2;112;96;235")
+    ("sn", "#7060eb", "sn=38;2;112;96;235"),
 ]
 
 
