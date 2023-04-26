@@ -125,6 +125,151 @@ def test_generate_no_scopes(thm_cmdline, capsys):
 #
 # test rendering of elements common to all scopes
 #
+def test_generate_enabled(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.nolistvar]
+        enabled = false
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+
+        [scope.somevar]
+        enabled = true
+        generator = "environment_variables"
+        environment.unset = "SOMEVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert "unset SOMEVAR" in out
+    assert not "unset NOLISTVAR" in out
+
+
+def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.unset]
+        enabled = false
+        enabled_if = "[[ 1 == 1 ]]"
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert not out
+
+
+def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.unset]
+        enabled = true
+        enabled_if = "[[ 0 == 1 ]]"
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert "unset NOLISTVAR" in out
+
+
+def test_generate_enabled_invalid_value(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.unset]
+        enabled = "notaboolean"
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert not out
+    assert "to be true or false" in err
+
+
+ENABLED_IFS = [
+    ("", True),
+    ("echo", True),
+    ("[[ 1 == 1 ]]", True),
+    ("[[ 1 == 0 ]]", False),
+    ("{var:echocmd} hi", True),
+    ("{variable:falsetest}", False),
+]
+
+
+@pytest.mark.parametrize("cmd, enabled", ENABLED_IFS)
+def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
+    tomlstr = f"""
+        [variables]
+        echocmd = "/bin/echo"
+        falsetest = "[[ 1 == 0]]"
+
+        [scope.unset]
+        enabled_if = "{cmd}"
+        generator = "environment_variables"
+        environment.unset = "ENVVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    if enabled:
+        assert "unset ENVVAR" in out
+    else:
+        assert not out
+
+
+def test_generate_comments(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.nolistvar]
+        enabled = false
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+
+        [scope.somevar]
+        enabled = true
+        generator = "environment_variables"
+        environment.unset = "SOMEVAR"
+    """
+    exit_code = thm_cmdline("generate --comment", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert "# [scope.nolistvar]" in out
+    assert "# [scope.somevar]" in out
+    assert "unset SOMEVAR" in out
+    assert not "unset NOLISTVAR" in out
+
+
+def test_unknown_generator(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.myprog]
+        generator = "mrfusion"
+        environment.unset = "SOMEVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    _, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert "unknown generator" in err
+    assert "mrfusion" in err
+
+
+def test_no_generator(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.myscope]
+        enabled = false
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    _, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert "does not have a generator defined" in err
+    assert "myscope" in err
+
+#
+# test the environment_variables generator
+#
 ENV_INTERPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
     ("{style:dark_orange:hex}", "#ff6c1c"),
@@ -159,6 +304,7 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
         dark_orange = "#ff6c1c"
 
         [scope.gum]
+        generator = "environment_variables"
         environment.export.GUM_OPTS = " --cursor-foreground={phrase}"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -170,6 +316,7 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
 def test_generate_environment_unset_list(thm_cmdline, capsys):
     tomlstr = """
         [scope.ls]
+        generator = "environment_variables"
         # set some environment variables
         environment.unset = ["SOMEVAR", "ANOTHERVAR"]
         environment.export.LS_COLORS = "ace ventura"
@@ -186,6 +333,7 @@ def test_generate_environment_unset_list(thm_cmdline, capsys):
 def test_generate_environment_unset_string(thm_cmdline, capsys):
     tomlstr = """
         [scope.unset]
+        generator = "environment_variables"
         environment.unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -193,129 +341,6 @@ def test_generate_environment_unset_string(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert "unset NOLISTVAR" in out
-
-
-def test_generate_enabled(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.nolistvar]
-        enabled = false
-        environment.unset = "NOLISTVAR"
-
-        [scope.somevar]
-        enabled = true
-        environment.unset = "SOMEVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    assert "unset SOMEVAR" in out
-    assert not "unset NOLISTVAR" in out
-
-
-def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.unset]
-        enabled = false
-        enabled_if = "[[ 1 == 1 ]]"
-        environment.unset = "NOLISTVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    assert not out
-
-
-def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.unset]
-        enabled = true
-        enabled_if = "[[ 0 == 1 ]]"
-        environment.unset = "NOLISTVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    assert "unset NOLISTVAR" in out
-
-
-def test_generate_enabled_invalid_value(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.unset]
-        enabled = "notaboolean"
-        environment.unset = "NOLISTVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_ERROR
-    assert not out
-    assert "to be true or false" in err
-
-
-ENABLED_IFS = [
-    ("", True),
-    ("echo", True),
-    ("[[ 1 == 1 ]]", True),
-    ("[[ 1 == 0 ]]", False),
-    ("{var:echocmd} hi", True),
-    ("{variable:falsetest}", False),
-]
-
-
-@pytest.mark.parametrize("cmd, enabled", ENABLED_IFS)
-def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
-    tomlstr = f"""
-        [variables]
-        echocmd = "/bin/echo"
-        falsetest = "[[ 1 == 0]]"
-
-        [scope.unset]
-        enabled_if = "{cmd}"
-        environment.unset = "ENVVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    if enabled:
-        assert "unset ENVVAR" in out
-    else:
-        assert not out
-
-
-def test_generate_comments(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.nolistvar]
-        enabled = false
-        environment.unset = "NOLISTVAR"
-
-        [scope.somevar]
-        enabled = true
-        environment.unset = "SOMEVAR"
-    """
-    exit_code = thm_cmdline("generate --comment", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    assert "# [scope.nolistvar]" in out
-    assert "# [scope.somevar]" in out
-    assert "unset SOMEVAR" in out
-    assert not "unset NOLISTVAR" in out
-
-
-def test_unknown_generator(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.myprog]
-        generator = "mrfusion"
-        environment.unset = "SOMEVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_ERROR
-    assert "unknown generator" in err
-    assert "mrfusion" in err
 
 
 #

@@ -718,24 +718,24 @@ class Themer:
             # doesn't exist
             if self.has_scope(scope):
                 scopedef = self.scopedef_for(scope)
+                # find the generator for this scope
+                try:
+                    generator = scopedef["generator"]
+                except KeyError as exc:
+                    errmsg = f"{self.prog}: scope '{scope}' does not have a generator defined"
+                    raise ThemeError(errmsg) from exc
                 # check if the scope is disabled
                 if not self.is_enabled(scope):
                     if args.comment:
                         print(f"# [scope.{scope}] skipped because it is not enabled")
                     continue
-                # do the rendering elements for all scopes
+                # scope is enabled, so print the comment
                 if args.comment:
                     print(f"# [scope.{scope}]")
-                self._generate_environment(scope, scopedef)
-                # see if we have a generator defined for custom rendering
-                try:
-                    generator = scopedef["generator"]
-                except KeyError:
-                    # no more to do for this scope, skip to the next iteration
-                    # of the loop
-                    continue
 
-                if generator == "fzf":
+                if generator == "environment_variables":
+                    self._generate_environment(scope, scopedef)
+                elif generator == "fzf":
                     self._generate_fzf(scope, scopedef)
                 elif generator == "ls_colors":
                     self._generate_ls_colors(scope, scopedef)
