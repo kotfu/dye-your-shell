@@ -267,6 +267,7 @@ def test_no_generator(thm_cmdline, capsys):
     assert "does not have a generator defined" in err
     assert "myscope" in err
 
+
 #
 # test the environment_variables generator
 #
