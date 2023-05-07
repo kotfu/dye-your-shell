@@ -8,11 +8,11 @@ format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [0.3.0] - 2023-05-07
 
 ### Added
 
-- generator for exa colors
+- generator for [exa](https://the.exa.website/) colors
 
 
 ## [0.2.0] - 2023-04-19
