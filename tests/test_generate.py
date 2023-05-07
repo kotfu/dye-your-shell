@@ -125,6 +125,152 @@ def test_generate_no_scopes(thm_cmdline, capsys):
 #
 # test rendering of elements common to all scopes
 #
+def test_generate_enabled(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.nolistvar]
+        enabled = false
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+
+        [scope.somevar]
+        enabled = true
+        generator = "environment_variables"
+        environment.unset = "SOMEVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert "unset SOMEVAR" in out
+    assert not "unset NOLISTVAR" in out
+
+
+def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.unset]
+        enabled = false
+        enabled_if = "[[ 1 == 1 ]]"
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert not out
+
+
+def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.unset]
+        enabled = true
+        enabled_if = "[[ 0 == 1 ]]"
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert "unset NOLISTVAR" in out
+
+
+def test_generate_enabled_invalid_value(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.unset]
+        enabled = "notaboolean"
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert not out
+    assert "to be true or false" in err
+
+
+ENABLED_IFS = [
+    ("", True),
+    ("echo", True),
+    ("[[ 1 == 1 ]]", True),
+    ("[[ 1 == 0 ]]", False),
+    ("{var:echocmd} hi", True),
+    ("{variable:falsetest}", False),
+]
+
+
+@pytest.mark.parametrize("cmd, enabled", ENABLED_IFS)
+def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
+    tomlstr = f"""
+        [variables]
+        echocmd = "/bin/echo"
+        falsetest = "[[ 1 == 0]]"
+
+        [scope.unset]
+        enabled_if = "{cmd}"
+        generator = "environment_variables"
+        environment.unset = "ENVVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    if enabled:
+        assert "unset ENVVAR" in out
+    else:
+        assert not out
+
+
+def test_generate_comments(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.nolistvar]
+        enabled = false
+        generator = "environment_variables"
+        environment.unset = "NOLISTVAR"
+
+        [scope.somevar]
+        enabled = true
+        generator = "environment_variables"
+        environment.unset = "SOMEVAR"
+    """
+    exit_code = thm_cmdline("generate --comment", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert "# [scope.nolistvar]" in out
+    assert "# [scope.somevar]" in out
+    assert "unset SOMEVAR" in out
+    assert not "unset NOLISTVAR" in out
+
+
+def test_unknown_generator(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.myprog]
+        generator = "mrfusion"
+        environment.unset = "SOMEVAR"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    _, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert "unknown generator" in err
+    assert "mrfusion" in err
+
+
+def test_no_generator(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.myscope]
+        enabled = false
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    _, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert "does not have a generator defined" in err
+    assert "myscope" in err
+
+
+#
+# test the environment_variables generator
+#
 ENV_INTERPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
     ("{style:dark_orange:hex}", "#ff6c1c"),
@@ -159,6 +305,7 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
         dark_orange = "#ff6c1c"
 
         [scope.gum]
+        generator = "environment_variables"
         environment.export.GUM_OPTS = " --cursor-foreground={phrase}"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -170,6 +317,7 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
 def test_generate_environment_unset_list(thm_cmdline, capsys):
     tomlstr = """
         [scope.ls]
+        generator = "environment_variables"
         # set some environment variables
         environment.unset = ["SOMEVAR", "ANOTHERVAR"]
         environment.export.LS_COLORS = "ace ventura"
@@ -186,6 +334,7 @@ def test_generate_environment_unset_list(thm_cmdline, capsys):
 def test_generate_environment_unset_string(thm_cmdline, capsys):
     tomlstr = """
         [scope.unset]
+        generator = "environment_variables"
         environment.unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -193,129 +342,6 @@ def test_generate_environment_unset_string(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert "unset NOLISTVAR" in out
-
-
-def test_generate_enabled(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.nolistvar]
-        enabled = false
-        environment.unset = "NOLISTVAR"
-
-        [scope.somevar]
-        enabled = true
-        environment.unset = "SOMEVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    assert "unset SOMEVAR" in out
-    assert not "unset NOLISTVAR" in out
-
-
-def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.unset]
-        enabled = false
-        enabled_if = "[[ 1 == 1 ]]"
-        environment.unset = "NOLISTVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    assert not out
-
-
-def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.unset]
-        enabled = true
-        enabled_if = "[[ 0 == 1 ]]"
-        environment.unset = "NOLISTVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    assert "unset NOLISTVAR" in out
-
-
-def test_generate_enabled_invalid_value(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.unset]
-        enabled = "notaboolean"
-        environment.unset = "NOLISTVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_ERROR
-    assert not out
-    assert "to be true or false" in err
-
-
-ENABLED_IFS = [
-    ("", True),
-    ("echo", True),
-    ("[[ 1 == 1 ]]", True),
-    ("[[ 1 == 0 ]]", False),
-    ("{var:echocmd} hi", True),
-    ("{variable:falsetest}", False),
-]
-
-
-@pytest.mark.parametrize("cmd, enabled", ENABLED_IFS)
-def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
-    tomlstr = f"""
-        [variables]
-        echocmd = "/bin/echo"
-        falsetest = "[[ 1 == 0]]"
-
-        [scope.unset]
-        enabled_if = "{cmd}"
-        environment.unset = "ENVVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    if enabled:
-        assert "unset ENVVAR" in out
-    else:
-        assert not out
-
-
-def test_generate_comments(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.nolistvar]
-        enabled = false
-        environment.unset = "NOLISTVAR"
-
-        [scope.somevar]
-        enabled = true
-        environment.unset = "SOMEVAR"
-    """
-    exit_code = thm_cmdline("generate --comment", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
-    assert not err
-    assert "# [scope.nolistvar]" in out
-    assert "# [scope.somevar]" in out
-    assert "unset SOMEVAR" in out
-    assert not "unset NOLISTVAR" in out
-
-
-def test_unknown_generator(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.myprog]
-        generator = "mrfusion"
-        environment.unset = "SOMEVAR"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_ERROR
-    assert "unknown generator" in err
-    assert "mrfusion" in err
 
 
 #
@@ -426,7 +452,7 @@ STYLE_TO_LSCOLORS = [
     ("symlink", "green4 bold", "ln=1;38;5;28"),
     ("multi_hard_link", "blue on white", "mh=34;47"),
     ("pipe", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
-    ("socket", "bright_white", "so=97"),
+    ("so", "bright_white", "so=97"),
     ("door", "bright_white", "do=97"),
     ("block_device", "default", "bd=0"),
     ("character_device", "black", "cd=30"),
@@ -442,10 +468,12 @@ STYLE_TO_LSCOLORS = [
 ]
 
 
-@pytest.mark.parametrize("name, styledef, lsc", STYLE_TO_LSCOLORS)
-def test_ls_colors_from_style(thm, name, styledef, lsc):
+@pytest.mark.parametrize("name, styledef, expected", STYLE_TO_LSCOLORS)
+def test_ls_colors_from_style(thm, name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    assert lsc == thm._ls_colors_from_style("scope", name, style)
+    code, render = thm._ls_colors_from_style(name, style, thm.LS_COLORS_MAP, "scope")
+    assert render == expected
+    assert code == expected[0:2]
 
 
 def test_ls_colors_no_styles(thm_cmdline, capsys):
@@ -499,7 +527,7 @@ def test_ls_colors_clear_builtin(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     expected = (
-        'export LS_COLORS="no=0:fi=0:di=94:ln=0:'
+        'export LS_COLORS="di=94:no=0:fi=0:ln=0:'
         "mh=0:pi=0:so=0:do=0:bd=0:cd=0:or=0:mi=0:"
         'su=0:sg=0:st=0:ow=0:tw=0:ex=0:ca=0"\n'
     )
@@ -510,6 +538,116 @@ def test_ls_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
     tomlstr = """
         [scope.lsc]
         generator = "ls_colors"
+        clear_builtin = "error"
+        style.directory = "bright_blue"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert not out
+    assert "'clear_builtin' to be true or false" in err
+
+
+#
+# test the exa_colors generator
+#
+# we only reallly have to test that the style name maps to the right code in ls_colors
+# ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
+# so we don't really need to test much of that
+STYLE_TO_EXACOLORS = [
+    ("text", "", ""),
+    ("text", "default", "no=0"),
+    ("file", "default", "fi=0"),
+    ("directory", "#8be9fd", "di=38;2;139;233;253"),
+    ("symlink", "green4 bold", "ln=1;38;5;28"),
+    ("multi_hard_link", "blue on white", "mh=34;47"),
+    ("pi", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
+    ("socket", "bright_white", "so=97"),
+    ("door", "bright_white", "do=97"),
+    ("block_device", "default", "bd=0"),
+    ("character_device", "black", "cd=30"),
+    ("broken_symlink", "bright_blue", "or=94"),
+    ("missing_symlink_target", "bright_blue", "mi=94"),
+    ("setuid", "bright_blue", "su=94"),
+    ("setgid", "bright_red", "sg=91"),
+    ("sticky", "blue_violet", "st=38;5;57"),
+    ("other_writable", "blue_violet italic", "ow=3;38;5;57"),
+    ("sticky_other_writable", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
+    ("executable_file", "cornflower_blue on grey82", "ex=38;5;69;48;5;252"),
+    ("file_with_capability", "red on black", "ca=31;40"),
+    ("sn", "#7060eb", "sn=38;2;112;96;235"),
+]
+
+
+@pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EXACOLORS)
+def test_exa_colors_from_style(thm, name, styledef, expected):
+    style = rich.style.Style.parse(styledef)
+    code, render = thm._ls_colors_from_style(name, style, thm.EXA_COLORS_MAP, "scope")
+    assert render == expected
+    assert code == expected[0:2]
+
+
+def test_exa_colors_no_styles(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert out == 'export EXA_COLORS=""\n'
+
+
+def test_exa_colors_unknown_style(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+        style.bundleid = "default"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert "unknown style" in err
+    assert "exac" in err
+
+
+def test_exa_colors_environment_variable(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+        environment_variable = "OTHER_EXA_COLOR"
+        style.file = "default"
+        style.size_number = "#7060eb"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert out == 'export OTHER_EXA_COLOR="fi=0:sn=38;2;112;96;235"\n'
+
+
+def test_exa_colors_clear_builtin(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
+        clear_builtin = true
+        style.directory = "bright_blue"
+        style.uu = "bright_red"
+        style.punctuation = "#555555"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    expected = 'export EXA_COLORS="reset:di=94:uu=91:xx=38;2;85;85;85"\n'
+    assert out == expected
+
+
+def test_exa_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.exac]
+        generator = "exa_colors"
         clear_builtin = "error"
         style.directory = "bright_blue"
     """

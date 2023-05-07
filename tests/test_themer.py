@@ -309,10 +309,10 @@ BOOL_TESTS = [
 @pytest.mark.parametrize("val, expected", BOOL_TESTS)
 def test_assert_bool(thm, val, expected):
     if expected:
-        thm._assert_bool("generator", "scope", "key", val)
+        thm._assert_bool(val, "generator", "scope", "key")
     else:
         with pytest.raises(ThemeError):
-            thm._assert_bool("generator", "scope", "key", val)
+            thm._assert_bool(val, "generator", "scope", "key")
 
 
 #

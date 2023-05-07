@@ -12,8 +12,10 @@
   // if you have to negate the exit code, try
   // isiterm2 && [[ $? == 0 ]]
 [x] add option to generate to insert comments into the output
-[ ] allow creation of variables with values, which can be interpolated
+[x] allow creation of variables with values, which can be interpolated
     into other sections
+[ ] move environment variables into their own generator instead of
+    processing them in every generator
 
 - documentation and website
   - show how to set BAT_THEME
@@ -41,3 +43,11 @@
 [x] add --no-color option
 [x] add --colors= option
 [x] add SHELL_THEMER_COLORS env variable
+
+
+## Recipe ideas
+
+- show how to enable a scope only for a certain operating system
+- show how to enable a scope only on certain hosts
+- show how to run a macos shortcut from a scope
+-

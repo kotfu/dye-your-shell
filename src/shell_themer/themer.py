@@ -571,7 +571,7 @@ class Themer:
         scopedef = self.scopedef_for(scope)
         try:
             enabled = scopedef["enabled"]
-            self._assert_bool(None, scope, "enabled", enabled)
+            self._assert_bool(enabled, None, scope, "enabled")
             # this is authoritative, if it exists, ignore enabled_if below
             return enabled
         except KeyError:
@@ -596,7 +596,7 @@ class Themer:
             return False
         return True
 
-    def _assert_bool(self, generator, scope, key, value):
+    def _assert_bool(self, value, generator, scope, key):
         if not isinstance(value, bool):
             if generator:
                 errmsg = (
@@ -718,27 +718,29 @@ class Themer:
             # doesn't exist
             if self.has_scope(scope):
                 scopedef = self.scopedef_for(scope)
+                # find the generator for this scope
+                try:
+                    generator = scopedef["generator"]
+                except KeyError as exc:
+                    errmsg = f"{self.prog}: scope '{scope}' does not have a generator defined"
+                    raise ThemeError(errmsg) from exc
                 # check if the scope is disabled
                 if not self.is_enabled(scope):
                     if args.comment:
                         print(f"# [scope.{scope}] skipped because it is not enabled")
                     continue
-                # do the rendering elements for all scopes
+                # scope is enabled, so print the comment
                 if args.comment:
                     print(f"# [scope.{scope}]")
-                self._generate_environment(scope, scopedef)
-                # see if we have a generator defined for custom rendering
-                try:
-                    generator = scopedef["generator"]
-                except KeyError:
-                    # no more to do for this scope, skip to the next iteration
-                    # of the loop
-                    continue
 
-                if generator == "fzf":
+                if generator == "environment_variables":
+                    self._generate_environment(scope, scopedef)
+                elif generator == "fzf":
                     self._generate_fzf(scope, scopedef)
                 elif generator == "ls_colors":
                     self._generate_ls_colors(scope, scopedef)
+                elif generator == "exa_colors":
+                    self._generate_exa_colors(scope, scopedef)
                 elif generator == "iterm":
                     self._generate_iterm(scope, scopedef)
                 elif generator == "shell":
@@ -898,7 +900,8 @@ class Themer:
     #
     # ls_colors generator
     #
-    LS_COLORS_MAP = {
+    LS_COLORS_BASE_MAP = {
+        # map both a friendly name and the "real" name
         "text": "no",
         "file": "fi",
         "directory": "di",
@@ -919,34 +922,45 @@ class Themer:
         "executable_file": "ex",
         "file_with_capability": "ca",
     }
+    # this map allows you to either use the 'native' color code, or the
+    # 'friendly' name defined by shell-themer
+    LS_COLORS_MAP = {}
+    for friendly, actual in LS_COLORS_BASE_MAP.items():
+        LS_COLORS_MAP[friendly] = actual
+        LS_COLORS_MAP[actual] = actual
 
     def _generate_ls_colors(self, scope, scopedef):
         "Render a LS_COLORS variable suitable for GNU ls"
         outlist = []
+        havecodes = []
         # process the styles
         styles = self.styles_from(scopedef)
         # figure out if we are clearing builtin styles
         try:
             clear_builtin = scopedef["clear_builtin"]
-            self._assert_bool("ls_colors", scope, "clear_builtin", clear_builtin)
+            self._assert_bool(clear_builtin, "ls_colors", scope, "clear_builtin")
         except KeyError:
             clear_builtin = False
 
+        # iterate over the styles given in our configuration
+        for name, style in styles.items():
+            if style:
+                mapcode, render = self._ls_colors_from_style(
+                    name, style, self.LS_COLORS_MAP, scope
+                )
+                havecodes.append(mapcode)
+                outlist.append(render)
+
         if clear_builtin:
-            # iterate over all known styles
-            for name in self.LS_COLORS_MAP:
-                try:
-                    style = styles[name]
-                except KeyError:
-                    # style isn't in our configuration, so put the default one in
-                    style = self.get_style("default")
-                if style:
-                    outlist.append(self._ls_colors_from_style(scope, name, style))
-        else:
-            # iterate over the styles given in our configuration
-            for name, style in styles.items():
-                if style:
-                    outlist.append(self._ls_colors_from_style(scope, name, style))
+            style = self.get_style("default")
+            # go through all the color codes, and render them with the
+            # 'default' style and add them to the output
+            for name, code in self.LS_COLORS_BASE_MAP.items():
+                if not code in havecodes:
+                    _, render = self._ls_colors_from_style(
+                        name, style, self.LS_COLORS_MAP, scope
+                    )
+                    outlist.append(render)
 
         # process the filesets
 
@@ -963,19 +977,24 @@ class Themer:
         # we chose to set the variable to empty instead of unsetting it
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
-    def _ls_colors_from_style(self, scope, name, style):
+    def _ls_colors_from_style(self, name, style, mapp, scope):
         """create an entry suitable for LS_COLORS from a style
 
         name should be a valid LS_COLORS entry, could be a code representing
         a file type, or a glob representing a file extension
 
         style is a style object
+
+        mapp is a dictionary of friendly color names to native color names
+            ie map['directory'] = 'di'
+
+        scope is the scope where this mapped occured, used for error message
         """
         ansicodes = ""
         if not style:
-            return ""
+            return "", ""
         try:
-            mapname = self.LS_COLORS_MAP[name]
+            mapname = mapp[name]
         except KeyError as exc:
             # they used a style for a file attribute that we don't know how to map
             # i.e. style.text or style.directory we know what to do with, but
@@ -983,7 +1002,7 @@ class Themer:
             raise ThemeError(
                 (
                     f"{self.prog}: unknown style '{name}' while processing"
-                    f"scope '{scope}' using the 'lscolors' generator"
+                    f" scope '{scope}' using the 'ls_colors' generator"
                 )
             ) from exc
 
@@ -1001,7 +1020,114 @@ class Themer:
             match = re.match(r"^\x1b\[([;\d]*)m", ansistring)
             # and get the numeric codes
             ansicodes = match.group(1)
-        return f"{mapname}={ansicodes}"
+        return mapname, f"{mapname}={ansicodes}"
+
+    #
+    # exa color generator
+    #
+    EXA_COLORS_BASE_MAP = {
+        # map both a friendly name and the "real" name
+        "text": "no",
+        "file": "fi",
+        "directory": "di",
+        "symlink": "ln",
+        "multi_hard_link": "mh",
+        "pipe": "pi",
+        "socket": "so",
+        "door": "do",
+        "block_device": "bd",
+        "character_device": "cd",
+        "broken_symlink": "or",
+        "missing_symlink_target": "mi",
+        "setuid": "su",
+        "setgid": "sg",
+        "sticky": "st",
+        "other_writable": "ow",
+        "sticky_other_writable": "tw",
+        "executable_file": "ex",
+        "file_with_capability": "ca",
+        "perms_user_read": "ur",
+        "perms_user_write": "uw",
+        "perms_user_execute_files": "ux",
+        "perms_user_execute_directories": "ue",
+        "perms_group_read": "gr",
+        "perms_group_write": "gw",
+        "perms_group_execute": "gx",
+        "perms_other_read": "tr",
+        "perms_other_write": "tw",
+        "perms_other_execute": "tx",
+        "perms_suid_files": "su",
+        "perms_sticky_directories": "sf",
+        "perms_extended_attribute": "xa",
+        "size_number": "sn",
+        "size_unit": "sb",
+        "df": "df",
+        "ds": "ds",
+        "uu": "uu",
+        "un": "un",
+        "gu": "gu",
+        "gn": "gn",
+        "lc": "lc",
+        "lm": "lm",
+        "ga": "ga",
+        "gm": "gm",
+        "gd": "gd",
+        "gv": "gv",
+        "gt": "gt",
+        "punctuation": "xx",
+        "date_time": "da",
+        "in": "in",
+        "bl": "bl",
+        "column_headers": "hd",
+        "lp": "lp",
+        "cc": "cc",
+        "b0": "b0",
+    }
+    # this map allows you to either use the 'native' exa code, or the
+    # 'friendly' name defined by shell-themer
+    EXA_COLORS_MAP = {}
+    for friendly, actual in EXA_COLORS_BASE_MAP.items():
+        EXA_COLORS_MAP[friendly] = actual
+        EXA_COLORS_MAP[actual] = actual
+
+    def _generate_exa_colors(self, scope, scopedef):
+        "Render a EXA_COLORS variable suitable for exa"
+        outlist = []
+        # process the styles
+        styles = self.styles_from(scopedef)
+        # figure out if we are clearing builtin styles
+        try:
+            clear_builtin = scopedef["clear_builtin"]
+            self._assert_bool(clear_builtin, "exa_colors", scope, "clear_builtin")
+        except KeyError:
+            clear_builtin = False
+
+        if clear_builtin:
+            # this tells exa to not use any built-in/hardcoded colors
+            outlist.append("reset")
+
+        # iterate over the styles given in our configuration
+        for name, style in styles.items():
+            if style:
+                _, render = self._ls_colors_from_style(
+                    name, style, self.EXA_COLORS_MAP, scope
+                )
+                outlist.append(render)
+
+        # process the filesets
+
+        # figure out which environment variable to put it in
+        try:
+            varname = scopedef["environment_variable"]
+            varname = self.variable_interpolate(varname)
+        except KeyError:
+            varname = "EXA_COLORS"
+
+        # even if outlist is empty, we have to set the variable, because
+        # when we are switching a theme, there may be contents in the
+        # environment variable already, and we need to tromp over them
+        # we chose to set the variable to empty instead of unsetting it
+        print(f'''export {varname}="{':'.join(outlist)}"''')
 
     #
     # iterm generator and helpers
