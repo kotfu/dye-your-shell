@@ -62,7 +62,7 @@ class Generator(abc.ABC):
         return name.lower()
 
     @abc.abstractmethod
-    def generate() -> str:
+    def generate(self) -> str:
         """generate a string of text, with newlines, which can be sourced by bash
 
         returns an empty string if there is nothing to generate
