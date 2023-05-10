@@ -37,42 +37,8 @@ from shell_themer import ThemeError
 #
 # test style parsing
 #
-def test_get_style_plain(thm):
-    style = thm.get_style("#aaff00")
-    assert isinstance(style, rich.style.Style)
-    assert style.color.name == "#aaff00"
+# TODO remove some of these tests, but maybe keep the integration level ones
 
-
-def test_get_style_complex(thm):
-    style = thm.get_style("bold white on red")
-    assert isinstance(style, rich.style.Style)
-    assert style.bold is True
-    assert style.color.name == "white"
-    assert style.bgcolor.name == "red"
-
-
-def test_get_style_invalid(thm):
-    with pytest.raises(rich.errors.StyleSyntaxError):
-        _ = thm.get_style("not a valid style")
-
-
-def test_get_style_interpolation(thm):
-    tomlstr = """
-        [variables]
-        qyellow = "#ffff00"
-
-        [styles]
-        background =  "#282a36"
-        foreground =  "#f8f8f2"
-        current_line =  "#f8f8f2 on #44475a"
-        warning = "{var:qyellow}"
-    """
-    thm.loads(tomlstr)
-    style = thm.get_style("current_line")
-    assert style.color.name == "#f8f8f2"
-    assert style.bgcolor.name == "#44475a"
-    style = thm.get_style("warning")
-    assert style.color.name == "#ffff00"
 
 
 def test_process_definition(thm):

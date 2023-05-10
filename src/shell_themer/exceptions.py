@@ -21,7 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""subpackage of generators for shell-themer"""
+"""Exceptions and errors"""
 
-from .generator import Generator
-from .environment_variables import EnvironmentVariablesGenerator
+
+class ThemeError(Exception):
+    """Exception for theme processing errors"""

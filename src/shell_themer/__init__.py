@@ -23,4 +23,5 @@
 #
 """command line tool for maintaining and switching color schemes"""
 
-from .themer import Themer, ThemeError
+from .themer import Themer
+from .exceptions import ThemeError

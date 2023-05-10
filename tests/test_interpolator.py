@@ -28,6 +28,7 @@ import pytest
 import rich.style
 
 from shell_themer.interpolator import Interpolator
+from shell_themer.parsers import StyleParser
 
 INTERPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
@@ -36,7 +37,8 @@ INTERPOLATIONS = [
     # for an unknown format or style, don't do any replacement
     ("{style:current_line}", "{style:current_line}"),
     ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
-    # we have to have the style keyword, or it all just gets passed through
+    # we have to have the 'style' or 'variable' keyword, or
+    # it all just gets passed through
     ("{dark_orange}", "{dark_orange}"),
     # escaped opening bracket means we should not interpolate
     (r"\{style:dark_orange}", "{style:dark_orange}"),
@@ -46,8 +48,9 @@ INTERPOLATIONS = [
     (r"\{ some other  things}", r"\{ some other  things}"),
     (r"\{escaped unmatched bracket", r"\{escaped unmatched bracket"),
     (r"\{notakeyword:something}", r"\{notakeyword:something}"),
-    # try a mixed variable and style interpolation
+    # both a variable and style interpolation in the same call
     ("{style:dark_orange} {var:someopts}", "#ff6c1c --option=fred -v"),
+    ("", ""),
 ]
 
 
@@ -63,11 +66,14 @@ STYLEPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
     ("{style:dark_orange:hex}", "#ff6c1c"),
     ("{style:dark_orange:hexnohash}", "ff6c1c"),
+    # multiple styles
+    ("{style:dark_orange}-{style:dark_orange:hexnohash}", "#ff6c1c-ff6c1c"),
     # for an unknown format or style, don't do any replacement
     ("{style:current_line}", "{style:current_line}"),
     ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
     # we have to have the style keyword, or it all just gets passed through
     ("{dark_orange}", "{dark_orange}"),
+    ("{variable:exists}", "{variable:exists}"),
     # escaped opening bracket means we should not interpolate
     (r"\{style:dark_orange}", "{style:dark_orange}"),
     # if you don't have matched brackets, or are missing the
@@ -75,21 +81,30 @@ STYLEPOLATIONS = [
     # to be removed.
     (r"\{ some other  things}", r"\{ some other  things}"),
     (r"\{escaped unmatched bracket", r"\{escaped unmatched bracket"),
+    ("", ""),
 ]
 
 
 @pytest.mark.parametrize("text, resolved", STYLEPOLATIONS)
 def test_interpolate_styles(text, resolved):
     styles = {"dark_orange": rich.style.Style.parse("#ff6c1c")}
-    interp = Interpolator(styles, None)
+    # create a variable, so we can check that it doesn't get interpolated
+    variables = {"exists": "yup"}
+    interp = Interpolator(styles, variables)
     assert resolved == interp.interpolate_styles(text)
 
 
 VARPOLATIONS = [
     ("{variable:green}", "{variable:green}"),
     ("{variable:someopts}", "--option=fred -v"),
+    # multiple variables
+    (
+        "{---{variable:someopts}---{variable:someopts}}",
+        "{-----option=fred -v-----option=fred -v}",
+    ),
     # we have to have the 'variable:' keyword, or it all just gets passed through
     ("{someopts}", "{someopts}"),
+    ("{style:foreground}", "{style:foreground}"),
     # escaped opening bracket means we should not interpolate
     (r"\{var:someopts}", "{var:someopts}"),
     # if you don't have matched brackets, or are missing the
@@ -97,11 +112,17 @@ VARPOLATIONS = [
     # to be removed.
     (r"\{ some other  things}", r"\{ some other  things}"),
     (r"\{escaped unmatched bracket", r"\{escaped unmatched bracket"),
+    ("", ""),
 ]
 
 
 @pytest.mark.parametrize("text, resolved", VARPOLATIONS)
 def test_interpolate_variables(text, resolved):
     variables = {"someopts": "--option=fred -v"}
-    interp = Interpolator(None, variables)
+    # create some styles so we can make sure they don't get interpolated
+    raw_styles = {"foreground": "#dddddd"}
+    sp = StyleParser(None, None)
+    styles = sp.parse_dict(raw_styles)
+    # create our interpolator
+    interp = Interpolator(styles, variables)
     assert resolved == interp.interpolate_variables(text)

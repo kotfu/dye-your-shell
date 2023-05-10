@@ -192,6 +192,5 @@ class Interpolator:
             style = None
         # nope, parse the input as a style
         if not style:
-            interp = self.interpolate_variables(styledef)
-            style = rich.style.Style.parse(interp)
+            style = rich.style.Style.parse(styledef)
         return style

@@ -28,7 +28,18 @@ import pytest
 import rich.style
 import rich.errors
 
+import shell_themer.generators
 from shell_themer import Themer
+
+
+#
+# test low level generator functions
+#
+def test_generator_classmap():
+    classmap = shell_themer.generators.GeneratorBase.classmap
+    assert "environment_variables" in classmap.keys()
+    assert "bogusgenerator" not in classmap.keys()
+    assert classmap["environment_variables"].__name__ == "EnvironmentVariables"
 
 
 #
@@ -123,7 +134,7 @@ def test_generate_no_scopes(thm_cmdline, capsys):
 
 
 #
-# test rendering of elements common to all scopes
+# test elements common to all scopes
 #
 def test_generate_enabled(thm_cmdline, capsys):
     tomlstr = """
@@ -469,9 +480,12 @@ STYLE_TO_LSCOLORS = [
 
 
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_LSCOLORS)
-def test_ls_colors_from_style(thm, name, styledef, expected):
+def test_ls_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    code, render = thm._ls_colors_from_style(name, style, thm.LS_COLORS_MAP, "scope")
+    genny = shell_themer.generators.LsColors(None, None, None, None, None)
+    code, render = genny._ls_colors_from_style(
+        name, style, genny.LS_COLORS_MAP, "scope"
+    )
     assert render == expected
     assert code == expected[0:2]
 
@@ -694,7 +708,7 @@ def test_iterm_bgonly(thm_cmdline, capsys):
 
 
 #
-# test the shellcommand generator
+# test the shell generator
 #
 def test_shell(thm_cmdline, capsys):
     tomlstr = """
