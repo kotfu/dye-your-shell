@@ -31,9 +31,10 @@ import rich.color
 from .interpolator import Interpolator
 from .parsers import StyleParser
 from .exceptions import ThemeError
+from .utils import AssertBool
 
 
-class GeneratorBase(abc.ABC):
+class GeneratorBase(abc.ABC, AssertBool):
     """Abstract Base Class for all generators
 
     Subclass and implement generate()
@@ -86,19 +87,53 @@ class GeneratorBase(abc.ABC):
         """
         return ""
 
-    # TODO move self.prog, generator, scope, key into a msgdata dictionary
-    def _assert_bool(self, value, generator, scope, key):
-        if not isinstance(value, bool):
-            if generator:
-                errmsg = (
-                    f"{self.prog}: {generator} generator for"
-                    f" scope '{scope}' requires '{key}' to be true or false"
+
+class LsColorsFromStyle:
+    # TODO put all the error message stuff into a errdata or msgdata dictionary
+    def ls_colors_from_style(self, name, style, mapp, scope):
+        """create an entry suitable for LS_COLORS from a style
+
+        name should be a valid LS_COLORS entry, could be a code representing
+        a file type, or a glob representing a file extension
+
+        style is a style object
+
+        mapp is a dictionary of friendly color names to native color names
+            ie map['directory'] = 'di'
+
+        scope is the scope where this mapped occured, used for error message
+        """
+        ansicodes = ""
+        if not style:
+            return "", ""
+        try:
+            mapname = mapp[name]
+        except KeyError as exc:
+            # they used a style for a file attribute that we don't know how to map
+            # i.e. style.text or style.directory we know what to do with, but
+            # style.bundleid we don't know how to map, so we generate an error
+            raise ThemeError(
+                (
+                    f"{self.prog}: unknown style '{name}' while processing"
+                    f" scope '{scope}' using the 'ls_colors' generator"
                 )
-            else:
-                errmsg = (
-                    f"{self.prog}: scope '{scope}' requires '{key}' to be true or false"
-                )
-            raise ThemeError(errmsg)
+            ) from exc
+
+        if style.color.type == rich.color.ColorType.DEFAULT:
+            ansicodes = "0"
+        else:
+            # this works, but it uses a protected method
+            #   ansicodes = style._make_ansi_codes(rich.color.ColorSystem.TRUECOLOR)
+            # here's another approach, we ask the style to render a string, then
+            # go peel the ansi codes out of the generated escape sequence
+            ansistring = style.render("-----")
+            # style.render uses this string to build it's output
+            # f"\x1b[{attrs}m{text}\x1b[0m"
+            # so let's go split it apart
+            match = re.match(r"^\x1b\[([;\d]*)m", ansistring)
+            # and get the numeric codes
+            ansicodes = match.group(1)
+        return mapname, f"{mapname}={ansicodes}"
 
 
 class EnvironmentVariables(GeneratorBase):
@@ -138,6 +173,7 @@ class Fzf(GeneratorBase):
     def generate(self) -> str:
         """render attribs into a shell statement to set an environment variable"""
         optstr = ""
+        interp = Interpolator(self.styles, self.variables)
 
         # process all the command line options
         try:
@@ -147,7 +183,7 @@ class Fzf(GeneratorBase):
 
         for key, value in opts.items():
             if isinstance(value, str):
-                interp_value = self.variable_interpolate(value)
+                interp_value = interp.interpolate_variables(value)
                 optstr += f" {key}='{interp_value}'"
             elif isinstance(value, bool) and value:
                 optstr += f" {key}"
@@ -155,7 +191,7 @@ class Fzf(GeneratorBase):
         # process all the styles
         colors = []
         # then add them back
-        for name, style in self.styles_from(self.scopedef).items():
+        for name, style in self.scope_styles.items():
             colors.append(self._fzf_from_style(name, style))
         # turn off all the colors, and add our color strings
         try:
@@ -170,7 +206,7 @@ class Fzf(GeneratorBase):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = self.variable_interpolate(varname)
+            varname = interp.interpolate_variables(varname)
             print(f'export {varname}="{optstr}{colorstr}"')
         except KeyError as exc:
             raise ThemeError(
@@ -252,7 +288,7 @@ class Fzf(GeneratorBase):
         return attribs
 
 
-class LsColors(GeneratorBase):
+class LsColors(GeneratorBase, LsColorsFromStyle):
     "generator for LS_COLORS environment variable"
     LS_COLORS_BASE_MAP = {
         # map both a friendly name and the "real" name
@@ -291,14 +327,16 @@ class LsColors(GeneratorBase):
         try:
             clear_builtin = self.scopedef["clear_builtin"]
             # TODO change "ls_colors" to use the generated name from GeneratorBase
-            self._assert_bool(clear_builtin, "ls_colors", self.scope, "clear_builtin")
+            self.assert_bool(
+                self.prog, clear_builtin, "ls_colors", self.scope, "clear_builtin"
+            )
         except KeyError:
             clear_builtin = False
 
         # iterate over the styles given in our configuration
         for name, style in self.scope_styles.items():
             if style:
-                mapcode, render = self._ls_colors_from_style(
+                mapcode, render = self.ls_colors_from_style(
                     name, style, self.LS_COLORS_MAP, self.scope
                 )
                 havecodes.append(mapcode)
@@ -311,7 +349,7 @@ class LsColors(GeneratorBase):
             # 'default' style and add them to the output
             for name, code in self.LS_COLORS_BASE_MAP.items():
                 if not code in havecodes:
-                    _, render = self._ls_colors_from_style(
+                    _, render = self.ls_colors_from_style(
                         name, style, self.LS_COLORS_MAP, self.scope
                     )
                     outlist.append(render)
@@ -332,55 +370,8 @@ class LsColors(GeneratorBase):
         # we chose to set the variable to empty instead of unsetting it
         return f'''export {varname}="{':'.join(outlist)}"'''
 
-    # TODO turn this into a mixin, so we can use it in both ls and exa colors
-    # TODO put all the error message stuff into a errdata or msgdata dictionary
-    def _ls_colors_from_style(self, name, style, mapp, scope):
-        """create an entry suitable for LS_COLORS from a style
 
-        name should be a valid LS_COLORS entry, could be a code representing
-        a file type, or a glob representing a file extension
-
-        style is a style object
-
-        mapp is a dictionary of friendly color names to native color names
-            ie map['directory'] = 'di'
-
-        scope is the scope where this mapped occured, used for error message
-        """
-        ansicodes = ""
-        if not style:
-            return "", ""
-        try:
-            mapname = mapp[name]
-        except KeyError as exc:
-            # they used a style for a file attribute that we don't know how to map
-            # i.e. style.text or style.directory we know what to do with, but
-            # style.bundleid we don't know how to map, so we generate an error
-            raise ThemeError(
-                (
-                    f"{self.prog}: unknown style '{name}' while processing"
-                    f" scope '{scope}' using the 'ls_colors' generator"
-                )
-            ) from exc
-
-        if style.color.type == rich.color.ColorType.DEFAULT:
-            ansicodes = "0"
-        else:
-            # this works, but it uses a protected method
-            #   ansicodes = style._make_ansi_codes(rich.color.ColorSystem.TRUECOLOR)
-            # here's another approach, we ask the style to render a string, then
-            # go peel the ansi codes out of the generated escape sequence
-            ansistring = style.render("-----")
-            # style.render uses this string to build it's output
-            # f"\x1b[{attrs}m{text}\x1b[0m"
-            # so let's go split it apart
-            match = re.match(r"^\x1b\[([;\d]*)m", ansistring)
-            # and get the numeric codes
-            ansicodes = match.group(1)
-        return mapname, f"{mapname}={ansicodes}"
-
-
-class ExaColors(GeneratorBase):
+class ExaColors(GeneratorBase, LsColorsFromStyle):
     "generator for environment variables for exa"
     #
     # exa color generator
@@ -453,12 +444,12 @@ class ExaColors(GeneratorBase):
     def generate(self):
         "Render a EXA_COLORS variable suitable for exa"
         outlist = []
-        # process the styles
-        styles = self.styles_from(self.scopedef)
         # figure out if we are clearing builtin styles
         try:
             clear_builtin = self.scopedef["clear_builtin"]
-            self._assert_bool(clear_builtin, "exa_colors", self.scope, "clear_builtin")
+            self.assert_bool(
+                self.prog, clear_builtin, "exa_colors", self.scope, "clear_builtin"
+            )
         except KeyError:
             clear_builtin = False
 
@@ -467,9 +458,9 @@ class ExaColors(GeneratorBase):
             outlist.append("reset")
 
         # iterate over the styles given in our configuration
-        for name, style in styles.items():
+        for name, style in self.scope_styles.items():
             if style:
-                _, render = self._ls_colors_from_style(
+                _, render = self.ls_colors_from_style(
                     name, style, self.EXA_COLORS_MAP, self.scope
                 )
                 outlist.append(render)
@@ -479,7 +470,8 @@ class ExaColors(GeneratorBase):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = self.variable_interpolate(varname)
+            interp = Interpolator(self.styles, self.variables)
+            varname = interp.interpolate(varname)
         except KeyError:
             varname = "EXA_COLORS"
 

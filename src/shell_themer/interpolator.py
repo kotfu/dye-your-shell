@@ -103,7 +103,7 @@ class Interpolator:
             out = f"{phrase}"
         else:
             try:
-                value = self.variables[varname]
+                value = self.value_of(varname)
             except KeyError:
                 value = None
             if value is None:

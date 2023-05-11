@@ -45,9 +45,10 @@ from .version import version_string
 from .interpolator import Interpolator
 from .generators import GeneratorBase
 from .exceptions import ThemeError
+from .utils import AssertBool
 
 
-class Themer:
+class Themer(AssertBool):
     """parse and translate a theme file for various command line programs"""
 
     EXIT_SUCCESS = 0
@@ -385,16 +386,6 @@ class Themer:
     #
     # style and variable related methods
     #
-    def styles_from(self, scopedef):
-        "Extract a dict of all the styles present in the given scope definition"
-        styles = {}
-        try:
-            raw_styles = scopedef["style"]
-            for key, value in raw_styles.items():
-                styles[key] = self.get_style(value)
-        except KeyError:
-            pass
-        return styles
 
     def get_style(self, styledef):
         """convert a string into rich.style.Style object"""
@@ -409,24 +400,25 @@ class Themer:
             style = rich.style.Style.parse(interp)
         return style
 
-    def value_of(self, variable):
-        """return the value or contents of a variable
-        performs variable interpolation at access time, not at
-        parse time
-        return None if variable is not defined"""
+    # TODO remove, replace with VariableGetter
+    # def value_of(self, variable):
+    #     """return the value or contents of a variable
+    #     performs variable interpolation at access time, not at
+    #     parse time
+    #     return None if variable is not defined"""
 
-        variables = {}
-        try:
-            variables = self.definition["variables"]
-            definedvalue = variables[variable]
-            # we can only interpolate variables in string type values
-            if isinstance(definedvalue, str):
-                value = self.variable_interpolate(definedvalue)
-                return self.style_interpolate(value)
-            return definedvalue
-        except KeyError:
-            # variable not defined
-            return None
+    #     variables = {}
+    #     try:
+    #         variables = self.definition["variables"]
+    #         definedvalue = variables[variable]
+    #         # we can only interpolate variables in string type values
+    #         if isinstance(definedvalue, str):
+    #             value = self.variable_interpolate(definedvalue)
+    #             return self.style_interpolate(value)
+    #         return definedvalue
+    #     except KeyError:
+    #         # variable not defined
+    #         return None
 
     #
     # scope, parsing, and validation methods
@@ -465,7 +457,7 @@ class Themer:
         scopedef = self.scopedef_for(scope)
         try:
             enabled = scopedef["enabled"]
-            self._assert_bool(enabled, None, scope, "enabled")
+            self.assert_bool(self.prog, enabled, None, scope, "enabled")
             # this is authoritative, if it exists, ignore enabled_if below
             return enabled
         except KeyError:
@@ -492,20 +484,6 @@ class Themer:
             # and this scope should therefore be disabled
             return False
         return True
-
-    ## TODO see if we can delete this method, we moved it to GeneratorBase
-    # def _assert_bool(self, value, generator, scope, key):
-    #     if not isinstance(value, bool):
-    #         if generator:
-    #             errmsg = (
-    #                 f"{self.prog}: {generator} generator for"
-    #                 f" scope '{scope}' requires '{key}' to be true or false"
-    #             )
-    #         else:
-    #             errmsg = (
-    #                 f"{self.prog}: scope '{scope}' requires '{key}' to be true or false"
-    #             )
-    #         raise ThemeError(errmsg)
 
     #
     # dispatchers

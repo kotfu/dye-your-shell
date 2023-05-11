@@ -33,12 +33,10 @@ import rich.errors
 
 from shell_themer import ThemeError
 
-
 #
 # test style parsing
 #
 # TODO remove some of these tests, but maybe keep the integration level ones
-
 
 
 def test_process_definition(thm):
@@ -76,145 +74,124 @@ def test_process_definition(thm):
     # check an interpolated variable in a style
     assert thm.styles["red"].color.name == "#ff5555"
     # check the variable interpolation
-    assert thm.value_of("replace") == "5555"
-    assert thm.value_of("myred") == "#ff5555"
-    # check style interpolation in variables
-    assert thm.value_of("igreen") == "#50fa7b"
+    # TODO maybe we don't need to check this here, maybe we should be testing it on
+    # the interpolator
+    # assert thm.value_of("replace") == "5555"
+    # assert thm.value_of("myred") == "#ff5555"
+    # # check style interpolation in variables
+    # assert thm.value_of("igreen") == "#50fa7b"
 
 
-def test_styles_from(thm):
-    tomlstr = """
-        [styles]
-        background =  "#282a36"
-        foreground =  "#f8f8f2"
-        current_line =  "#f8f8f2 on #44475a"
-        comment =  "#6272a4"
-        cyan =  "#8be9fd"
-        green =  "#50fa7b"
-        orange =  "#ffb86c"
-        pink =  "#ff79c6"
-        purple =  "#bd93f9"
-        red =  "#ff5555"
-        yellow =  "#f1fa8c"
+# TODO this should test the init in GeneratorBase which sets scope_styles
+# def test_styles_from(thm):
+#     tomlstr = """
+#         [styles]
+#         background =  "#282a36"
+#         foreground =  "#f8f8f2"
+#         current_line =  "#f8f8f2 on #44475a"
+#         comment =  "#6272a4"
+#         cyan =  "#8be9fd"
+#         green =  "#50fa7b"
+#         orange =  "#ffb86c"
+#         pink =  "#ff79c6"
+#         purple =  "#bd93f9"
+#         red =  "#ff5555"
+#         yellow =  "#f1fa8c"
 
-        [scope.iterm]
-        generator = "iterm"
-        style.foreground = "foreground"
-        style.background = "background"
+#         [scope.iterm]
+#         generator = "iterm"
+#         style.foreground = "foreground"
+#         style.background = "background"
 
-        [scope.fzf]
-        generator = "fzf"
+#         [scope.fzf]
+#         generator = "fzf"
 
-        # attributes specific to fzf
-        environment_variable = "FZF_DEFAULT_OPTS"
+#         # attributes specific to fzf
+#         environment_variable = "FZF_DEFAULT_OPTS"
 
-        # command line options
-        opt.--prompt = ">"
-        opt.--border = "single"
-        opt.--pointer = "•"
-        opt.--info = "hidden"
-        opt.--no-sort = true
-        opt."+i" = true
+#         # command line options
+#         opt.--prompt = ">"
+#         opt.--border = "single"
+#         opt.--pointer = "•"
+#         opt.--info = "hidden"
+#         opt.--no-sort = true
+#         opt."+i" = true
 
-        # styles
-        style.text = "foreground"
-        style.label = "green"
-        style.border = "orange"
-        style.selected = "current_line"
-        style.prompt = "green"
-        style.indicator = "cyan"
-        style.match = "pink"
-        style.localstyle = "green on black"
-    """
-    thm.loads(tomlstr)
-    scopedef = thm.scopedef_for("fzf")
-    styles = thm.styles_from(scopedef)
-    assert isinstance(styles, dict)
-    assert len(styles) == 8
-    assert "indicator" in styles.keys()
-    assert isinstance(styles["localstyle"], rich.style.Style)
-    style = styles["selected"]
-    assert style.color.name == "#f8f8f2"
-    assert style.bgcolor.name == "#44475a"
+#         # styles
+#         style.text = "foreground"
+#         style.label = "green"
+#         style.border = "orange"
+#         style.selected = "current_line"
+#         style.prompt = "green"
+#         style.indicator = "cyan"
+#         style.match = "pink"
+#         style.localstyle = "green on black"
+#     """
+#     thm.loads(tomlstr)
+#     scopedef = thm.scopedef_for("fzf")
+#     styles = thm.styles_from(scopedef)
+#     assert isinstance(styles, dict)
+#     assert len(styles) == 8
+#     assert "indicator" in styles.keys()
+#     assert isinstance(styles["localstyle"], rich.style.Style)
+#     style = styles["selected"]
+#     assert style.color.name == "#f8f8f2"
+#     assert style.bgcolor.name == "#44475a"
 
 
-def test_styles_from_unknown(thm):
-    tomlstr = """
-        [scope.iterm]
-        generator = "iterm"
-        style.foreground = "foreground"
-        style.background = "background"
-    """
-    thm.loads(tomlstr)
-    scopedef = thm.scopedef_for("unknown")
-    styles = thm.styles_from(scopedef)
-    assert isinstance(styles, dict)
-    assert styles == {}
+# TODO I don't think we need to test this, as long as we test the
+# init() method of GeneratorBase
+# def test_styles_from_unknown(thm):
+#     tomlstr = """
+#         [scope.iterm]
+#         generator = "iterm"
+#         style.foreground = "foreground"
+#         style.background = "background"
+#     """
+#     thm.loads(tomlstr)
+#     scopedef = thm.scopedef_for("unknown")
+#     styles = thm.styles_from(scopedef)
+#     assert isinstance(styles, dict)
+#     assert styles == {}
 
 
 #
 # test variable related methods, including interpolation
 #
-VARIABLES = [
-    ("SomeVar", "Hello"),
-    ("another_var", "one,two,three"),
-    ("comment", "#6272a4"),
-    ("empty", ""),
-    ("number", 5),
-    ("bool", True),
-    ("notdefined", None),
-    ("text", "#6272a4 on #002200"),
-    # make sure we interpolate a style into a variable
-    ("astyle", "00ff00"),
-]
+# TODO move this to where we test the interpolator
+# VARIABLES = [
+#     ("SomeVar", "Hello"),
+#     ("another_var", "one,two,three"),
+#     ("comment", "#6272a4"),
+#     ("empty", ""),
+#     ("number", 5),
+#     ("bool", True),
+#     ("notdefined", None),
+#     ("text", "#6272a4 on #002200"),
+#     # make sure we interpolate a style into a variable
+#     ("astyle", "00ff00"),
+# ]
 
 
-@pytest.mark.parametrize("variable, value", VARIABLES)
-def test_value_of(thm, variable, value):
-    tomlstr = """
-        [variables]
-        SomeVar =  "Hello"
-        another_var = "one,two,three"
-        comment =  "#6272a4"
-        background = "#002200"
-        number = 5
-        bool = true
-        empty = ""
-        text = "{var:comment} on {variable:background}"
-        astyle = "{style:green:hexnohash}"
+# @pytest.mark.parametrize("variable, value", VARIABLES)
+# def test_value_of(thm, variable, value):
+#     tomlstr = """
+#         [variables]
+#         SomeVar =  "Hello"
+#         another_var = "one,two,three"
+#         comment =  "#6272a4"
+#         background = "#002200"
+#         number = 5
+#         bool = true
+#         empty = ""
+#         text = "{var:comment} on {variable:background}"
+#         astyle = "{style:green:hexnohash}"
 
-        [styles]
-        green = "#00ff00"
-    """
-    thm.loads(tomlstr)
-    assert thm.value_of(variable) == value
-
-
-VARIABLE_INTERPOLATIONS = [
-    ("{variable:SomeVar} there", "Hello there"),
-    ("{variable:somevar} there", "{variable:somevar} there"),
-    ("It is {var:bool}.", "It is true."),
-    ("nothing to be done", "nothing to be done"),
-    ("fred='{var:empty}'", "fred=''"),
-    (r"\{variable:SomeVar} there", "{variable:SomeVar} there"),
-    ("I have {var:number} apples.", "I have 5 apples."),
-    ("count: {variable:another_var}", "count: one,two,three"),
-]
-
-
-@pytest.mark.parametrize("value, newvalue", VARIABLE_INTERPOLATIONS)
-def test_variable_interpolate(thm, value, newvalue):
-    tomlstr = """
-        [variables]
-        SomeVar =  "Hello"
-        another_var = "one,two,three"
-        comment =  "#6272a4"
-        number = 5
-        bool = true
-        empty = ""
-    """
-    thm.loads(tomlstr)
-    assert thm.variable_interpolate(value) == newvalue
+#         [styles]
+#         green = "#00ff00"
+#     """
+#     thm.loads(tomlstr)
+#     assert thm.value_of(variable) == value
 
 
 #
@@ -232,9 +209,10 @@ def test_scopedef(thm):
     assert isinstance(scopedef, dict)
     assert scopedef["generator"] == "iterm"
     assert len(scopedef) == 2
-    styles = thm.styles_from(scopedef)
-    assert len(styles) == 2
-    assert isinstance(styles["foreground"], rich.style.Style)
+    # TODO this should be tested on the GeneratorBase, not here
+    # styles = thm.styles_from(scopedef)
+    # assert len(styles) == 2
+    # assert isinstance(styles["foreground"], rich.style.Style)
 
 
 def test_scopedef_notfound(thm):
@@ -260,25 +238,6 @@ def test_has_scope(thm):
     thm.loads(tomlstr)
     assert thm.has_scope("qqq")
     assert not thm.has_scope("fred")
-
-
-BOOL_TESTS = [
-    (True, True),
-    (False, True),
-    ("something", False),
-    (0, False),
-    (1, False),
-    (0.5, False),
-]
-
-
-@pytest.mark.parametrize("val, expected", BOOL_TESTS)
-def test_assert_bool(thm, val, expected):
-    if expected:
-        thm._assert_bool(val, "generator", "scope", "key")
-    else:
-        with pytest.raises(ThemeError):
-            thm._assert_bool(val, "generator", "scope", "key")
 
 
 #

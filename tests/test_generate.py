@@ -372,9 +372,10 @@ ATTRIBS_TO_FZF = [
 
 
 @pytest.mark.parametrize("styledef, fzf", ATTRIBS_TO_FZF)
-def test_fzf_attribs_from_style(thm, styledef, fzf):
+def test_fzf_attribs_from_style(styledef, fzf):
     style = rich.style.Style.parse(styledef)
-    assert fzf == thm._fzf_attribs_from_style(style)
+    genny = shell_themer.generators.Fzf(None, None, None, None, None)
+    assert fzf == genny._fzf_attribs_from_style(style)
 
 
 STYLE_TO_FZF = [
@@ -397,9 +398,10 @@ STYLE_TO_FZF = [
 
 
 @pytest.mark.parametrize("name, styledef, fzf", STYLE_TO_FZF)
-def test_fzf_from_style(thm, name, styledef, fzf):
+def test_fzf_from_style(name, styledef, fzf):
     style = rich.style.Style.parse(styledef)
-    assert fzf == thm._fzf_from_style(name, style)
+    genny = shell_themer.generators.Fzf(None, None, None, None, None)
+    assert fzf == genny._fzf_from_style(name, style)
 
 
 def test_fzf_opts(thm_cmdline, capsys):
@@ -483,9 +485,7 @@ STYLE_TO_LSCOLORS = [
 def test_ls_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
     genny = shell_themer.generators.LsColors(None, None, None, None, None)
-    code, render = genny._ls_colors_from_style(
-        name, style, genny.LS_COLORS_MAP, "scope"
-    )
+    code, render = genny.ls_colors_from_style(name, style, genny.LS_COLORS_MAP, "scope")
     assert render == expected
     assert code == expected[0:2]
 
@@ -594,9 +594,12 @@ STYLE_TO_EXACOLORS = [
 
 
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EXACOLORS)
-def test_exa_colors_from_style(thm, name, styledef, expected):
+def test_exa_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    code, render = thm._ls_colors_from_style(name, style, thm.EXA_COLORS_MAP, "scope")
+    genny = shell_themer.generators.ExaColors(None, None, None, None, None)
+    code, render = genny.ls_colors_from_style(
+        name, style, genny.EXA_COLORS_MAP, "scope"
+    )
     assert render == expected
     assert code == expected[0:2]
 
