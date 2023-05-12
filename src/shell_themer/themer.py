@@ -377,42 +377,6 @@ class Themer(AssertBool):
         self.styles = parser.parse_dict(raw_styles)
 
     #
-    # style and variable related methods
-    #
-    def get_style(self, styledef):
-        """convert a string into rich.style.Style object"""
-        # first check if this definition is already in our list of styles
-        try:
-            style = self.styles[styledef]
-        except KeyError:
-            style = None
-        # nope, parse the input as a style
-        if not style:
-            interp = self.variable_interpolate(styledef)
-            style = rich.style.Style.parse(interp)
-        return style
-
-    # TODO remove, replace with VariableGetter
-    # def value_of(self, variable):
-    #     """return the value or contents of a variable
-    #     performs variable interpolation at access time, not at
-    #     parse time
-    #     return None if variable is not defined"""
-
-    #     variables = {}
-    #     try:
-    #         variables = self.definition["variables"]
-    #         definedvalue = variables[variable]
-    #         # we can only interpolate variables in string type values
-    #         if isinstance(definedvalue, str):
-    #             value = self.variable_interpolate(definedvalue)
-    #             return self.style_interpolate(value)
-    #         return definedvalue
-    #     except KeyError:
-    #         # variable not defined
-    #         return None
-
-    #
     # scope, parsing, and validation methods
     #
     def has_scope(self, scope):
