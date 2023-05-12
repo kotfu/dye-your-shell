@@ -60,20 +60,3 @@ class AssertBool:
                     f" requires '{msgdata['key']}' to be true or false"
                 )
             raise ThemeError(errmsg)
-
-
-class VariableGetter:
-    """Mixin class with a method to get the value of a variable"""
-
-    def value_of(self, varname, styles, variables):
-        """get the value of a variable, interpolating variables if present"""
-        try:
-            definedvalue = variables[varname]
-            # we can only interpolate variables in string type values
-            if isinstance(definedvalue, str):
-                interp = Interpolator(styles, variables)
-                return interp.interpolate(definedvalue)
-            return definedvalue
-        except KeyError:
-            # variable not defined
-            return None
