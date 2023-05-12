@@ -24,10 +24,8 @@
 """command line tool for maintaining and switching color schemes"""
 
 import argparse
-import functools
 import os
 import pathlib
-import re
 import subprocess
 import sys
 
@@ -44,6 +42,7 @@ import tomlkit
 from .version import version_string
 from .interpolator import Interpolator
 from .generators import GeneratorBase
+from .parsers import StyleParser
 from .exceptions import ThemeError
 from .utils import AssertBool
 
@@ -370,23 +369,16 @@ class Themer(AssertBool):
     def _process_definition(self):
         """process a newly loaded definition, including variables and styles"""
         # process the styles
-        self.styles = {}
+        parser = StyleParser(None, self.variables)
         try:
-            for key, styledef in self.definition["styles"].items():
-                # interpolate variables
-                ### TODO use StyleParser??
-                interp = Interpolator(None, self.variables)
-                resolved = interp.interpolate_variables(styledef)
-                # and parse the style definition
-                self.styles[key] = rich.style.Style.parse(resolved)
+            raw_styles = self.definition["styles"]
         except KeyError:
-            # no styles
-            pass
+            raw_styles = {}
+        self.styles = parser.parse_dict(raw_styles)
 
     #
     # style and variable related methods
     #
-
     def get_style(self, styledef):
         """convert a string into rich.style.Style object"""
         # first check if this definition is already in our list of styles

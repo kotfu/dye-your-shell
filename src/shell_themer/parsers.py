@@ -60,7 +60,7 @@ class StyleParser:
             style = rich.style.Style.parse(resolved)
         return style
 
-    def parse_dict(self, raw_styles: dict = {}) -> dict:
+    def parse_dict(self, raw_styles: dict = None) -> dict:
         """parse each style in a dictionary"""
         new_styles = {}
         if raw_styles:
