@@ -619,7 +619,11 @@ class Themer(AssertBool):
                     gcls = GeneratorBase.classmap[generator]
                     # initialize the class with the scope and scope definition
                     ginst = gcls(
-                        self.prog, scope, scopedef, self.styles, self.variables
+                        scopedef,
+                        self.styles,
+                        self.variables,
+                        prog=self.prog,
+                        scope=scope,
                     )
                     # generate and print the output
                     output = ginst.generate()

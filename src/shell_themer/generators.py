@@ -56,22 +56,21 @@ class GeneratorBase(abc.ABC, AssertBool):
         # make a registry of subclasses as they are defined
         cls.classmap[cls._name_of(cls.__name__)] = cls
 
-    ## TODO: move prog and scope into an msgdata dictionary parameter
-    def __init__(self, prog, scope, scopedef, styles, variables):
+    def __init__(self, scopedef, styles, variables, prog=None, scope=None):
         super().__init__()
         self.generator = self._name_of(self.__class__.__name__)
-        self.prog = prog
-        self.scope = scope
         self.scopedef = scopedef
         self.styles = styles
         self.variables = variables
+        self.prog = prog
+        self.scope = scope
         # create scope_styles, the styles parsed from scopedef
         try:
             raw_styles = scopedef["style"]
         except (KeyError, TypeError):
             raw_styles = {}
-        interp = StyleParser(styles, variables)
-        self.scope_styles = interp.parse_dict(raw_styles)
+        parser = StyleParser(styles, variables)
+        self.scope_styles = parser.parse_dict(raw_styles)
 
     @classmethod
     def _name_of(cls, name: str) -> str:
