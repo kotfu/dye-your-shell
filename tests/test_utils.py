@@ -41,9 +41,13 @@ BOOL_TESTS = [
 
 @pytest.mark.parametrize("val, expected", BOOL_TESTS)
 def test_assert_bool(val, expected):
-    ab = AssertBool()
+    asserter = AssertBool()
     if expected:
-        ab.assert_bool("prog", val, "generator", "scope", "key")
+        asserter.assert_bool(
+            val, key="val", prog="prog", generator="generator", scope="scope"
+        )
     else:
         with pytest.raises(ThemeError):
-            ab.assert_bool("prog", val, "generator", "scope", "key")
+            asserter.assert_bool(
+                val, key="val", prog="prog", geneartor="generator", scope="scope"
+            )

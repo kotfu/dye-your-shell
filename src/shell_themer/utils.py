@@ -33,23 +33,40 @@ class AssertBool:
     :raises ThemeError: if the value is not boolean
     """
 
-    # TODO move self.prog, generator, scope, key into a msgdata dictionary
-    def assert_bool(self, prog, value, generator, scope, key):
+    def assert_bool(self, value, generator=None, **msgdata):
+        """raise ThemeError if value is not a boolean
+
+        msgdata is a dictionary of items used to create a useful
+        error message.
+
+        generator = the name of the generator that triggered the error
+                    if not present, null, or empty, the error message
+                    won't include which generator caused the error.
+                    generator is optional
+        prog = the name of the program, required
+        scope = the name of the scope to include in the error message, required
+        key = the key which must contain the true or false value, required
+        """
         if not isinstance(value, bool):
             if generator:
                 errmsg = (
-                    f"{prog}: {generator} generator for"
-                    f" scope '{scope}' requires '{key}' to be true or false"
+                    f"{msgdata['prog']}: {generator} generator for"
+                    f" scope '{msgdata['scope']}' requires '{msgdata['key']}'"
+                    f" to be true or false"
                 )
             else:
-                errmsg = f"{prog}: scope '{scope}' requires '{key}' to be true or false"
+                errmsg = (
+                    f"{msgdata['prog']}: scope '{msgdata['scope']}'"
+                    f" requires '{msgdata['key']}' to be true or false"
+                )
             raise ThemeError(errmsg)
 
 
 class VariableGetter:
     """Mixin class with a method to get the value of a variable"""
 
-    def value_of(varname, styles, variables):
+    def value_of(self, varname, styles, variables):
+        """get the value of a variable, interpolating variables if present"""
         try:
             definedvalue = variables[varname]
             # we can only interpolate variables in string type values

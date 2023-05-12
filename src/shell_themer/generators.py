@@ -50,14 +50,16 @@ class GeneratorBase(abc.ABC, AssertBool):
 
     classmap = {}
 
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
+    @classmethod
+    def __init_subclass__(cls):
+        super().__init_subclass__()
         # make a registry of subclasses as they are defined
         cls.classmap[cls._name_of(cls.__name__)] = cls
 
-    ## TODO: move prog into an msgdata dictionary parameter
+    ## TODO: move prog and scope into an msgdata dictionary parameter
     def __init__(self, prog, scope, scopedef, styles, variables):
         super().__init__()
+        self.generator = self._name_of(self.__class__.__name__)
         self.prog = prog
         self.scope = scope
         self.scopedef = scopedef
@@ -326,9 +328,12 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
         # figure out if we are clearing builtin styles
         try:
             clear_builtin = self.scopedef["clear_builtin"]
-            # TODO change "ls_colors" to use the generated name from GeneratorBase
             self.assert_bool(
-                self.prog, clear_builtin, "ls_colors", self.scope, "clear_builtin"
+                clear_builtin,
+                key="clear_builtin",
+                generator=self.generator,
+                prog=self.prog,
+                scope=self.scope,
             )
         except KeyError:
             clear_builtin = False
@@ -448,7 +453,11 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
         try:
             clear_builtin = self.scopedef["clear_builtin"]
             self.assert_bool(
-                self.prog, clear_builtin, "exa_colors", self.scope, "clear_builtin"
+                clear_builtin,
+                key="clear_builtin",
+                generator=self.generator,
+                prog=self.prog,
+                scope=self.scope,
             )
         except KeyError:
             clear_builtin = False

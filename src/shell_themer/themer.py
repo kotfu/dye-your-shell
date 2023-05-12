@@ -457,7 +457,12 @@ class Themer(AssertBool):
         scopedef = self.scopedef_for(scope)
         try:
             enabled = scopedef["enabled"]
-            self.assert_bool(self.prog, enabled, None, scope, "enabled")
+            self.assert_bool(
+                enabled,
+                key="enabled",
+                prog=self.prog,
+                scope=scope,
+            )
             # this is authoritative, if it exists, ignore enabled_if below
             return enabled
         except KeyError:
