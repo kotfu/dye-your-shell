@@ -75,7 +75,6 @@ def test_process_definition(thm):
     assert thm.styles["red"].color.name == "#ff5555"
 
 
-
 # TODO this should test the init in GeneratorBase which sets scope_styles
 # def test_styles_from(thm):
 #     tomlstr = """

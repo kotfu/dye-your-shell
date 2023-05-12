@@ -112,17 +112,25 @@ VARPOLATIONS = [
     # to be removed.
     (r"\{ some other  things}", r"\{ some other  things}"),
     (r"\{escaped unmatched bracket", r"\{escaped unmatched bracket"),
+    # try interpolating numbers
+    ("size {variable:size}", "size 5"),
+    ("lets {variable:doit}", "lets true"),
+    # empty should yield empty
     ("", ""),
 ]
 
 
 @pytest.mark.parametrize("text, resolved", VARPOLATIONS)
 def test_interpolate_variables(text, resolved):
-    variables = {"someopts": "--option=fred -v"}
+    variables = {
+        "someopts": "--option=fred -v",
+        "size": 5,
+        "doit": True,
+    }
     # create some styles so we can make sure they don't get interpolated
     raw_styles = {"foreground": "#dddddd"}
-    sp = StyleParser(None, None)
-    styles = sp.parse_dict(raw_styles)
+    parser = StyleParser(None, None)
+    styles = parser.parse_dict(raw_styles)
     # create our interpolator
     interp = Interpolator(styles, variables)
     assert resolved == interp.interpolate_variables(text)

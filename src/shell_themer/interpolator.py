@@ -31,6 +31,8 @@ import rich.style
 
 
 class Interpolator:
+    """Interpolate style and variable keywords"""
+
     def __init__(self, styles, variables):
         super().__init__()
         self.styles = styles
@@ -38,10 +40,12 @@ class Interpolator:
 
     def value_of(self, variable):
         """return the value or contents of a variable
+
         performs variable interpolation at access time, not at
         parse time
-        return None if variable is not defined"""
 
+        return None if variable is not defined
+        """
         try:
             definedvalue = self.variables[variable]
             # we can only interpolate variables in string type values
@@ -102,10 +106,7 @@ class Interpolator:
             # in match group 2
             out = f"{phrase}"
         else:
-            try:
-                value = self.value_of(varname)
-            except KeyError:
-                value = None
+            value = self.value_of(varname)
             if value is None:
                 # we can't find the variable, so don't do a replacement
                 out = match.group(0)
