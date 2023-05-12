@@ -73,13 +73,7 @@ def test_process_definition(thm):
     assert thm.styles["yellow"].color.name == "#f1fa8c"
     # check an interpolated variable in a style
     assert thm.styles["red"].color.name == "#ff5555"
-    # check the variable interpolation
-    # TODO maybe we don't need to check this here, maybe we should be testing it on
-    # the interpolator
-    # assert thm.value_of("replace") == "5555"
-    # assert thm.value_of("myred") == "#ff5555"
-    # # check style interpolation in variables
-    # assert thm.value_of("igreen") == "#50fa7b"
+
 
 
 # TODO this should test the init in GeneratorBase which sets scope_styles

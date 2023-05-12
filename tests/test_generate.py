@@ -33,13 +33,20 @@ from shell_themer import Themer
 
 
 #
-# test low level generator functions
+# test GeneratorBase functionality
 #
 def test_generator_classmap():
     classmap = shell_themer.generators.GeneratorBase.classmap
-    assert "environment_variables" in classmap.keys()
-    assert "bogusgenerator" not in classmap.keys()
+    assert "environment_variables" in classmap
+    assert "bogusgenerator" not in classmap
     assert classmap["environment_variables"].__name__ == "EnvironmentVariables"
+
+
+def test_generator_name():
+    envgen = shell_themer.generators.EnvironmentVariables(None, None, None)
+    assert envgen.generator == "environment_variables"
+    fzfgen = shell_themer.generators.Fzf(None, None, None)
+    assert fzfgen.generator == "fzf"
 
 
 #
@@ -215,7 +222,7 @@ def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
     tomlstr = f"""
         [variables]
         echocmd = "/bin/echo"
-        falsetest = "[[ 1 == 0]]"
+        falsetest = "[[ 1 == 0 ]]"
 
         [scope.unset]
         enabled_if = "{cmd}"
@@ -327,10 +334,13 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
 
 def test_generate_environment_unset_list(thm_cmdline, capsys):
     tomlstr = """
+        [variables]
+        thevar = "ANOTHERVAR"
+
         [scope.ls]
         generator = "environment_variables"
         # set some environment variables
-        environment.unset = ["SOMEVAR", "ANOTHERVAR"]
+        environment.unset = ["SOMEVAR", "{var:thevar}"]
         environment.export.LS_COLORS = "ace ventura"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -404,8 +414,11 @@ def test_fzf_from_style(name, styledef, fzf):
     assert fzf == genny._fzf_from_style(name, style)
 
 
-def test_fzf_opts(thm_cmdline, capsys):
+def test_fzf(thm_cmdline, capsys):
     tomlstr = """
+        [styles]
+        purple = "#7060eb"
+
         [variables]
         bstyle = "rounded"
 
@@ -414,18 +427,25 @@ def test_fzf_opts(thm_cmdline, capsys):
         environment_variable = "QQQ"
         opt."+i" = true
         opt.--border = "{var:bstyle}"
+        style.prompt = "magenta3"
+        style.info = "purple"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
-    assert out == """export QQQ=" +i --border='rounded'"\n"""
+    expected = (
+        """export QQQ=" +i --border='rounded'"""
+        """ --color='prompt:164:regular,info:#7060eb:regular'"\n"""
+    )
+    assert out == expected
 
 
 def test_fzf_no_opts(thm_cmdline, capsys):
     tomlstr = """
         [variables]
         varname = "ZZ"
+
         [scope.fzf]
         generator = "fzf"
         environment_variable = "Q{var:varname}QQ"
@@ -529,6 +549,26 @@ def test_ls_colors_environment_variable(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert out == 'export OTHER_LS_COLOR="fi=0"\n'
+
+
+def test_ls_colors_styles_variables(thm_cmdline, capsys):
+    tomlstr = """
+        [variables]
+        pinkvar = "magenta3"
+
+        [styles]
+        warning = "yellow on red"
+
+        [scope.lsc]
+        generator = "ls_colors"
+        style.file = "warning"
+        style.directory = "{var:pinkvar}"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert out == 'export LS_COLORS="fi=33;41:di=38;5;164"\n'
 
 
 def test_ls_colors_clear_builtin(thm_cmdline, capsys):
@@ -646,6 +686,26 @@ def test_exa_colors_environment_variable(thm_cmdline, capsys):
     assert out == 'export OTHER_EXA_COLOR="fi=0:sn=38;2;112;96;235"\n'
 
 
+def test_exa_colors_styles_variables(thm_cmdline, capsys):
+    tomlstr = """
+        [variables]
+        pinkvar = "magenta3"
+
+        [styles]
+        warning = "yellow on red"
+
+        [scope.lsc]
+        generator = "exa_colors"
+        style.file = "warning"
+        style.directory = "{var:pinkvar}"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert out == 'export EXA_COLORS="fi=33;41:di=38;5;164"\n'
+
+
 def test_exa_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
@@ -682,10 +742,14 @@ def test_exa_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
 #
 def test_iterm(thm_cmdline, capsys):
     tomlstr = """
+        [styles]
+        foreground = "#ffeebb"
+        background = "#221122"
+
         [scope.iterm]
         generator = "iterm"
-        style.foreground = "#ffeebb"
-        style.background = "#221122"
+        style.foreground = "foreground"
+        style.background = "background"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()

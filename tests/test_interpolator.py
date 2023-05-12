@@ -53,34 +53,6 @@ INTERPOLATIONS = [
     ("", ""),
 ]
 
-# TODO figure out if we could/should do some sort of end-to-end
-# test on this. I moved this test from test_themer.py
-# VARIABLE_INTERPOLATIONS = [
-#     ("{variable:SomeVar} there", "Hello there"),
-#     ("{variable:somevar} there", "{variable:somevar} there"),
-#     ("It is {var:bool}.", "It is true."),
-#     ("nothing to be done", "nothing to be done"),
-#     ("fred='{var:empty}'", "fred=''"),
-#     (r"\{variable:SomeVar} there", "{variable:SomeVar} there"),
-#     ("I have {var:number} apples.", "I have 5 apples."),
-#     ("count: {variable:another_var}", "count: one,two,three"),
-# ]
-
-
-# @pytest.mark.parametrize("value, newvalue", VARIABLE_INTERPOLATIONS)
-# def test_variable_interpolate(thm, value, newvalue):
-#     tomlstr = """
-#         [variables]
-#         SomeVar =  "Hello"
-#         another_var = "one,two,three"
-#         comment =  "#6272a4"
-#         number = 5
-#         bool = true
-#         empty = ""
-#     """
-#     thm.loads(tomlstr)
-#     assert thm.variable_interpolate(value) == newvalue
-
 
 @pytest.mark.parametrize("text, resolved", INTERPOLATIONS)
 def test_interpolate(text, resolved):
