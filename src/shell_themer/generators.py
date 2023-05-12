@@ -91,8 +91,9 @@ class GeneratorBase(abc.ABC, AssertBool):
 
 
 class LsColorsFromStyle:
-    # TODO put all the error message stuff into a errdata or msgdata dictionary
-    def ls_colors_from_style(self, name, style, mapp, scope):
+    """Generator mixin to create ls_colors type styles"""
+
+    def ls_colors_from_style(self, name, style, mapp, **msgdata):
         """create an entry suitable for LS_COLORS from a style
 
         name should be a valid LS_COLORS entry, could be a code representing
@@ -103,7 +104,11 @@ class LsColorsFromStyle:
         mapp is a dictionary of friendly color names to native color names
             ie map['directory'] = 'di'
 
-        scope is the scope where this mapped occured, used for error message
+        **msgdata - used for generating useful error messages
+        prog = the name of the program
+        scope = is the scope where this mapped occured
+
+        returns a tuple of the mapped name and a phrase to add to LS_COLORS
         """
         ansicodes = ""
         if not style:
@@ -116,8 +121,8 @@ class LsColorsFromStyle:
             # style.bundleid we don't know how to map, so we generate an error
             raise ThemeError(
                 (
-                    f"{self.prog}: unknown style '{name}' while processing"
-                    f" scope '{scope}' using the 'ls_colors' generator"
+                    f"{msgdata['prog']}: unknown style '{name}' while processing"
+                    f" scope '{msgdata['scope']}'"
                 )
             ) from exc
 
@@ -342,7 +347,7 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
         for name, style in self.scope_styles.items():
             if style:
                 mapcode, render = self.ls_colors_from_style(
-                    name, style, self.LS_COLORS_MAP, self.scope
+                    name, style, self.LS_COLORS_MAP, prog=self.prog, scope=self.scope
                 )
                 havecodes.append(mapcode)
                 outlist.append(render)
@@ -355,7 +360,11 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
             for name, code in self.LS_COLORS_BASE_MAP.items():
                 if not code in havecodes:
                     _, render = self.ls_colors_from_style(
-                        name, style, self.LS_COLORS_MAP, self.scope
+                        name,
+                        style,
+                        self.LS_COLORS_MAP,
+                        prog=self.prog,
+                        scope=self.scope,
                     )
                     outlist.append(render)
 
@@ -470,7 +479,7 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
         for name, style in self.scope_styles.items():
             if style:
                 _, render = self.ls_colors_from_style(
-                    name, style, self.EXA_COLORS_MAP, self.scope
+                    name, style, self.EXA_COLORS_MAP, prog=self.prog, scope=self.scope
                 )
                 outlist.append(render)
 

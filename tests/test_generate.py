@@ -485,7 +485,9 @@ STYLE_TO_LSCOLORS = [
 def test_ls_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
     genny = shell_themer.generators.LsColors(None, None, None, None, None)
-    code, render = genny.ls_colors_from_style(name, style, genny.LS_COLORS_MAP, "scope")
+    code, render = genny.ls_colors_from_style(
+        name, style, genny.LS_COLORS_MAP, prog="prog", scope="scope"
+    )
     assert render == expected
     assert code == expected[0:2]
 
@@ -598,7 +600,7 @@ def test_exa_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
     genny = shell_themer.generators.ExaColors(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
-        name, style, genny.EXA_COLORS_MAP, "scope"
+        name, style, genny.EXA_COLORS_MAP, prog="prog", scope="scope"
     )
     assert render == expected
     assert code == expected[0:2]
