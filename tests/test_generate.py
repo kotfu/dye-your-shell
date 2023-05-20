@@ -293,6 +293,7 @@ ENV_INTERPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
     ("{style:dark_orange:hex}", "#ff6c1c"),
     ("{style:dark_orange:hexnohash}", "ff6c1c"),
+    ("{style:dark_orange:ansi_on}hello there{style:dark_orange:ansi_off}", "\x1B[38;2;255;108;28mhello there\x1B[0m"),
     # for an unknown format or style, don't do any replacement
     ("{style:current_line}", "{style:current_line}"),
     ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
@@ -799,6 +800,23 @@ def test_shell(thm_cmdline, capsys):
     assert not err
     assert out == "echo hello there\necho general kenobi\necho #a020f0\n"
 
+def test_shell_ansi(thm_cmdline, capsys):
+    tomlstr = """
+        [variables]
+        greeting = "hello there"
+
+        [styles]
+        purple = "#A020F0"
+
+        [scope.shortcut]
+        generator = "shell"
+        command.first = "echo {style:purple:ansi_on}{var:greeting}{style:purple:ansi_off}"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    assert out == "echo \x1b[38;2;160;32;240mhello there\x1b[0m\n"
 
 def test_shell_enabled_if(thm_cmdline, capsys):
     # we have separate tests for enabled_if, but since it's super useful with the

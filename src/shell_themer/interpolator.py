@@ -56,11 +56,10 @@ class Interpolator:
             # variable not defined
             return None
 
-    def interpolate(self, text):
+    def interpolate(self, text: str) -> str:
         "interpolate variables and styles in the given text"
-        newtext = self.interpolate_variables(text)
-        newtext = self.interpolate_styles(newtext)
-        return newtext
+        vtext = self.interpolate_variables(text)
+        return self.interpolate_styles(vtext)
 
     def interpolate_variables(self, text: str) -> str:
         """interpolate variables in the passed value"""
@@ -78,8 +77,16 @@ class Interpolator:
         # match group 2 = entire variable phrase
         # match group 3 = 'var' or 'variable'
         # match group 4 = name of the variable
+        #
+        # (\\)? = match the backslash for group 1
+        # (\{(var|variable): = open group 2, then match the opening brace
+        #                      and either var or variable followed by a
+        #                      colon in group 3
+        # (.*?) = non-greedy variable name in group 4
+        # \}) = the closing brace, escaped because } means something in
+        #       a regex, and the closing paren for group 2
         newvalue = re.sub(
-            r"(\\)?(\{(var|variable):([^}:]*)(?::(.*))?\})", tmpfunc, text
+            r"(\\)?(\{(var|variable):(.*?)\})", tmpfunc, text
         )
         return newvalue
 
@@ -129,6 +136,7 @@ class Interpolator:
         # this regex matches any of the following:
         #   {style:darkorange}
         #   {style:yellow:}
+        #   {style:red:ansi_on}
         #   \{style:blue:hex}
         # so we can replace it with style information.
         #
@@ -136,7 +144,15 @@ class Interpolator:
         # match group 2 = entire style/format phrase
         # match group 3 = name of the style (not the literal 'style:')
         # match group 4 = format
-        newvalue = re.sub(r"(\\)?(\{style:([^}:]*)(?::(.*))?\})", tmpfunc, text)
+        #
+        # (\\)? = match the backslash for group 1
+        # (\{style:(.*?) = open group 2, then match {style:  with an
+        #                  escaped { and whatever the style name is
+        #                  (with a non-greedy match) in group 3
+        # (?::(.*?))? = the optional format part
+        # \}) = the closing brace, escaped because } means something in
+        #       a regex, and the closing paren for group 2
+        newvalue = re.sub(r"(\\)?(\{style:(.*?)(?::(.*?))?\})", tmpfunc, text)
         return newvalue
 
     def _style_subber(self, match):
