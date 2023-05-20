@@ -10,6 +10,9 @@ format of this file follows recommendations from
 
 ## [Unreleased]
 
+### Added
+
+- `ansi_on` and `ansi_off` style formats
 
 
 ## [0.3.0] - 2023-05-07

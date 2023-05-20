@@ -66,6 +66,8 @@ STYLEPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
     ("{style:dark_orange:hex}", "#ff6c1c"),
     ("{style:dark_orange:hexnohash}", "ff6c1c"),
+    ("{style:dark_orange:ansi_on}", "\x1b[38;2;255;108;28m"),
+    ("{style:dark_orange:ansi_off}", "\x1b[0m"),
     # multiple styles
     ("{style:dark_orange}-{style:dark_orange:hexnohash}", "#ff6c1c-ff6c1c"),
     # for an unknown format or style, don't do any replacement

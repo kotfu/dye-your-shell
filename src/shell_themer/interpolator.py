@@ -178,6 +178,14 @@ class Interpolator:
             elif fmt == "hexnohash":
                 # replace the match with the hex code without the hash
                 out = style.color.triplet.hex.replace("#", "")
+            elif fmt == "ansi_on":
+                splitter = '-----'
+                ansistring = style.render(splitter)
+                out, _ = ansistring.split(splitter)
+            elif fmt == "ansi_off":
+                splitter = '-----'
+                ansistring = style.render(splitter)
+                _, out = ansistring.split(splitter)
             else:
                 # unknown format, so don't do any replacement
                 out = phrase

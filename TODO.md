@@ -14,8 +14,10 @@
 [x] add option to generate to insert comments into the output
 [x] allow creation of variables with values, which can be interpolated
     into other sections
-[ ] move environment variables into their own generator instead of
+[x] move environment variables into their own generator instead of
     processing them in every generator
+[x] add a style format for ansi codes on and off, so you can use
+    the style in an 'echo' command
 
 - documentation and website
   - show how to set BAT_THEME
