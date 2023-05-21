@@ -505,29 +505,119 @@ class Iterm(GeneratorBase):
 
         echo "\033]1337;SetColors=bg=331111\007"
         """
-        out = []
-        rendered = self._iterm_render_style("foreground", "fg")
-        if rendered:
-            out.append(rendered)
-        rendered = self._iterm_render_style("background", "bg")
-        if rendered:
-            out.append(rendered)
-        return "\n".join(out)
+        output = []
 
-    def _iterm_render_style(self, style_name, iterm_key):
+        # set the profile
+        self._iterm_profile(output)
+
+        # set the tab or window title color
+        self._iterm_tab(output)
+
+        # set foreground and background colors
+        self._iterm_render_style(output, "foreground", "fg")
+        self._iterm_render_style(output, "background", "bg")
+
+        # set the cursor shape and color
+        self._iterm_cursor(output)
+
+        return "\n".join(output)
+
+    def _iterm_profile(self, output):
+        """add commands to output to tell iterm to change to a profile"""
+        try:
+            profile = self.scopedef["profile"]
+            cmd = r'builtin echo -e "\e]1337;'
+            cmd += f"SetProfile={profile}"
+            cmd += r'\a"'
+            output.append(cmd)
+        except KeyError:
+            # no profile directive given
+            pass
+
+    def _iterm_tab(self, output):
+        """add commands to output to change the tab or window title background color"""
+        try:
+            style = self.scope_styles["tab"]
+            if style.color.is_default:
+                # set the command to change the tab color back to the default,
+                # meaning whatever is set in the profile.
+                # gotta use raw strings here so the \e and \a don't get
+                # interpreted by python, they need to be passed through
+                # to the echo command
+                cmd = r'builtin echo -e "\e]6;1;bg;*;default\a"'
+                output.append(cmd)
+            else:
+                clr = style.color.get_truecolor()
+                # gotta use raw strings here so the \e and \a don't get
+                # interpreted by python, they need to be passed through
+                # to the echo command
+                cmd = r'builtin echo -e "\e]6;1;bg;red;brightness;'
+                cmd += f"{clr.red}"
+                cmd += r'\a"'
+                output.append(cmd)
+                cmd = r'builtin echo -e "\e]6;1;bg;green;brightness;'
+                cmd += f"{clr.green}"
+                cmd += r'\a"'
+                output.append(cmd)
+                cmd = r'builtin echo -e "\e]6;1;bg;blue;brightness;'
+                cmd += f"{clr.blue}"
+                cmd += r'\a"'
+                output.append(cmd)
+        except KeyError:
+            pass
+
+    CURSOR_MAP = {
+        "block": "0",
+        "box": "0",
+        "vertical_bar": "1",
+        "vertical": "1",
+        "bar": "1",
+        "pipe": "1",
+        "underline": "2",
+    }
+
+    def _iterm_cursor(self, output):
+        """generate echo commands to change the cursor shape,
+        foreground, and background colors
+        """
+        # check the cursor shape
+        try:
+            cursor = self.scopedef["cursor"]
+        except KeyError:
+            cursor = None
+        if cursor:
+            if cursor in self.CURSOR_MAP:
+                cmd = r'builtin echo -e "\e]1337;'
+                cmd += f"CursorShape={self.CURSOR_MAP[cursor]}"
+                cmd += r'\a"'
+                output.append(cmd)
+            else:
+                raise ThemeError(
+                    (
+                        f"{self.prog}: unknown cursor '{cursor}'"
+                        f" while processing scope '{self.scope}'"
+                    )
+                )
+        # render the cursor color
+        # iterm has curbg and curfg color codes, but as far as I can tell
+        # the curfg is a noop
+        self._iterm_render_style(output, "cursor", "curbg")
+
+    def _iterm_render_style(self, output, style_name, iterm_key):
         """print an iterm escape sequence to change the color palette"""
         try:
             style = self.scope_styles[style_name]
-        except KeyError:
-            return None
-        if style:
             clr = style.color.get_truecolor()
-            # gotta use raw strings here so the \033 and \007 don't get
-            # interpreted by python
-            out = r'builtin echo -e "\e]1337;'
-            out += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
-            out += r'\a"'
-            return out
+            # gotta use raw strings here so the \e and \a don't get
+            # interpreted by python, they need to be passed through
+            # to the echo command
+            cmd = r'builtin echo -e "\e]1337;'
+            cmd += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
+            cmd += r'\a"'
+            output.append(cmd)
+        except KeyError:
+            # the given style doesn't exist
+            pass
 
 
 class Shell(GeneratorBase):

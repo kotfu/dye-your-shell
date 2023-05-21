@@ -293,7 +293,10 @@ ENV_INTERPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
     ("{style:dark_orange:hex}", "#ff6c1c"),
     ("{style:dark_orange:hexnohash}", "ff6c1c"),
-    ("{style:dark_orange:ansi_on}hello there{style:dark_orange:ansi_off}", "\x1B[38;2;255;108;28mhello there\x1B[0m"),
+    (
+        "{style:dark_orange:ansi_on}hello there{style:dark_orange:ansi_off}",
+        "\x1B[38;2;255;108;28mhello there\x1B[0m",
+    ),
     # for an unknown format or style, don't do any replacement
     ("{style:current_line}", "{style:current_line}"),
     ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
@@ -741,7 +744,7 @@ def test_exa_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
 #
 # test the iterm generator
 #
-def test_iterm(thm_cmdline, capsys):
+def test_iterm_fg_bg(thm_cmdline, capsys):
     tomlstr = """
         [styles]
         foreground = "#ffeebb"
@@ -762,7 +765,7 @@ def test_iterm(thm_cmdline, capsys):
     assert lines[1] == r'builtin echo -e "\e]1337;SetColors=bg=221122\a"'
 
 
-def test_iterm_bgonly(thm_cmdline, capsys):
+def test_iterm_bg(thm_cmdline, capsys):
     tomlstr = """
         [scope.iterm]
         generator = "iterm"
@@ -775,6 +778,116 @@ def test_iterm_bgonly(thm_cmdline, capsys):
     lines = out.splitlines()
     assert len(lines) == 1
     assert lines[0] == r'builtin echo -e "\e]1337;SetColors=bg=b2cacd\a"'
+
+
+def test_iterm_profile(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        generator = "iterm"
+        cursor = "box"
+        style.cursor = "#b2cacd"
+        profile = "myprofilename"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    # we have multiple directives in this scope, but the profile directive
+    # should always come out first
+    assert len(lines) == 3
+    assert lines[0] == r'builtin echo -e "\e]1337;SetProfile=myprofilename\a"'
+
+
+def test_iterm_cursor(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        generator = "iterm"
+        cursor = "underline"
+        style.cursor = "#cab2cd"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 2
+    assert lines[0] == r'builtin echo -e "\e]1337;CursorShape=2\a"'
+    assert lines[1] == r'builtin echo -e "\e]1337;SetColors=curbg=cab2cd\a"'
+
+
+CURSORS = [
+    ("block", "0"),
+    ("box", "0"),
+    ("vertical_bar", "1"),
+    ("vertical", "1"),
+    ("bar", "1"),
+    ("pipe", "1"),
+    ("underline", "2"),
+]
+
+
+@pytest.mark.parametrize("name, code", CURSORS)
+def test_iterm_cursor_shape(thm_cmdline, capsys, name, code):
+    tomlstr = f"""
+        [scope.iterm]
+        generator = "iterm"
+        cursor = "{name}"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 1
+    # fr'...' lets us use f string interpolation, but the r disables
+    # escape processing, just what we need for this test
+    assert lines[0] == rf'builtin echo -e "\e]1337;CursorShape={code}\a"'
+
+
+def test_iterm_cursor_shape_invalid(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        generator = "iterm"
+        cursor = "ibeam"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_ERROR
+    assert not out
+    assert "unknown cursor" in err
+
+
+def test_item_tab_default(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        generator = "iterm"
+        style.tab = "default"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 1
+    assert lines[0] == r'builtin echo -e "\e]6;1;bg;*;default\a"'
+
+
+def test_iterm_tab_color(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        generator = "iterm"
+        style.tab = "#337799"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 3
+    assert lines[0] == r'builtin echo -e "\e]6;1;bg;red;brightness;51\a"'
+    assert lines[1] == r'builtin echo -e "\e]6;1;bg;green;brightness;119\a"'
+    assert lines[2] == r'builtin echo -e "\e]6;1;bg;blue;brightness;153\a"'
 
 
 #
@@ -800,6 +913,7 @@ def test_shell(thm_cmdline, capsys):
     assert not err
     assert out == "echo hello there\necho general kenobi\necho #a020f0\n"
 
+
 def test_shell_ansi(thm_cmdline, capsys):
     tomlstr = """
         [variables]
@@ -817,6 +931,7 @@ def test_shell_ansi(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert out == "echo \x1b[38;2;160;32;240mhello there\x1b[0m\n"
+
 
 def test_shell_enabled_if(thm_cmdline, capsys):
     # we have separate tests for enabled_if, but since it's super useful with the

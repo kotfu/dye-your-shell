@@ -13,6 +13,9 @@ format of this file follows recommendations from
 ### Added
 
 - `ansi_on` and `ansi_off` style formats
+- Add new iterm generator directives for changing cursor color and shape
+- Add new iterm generator directive to change the iterm profile
+- Add new iterm generator directive to change the tab or window title background color
 
 
 ## [0.3.0] - 2023-05-07

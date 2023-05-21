@@ -85,9 +85,7 @@ class Interpolator:
         # (.*?) = non-greedy variable name in group 4
         # \}) = the closing brace, escaped because } means something in
         #       a regex, and the closing paren for group 2
-        newvalue = re.sub(
-            r"(\\)?(\{(var|variable):(.*?)\})", tmpfunc, text
-        )
+        newvalue = re.sub(r"(\\)?(\{(var|variable):(.*?)\})", tmpfunc, text)
         return newvalue
 
     def _var_subber(self, match):
@@ -195,11 +193,11 @@ class Interpolator:
                 # replace the match with the hex code without the hash
                 out = style.color.triplet.hex.replace("#", "")
             elif fmt == "ansi_on":
-                splitter = '-----'
+                splitter = "-----"
                 ansistring = style.render(splitter)
                 out, _ = ansistring.split(splitter)
             elif fmt == "ansi_off":
-                splitter = '-----'
+                splitter = "-----"
                 ansistring = style.render(splitter)
                 _, out = ansistring.split(splitter)
             else:
