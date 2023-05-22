@@ -21,7 +21,14 @@
 [ ] create a way to save the output of a shell command in a variable
 [x] make a way to interpolate current environment variables, like with
     {env:HOME}
-
+[x] make a way to capture output of a shell command into a variable
+[ ] change variable interpolation and style interpolation to raise
+    errors if the variable or style is not defined. because environment
+    variables are defined outside of the theme file, we still interpolate
+    an empty string for an undefined environment variable
+[ ] make iterm generator smart enabled, ie check if iterm is the terminal emulator
+    and if not, don't generate any output, but maybe generate a comment
+[ ] make enabled_if and enabled generate more detailed comments
 
 - documentation and website
   - show how to set BAT_THEME

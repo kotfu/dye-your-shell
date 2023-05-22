@@ -190,19 +190,9 @@ class Themer(AssertBool):
         self.theme_file = None
         self.definition = {}
         self.styles = {}
+        self.variables = {}
 
         self.loads()
-
-    @property
-    def variables(self):
-        """Return the variables from the definition
-
-        or an empty dictionary if there are none"""
-        try:
-            variables = self.definition["variables"]
-        except KeyError:
-            variables = {}
-        return variables
 
     @property
     def theme_dir(self):
@@ -367,14 +357,64 @@ class Themer(AssertBool):
         self._process_definition()
 
     def _process_definition(self):
-        """process a newly loaded definition, including variables and styles"""
-        # process the styles
-        parser = StyleParser(None, self.variables)
+        """process a newly loaded definition, including variables and styles
+
+        this sets self.styles and self.variables
+        """
+        # process the styles, with no base styles or variables
+        parser = StyleParser(None, None)
         try:
             raw_styles = self.definition["styles"]
         except KeyError:
             raw_styles = {}
         self.styles = parser.parse_dict(raw_styles)
+        # Process the capture variables, without interpolation.
+        # We can't interpolate because the toml parser has to group
+        # all the "capture" items in a separate table, they can't be
+        # interleaved with the regular variables in the order they are
+        # defined. So we have to choose to process either the [variables]
+        # table or the [variables][capture] table first. We choose the
+        # [variables][capture] table.
+        resolved_vars = {}
+        try:
+            cap_vars = self.definition["variables"]["capture"]
+        except KeyError:
+            cap_vars = {}
+        for var, cmd in cap_vars.items():
+            proc = subprocess.run(cmd, shell=True, check=False, capture_output=True)
+            if proc.returncode != 0:
+                raise ThemeError(
+                    f"{self.prog}: capture variable '{var}' returned"
+                    " a non-zero exit code."
+                )
+            resolved_vars[var] = str(proc.stdout, "UTF-8")
+        # then add the regular variables, interpolating as we go
+        try:
+            # make a shallow copy, because we are gonna delete something
+            # and we want the definition to stay pristine
+            reg_vars = dict(self.definition["variables"])
+        except KeyError:
+            reg_vars = {}
+        try:
+            del reg_vars["capture"]
+        except KeyError:
+            # no capture variables, but we don't care
+            pass
+
+        for var, defined in reg_vars.items():
+            if var in resolved_vars:
+                raise ThemeError(
+                    f"{self.prog}: a variable named '{var}' is already defined."
+                )
+            # create a new interpolator each time through the loop so
+            # we can interpolate variables into other variables as they
+            # are defined
+            interp = Interpolator(self.styles, resolved_vars)
+            resolved_vars[var] = interp.interpolate(defined)
+
+        # finally set the variables on this object, which will be used by a
+        # lot of other stuff
+        self.variables = resolved_vars
 
     #
     # scope, parsing, and validation methods
@@ -559,7 +599,7 @@ class Themer(AssertBool):
                 try:
                     generator = scopedef["generator"]
                 except KeyError as exc:
-                    errmsg = f"{self.prog}: scope '{scope}' does not have a generator defined"
+                    errmsg = f"{self.prog}: scope '{scope}' does not have a generator."
                     raise ThemeError(errmsg) from exc
                 # check if the scope is disabled
                 if not self.is_enabled(scope):

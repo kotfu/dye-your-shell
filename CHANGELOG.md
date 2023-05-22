@@ -17,6 +17,7 @@ format of this file follows recommendations from
 - Add new iterm generator directive to change the iterm profile
 - Add new iterm generator directive to change the tab or window title background color
 - Add new {env:HOME} interpolation for shell environment variables
+- Add capture variables which set their value from the output of shell commands
 
 ### Changed
 

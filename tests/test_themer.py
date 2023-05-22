@@ -33,21 +33,12 @@ import rich.errors
 
 from shell_themer import ThemeError
 
-#
-# test style parsing
-#
-# TODO remove some of these tests, but maybe keep the integration level ones
 
-
+#
+# test style and variable processing on initialization
+#
 def test_process_definition(thm):
     tomlstr = """
-        [variables]
-        replace = "{var:secondhalf}"
-        firsthalf = "#ff"
-        secondhalf = "5555"
-        myred = "{var:firsthalf}{variable:secondhalf}"
-        igreen = "{style:green}"
-
         [styles]
         background =  "#282a36"
         foreground =  "#f8f8f2"
@@ -58,21 +49,56 @@ def test_process_definition(thm):
         orange =  "#ffb86c"
         pink =  "#ff79c6"
         purple =  "#bd93f9"
-        red =  "{var:myred}"
         yellow =  "#f1fa8c"
 
-        [scope.ls]
-        # set some environment variables
-        environment.unset = ["SOMEVAR", "ANOTHERVAR"]
-        environment.export.LS_COLORS = "ace ventura"
+        [variables]
+        capture.somevar = "printf '%s' {var:replace}"
+        secondhalf = "5555"
+        replace = "{var:secondhalf}"
+        firsthalf = "fred"
+        myred = "{var:firsthalf}{variable:secondhalf}"
+        igreen = "{style:green:hexnohash}"
+        capture.anothervar = "printf '%s' myvalue"
     """
     thm.loads(tomlstr)
+    # check the styles
     assert isinstance(thm.styles, dict)
     assert isinstance(thm.styles["cyan"], rich.style.Style)
     assert thm.styles["cyan"].color.name == "#8be9fd"
     assert thm.styles["yellow"].color.name == "#f1fa8c"
-    # check an interpolated variable in a style
-    assert thm.styles["red"].color.name == "#ff5555"
+    assert len(thm.styles) == 10
+    # check the variables
+    assert len(thm.variables) == 7
+    # capture doesn't interpolate variables
+    assert thm.variables["somevar"] == "{var:replace}"
+    # make sure capture variable actually captures
+    assert thm.variables["anothervar"] == "myvalue"
+    # styles interpolate into variables
+    assert thm.variables["igreen"] == "50fa7b"
+    # variables interpolate into variables
+    assert thm.variables["replace"] == "5555"
+    assert thm.variables["myred"] == "fred5555"
+
+
+def test_process_definition_duplicate_variables(thm):
+    tomlstr = """
+        [variables]
+        capture.thevar = "printf '%s' thevalue"
+        thevar = "fred"
+    """
+    with pytest.raises(ThemeError):
+        thm.loads(tomlstr)
+
+
+def test_process_definition_capture_error(thm):
+    # the extra f in printff should return a non-zero
+    # exit code, which is an error
+    tomlstr = """
+        [variables]
+        capture.thevar = "printff '%s' thevalue"
+    """
+    with pytest.raises(ThemeError):
+        thm.loads(tomlstr)
 
 
 # TODO this should test the init in GeneratorBase which sets scope_styles
@@ -151,40 +177,6 @@ def test_process_definition(thm):
 #
 # test variable related methods, including interpolation
 #
-# TODO move this to where we test the interpolator
-# VARIABLES = [
-#     ("SomeVar", "Hello"),
-#     ("another_var", "one,two,three"),
-#     ("comment", "#6272a4"),
-#     ("empty", ""),
-#     ("number", 5),
-#     ("bool", True),
-#     ("notdefined", None),
-#     ("text", "#6272a4 on #002200"),
-#     # make sure we interpolate a style into a variable
-#     ("astyle", "00ff00"),
-# ]
-
-
-# @pytest.mark.parametrize("variable, value", VARIABLES)
-# def test_value_of(thm, variable, value):
-#     tomlstr = """
-#         [variables]
-#         SomeVar =  "Hello"
-#         another_var = "one,two,three"
-#         comment =  "#6272a4"
-#         background = "#002200"
-#         number = 5
-#         bool = true
-#         empty = ""
-#         text = "{var:comment} on {variable:background}"
-#         astyle = "{style:green:hexnohash}"
-
-#         [styles]
-#         green = "#00ff00"
-#     """
-#     thm.loads(tomlstr)
-#     assert thm.value_of(variable) == value
 
 
 #
