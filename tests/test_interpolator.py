@@ -52,7 +52,11 @@ INTERPOLATIONS = [
     # nested and complex versions
     ("{style:dark_orange} {var:someopts}", "#ff6c1c --option=fred -v"),
     ("HOME='{var:nested}'", "HOME='/home/ace'"),
+    # booleans and numbers
+    ("it's {var:bool}", "it's true"),
+    ("countdown in {var:number}", "countdown in 5"),
     # empty is empty
+    ("{var:empty}", ""),
     ("", ""),
 ]
 
@@ -63,6 +67,9 @@ def test_interpolate(mocker, text, resolved):
         "password": "newenglandclamchowder",
         "someopts": "--option=fred -v",
         "nested": "{env:HOME}",
+        "number": 5,
+        "bool": True,
+        "empty": "",
     }
     styles = {"dark_orange": rich.style.Style.parse("#ff6c1c")}
     mocker.patch.dict(os.environ, {}, clear=True)
