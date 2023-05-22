@@ -24,6 +24,8 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
+import os
+
 import pytest
 import rich.style
 
@@ -31,12 +33,11 @@ from shell_themer.interpolator import Interpolator
 from shell_themer.parsers import StyleParser
 
 INTERPOLATIONS = [
-    ("{style:dark_orange}", "#ff6c1c"),
     ("{style:dark_orange:hex}", "#ff6c1c"),
-    ("{style:dark_orange:hexnohash}", "ff6c1c"),
     # for an unknown format or style, don't do any replacement
     ("{style:current_line}", "{style:current_line}"),
     ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
+    ("{env:THEMER_COLORS} {variable:password}", "text=#f0f0f0 newenglandclamchowder"),
     # we have to have the 'style' or 'variable' keyword, or
     # it all just gets passed through
     ("{dark_orange}", "{dark_orange}"),
@@ -48,16 +49,25 @@ INTERPOLATIONS = [
     (r"\{ some other  things}", r"\{ some other  things}"),
     (r"\{escaped unmatched bracket", r"\{escaped unmatched bracket"),
     (r"\{notakeyword:something}", r"\{notakeyword:something}"),
-    # both a variable and style interpolation in the same call
+    # nested and complex versions
     ("{style:dark_orange} {var:someopts}", "#ff6c1c --option=fred -v"),
+    ("HOME='{var:nested}'", "HOME='/home/ace'"),
+    # empty is empty
     ("", ""),
 ]
 
 
 @pytest.mark.parametrize("text, resolved", INTERPOLATIONS)
-def test_interpolate(text, resolved):
-    variables = {"someopts": "--option=fred -v"}
+def test_interpolate(mocker, text, resolved):
+    variables = {
+        "password": "newenglandclamchowder",
+        "someopts": "--option=fred -v",
+        "nested": "{env:HOME}",
+    }
     styles = {"dark_orange": rich.style.Style.parse("#ff6c1c")}
+    mocker.patch.dict(os.environ, {}, clear=True)
+    mocker.patch.dict(os.environ, {"THEMER_COLORS": "text=#f0f0f0"})
+    mocker.patch.dict(os.environ, {"HOME": "/home/ace"})
     interp = Interpolator(styles, variables)
     assert resolved == interp.interpolate(text)
 
@@ -136,3 +146,19 @@ def test_interpolate_variables(text, resolved):
     # create our interpolator
     interp = Interpolator(styles, variables)
     assert resolved == interp.interpolate_variables(text)
+
+
+ENVPOLATIONS = [
+    ("{env:HOME}", "/home/ace"),
+    ("say >{environment:NOTSET}<", "say ><"),
+    (r"backslashed \{env:THEMER_COLORS}", "backslashed {env:THEMER_COLORS}"),
+]
+
+
+@pytest.mark.parametrize("text, resolved", ENVPOLATIONS)
+def test_interpolate_environment(mocker, text, resolved):
+    mocker.patch.dict(os.environ, {}, clear=True)
+    mocker.patch.dict(os.environ, {"THEMER_COLORS": "text=#f0f0f0"})
+    mocker.patch.dict(os.environ, {"HOME": "/home/ace"})
+    interp = Interpolator(None, None)
+    assert resolved == interp.interpolate_environment(text)

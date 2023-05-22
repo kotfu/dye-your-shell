@@ -19,7 +19,7 @@
 [x] add a style format for ansi codes on and off, so you can use
     the style in an 'echo' command
 [ ] create a way to save the output of a shell command in a variable
-[ ] make a way to interpolate current environment variables, like with
+[x] make a way to interpolate current environment variables, like with
     {env:HOME}
 
 

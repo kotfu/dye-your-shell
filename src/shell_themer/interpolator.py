@@ -24,6 +24,7 @@
 """interpolators for variables and styles"""
 
 import functools
+import os
 import re
 
 import rich.errors
@@ -58,8 +59,9 @@ class Interpolator:
 
     def interpolate(self, text: str) -> str:
         "interpolate variables and styles in the given text"
-        vtext = self.interpolate_variables(text)
-        return self.interpolate_styles(vtext)
+        text = self.interpolate_variables(text)
+        text = self.interpolate_environment(text)
+        return self.interpolate_styles(text)
 
     def interpolate_variables(self, text: str) -> str:
         """interpolate variables in the passed value"""
@@ -101,8 +103,8 @@ class Interpolator:
         backslash = match.group(1)
         # the entire phrase, including the braces
         phrase = match.group(2)
-        # match.group(3) is the literal 'var' or 'variable', we don't need that
-        # the stuff after the colon but before the closing brace
+        # match.group(3) is the literal 'var' or 'variable', we don't need that.
+        # group 4 has the name of the variable
         varname = match.group(4)
 
         if backslash:
@@ -123,6 +125,61 @@ class Interpolator:
                     out = str(value).lower()
                 else:
                     out = str(value)
+        return out
+
+    def interpolate_environment(self, text: str) -> str:
+        """interpolate environment variables in a passed value"""
+        # this incantation gives us a callable function which is
+        # really a method on our class, and which gets self
+        # passed to the method just like any other method
+        tmpfunc = functools.partial(self._env_subber)
+        # this regex matches any of the following:
+        #   {var:darkorange}
+        #   {variable:yellow}
+        #   \{variable:blue}
+        # so we can replace it with a previously defined variable.
+        #
+        # match group 1 = backslash, if present
+        # match group 2 = entire variable phrase
+        # match group 3 = 'env' or 'environment'
+        # match group 4 = name of the variable
+        #
+        # (\\)? = match the backslash for group 1
+        # (\{(env|environment): = open group 2, then match the opening brace
+        #                      and either var or variable followed by a
+        #                      colon in group 3
+        # (.*?) = non-greedy variable name in group 4
+        # \}) = the closing brace, escaped because } means something in
+        #       a regex, and the closing paren for group 2
+        newvalue = re.sub(r"(\\)?(\{(env|environment):(.*?)\})", tmpfunc, text)
+        return newvalue
+
+    def _env_subber(self, match):
+        """the replacement function called by re.sub() in variable_interpolate()
+
+        this decides the replacement text for the matched regular expression
+
+        the philosophy is to have the replacement string be exactly what was
+        matched in the string, unless we the variable given exists and has a
+        value, in which case we insert that value.
+        """
+        # the backslash to protect the brace, may or may not be present
+        backslash = match.group(1)
+        # the entire phrase, including the braces
+        phrase = match.group(2)
+        # match.group(3) is the literal 'env' or 'environment', we don't need that.
+        # group 4 contains the name of the environment variable
+        varname = match.group(4)
+
+        if backslash:
+            # the only thing we replace is the backslash, the rest of it gets
+            # passed through as is, which the regex conveniently has for us
+            # in match group 2
+            out = f"{phrase}"
+        else:
+            # get environment variable, with empty string as the default value
+            # same as how bash works
+            out = os.getenv(varname, "")
         return out
 
     def interpolate_styles(self, text: str) -> str:
