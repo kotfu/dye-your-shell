@@ -16,6 +16,7 @@ format of this file follows recommendations from
 - Add new iterm generator directives for changing cursor color and shape
 - Add new iterm generator directive to change the iterm profile
 - Add new iterm generator directive to change the tab or window title background color
+- Simplify directives in environment_variables generator
 
 
 ## [0.3.0] - 2023-05-07

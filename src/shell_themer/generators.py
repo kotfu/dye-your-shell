@@ -142,31 +142,31 @@ class EnvironmentVariables(GeneratorBase):
     "generate statements to export and unset environment variables"
 
     def generate(self) -> str:
-        out = []
+        output = []
         interp = Interpolator(self.styles, self.variables)
         try:
-            unsets = self.scopedef["environment"]["unset"]
+            unsets = self.scopedef["unset"]
             if isinstance(unsets, str):
                 # if they used a string in the config file instead of a list
                 # process it like a single item instead of trying to process
                 # each letter in the string
                 unsets = [unsets]
             for unset in unsets:
-                out.append(f"unset {interp.interpolate(unset)}")
+                output.append(f"unset {interp.interpolate(unset)}")
         except KeyError:
             # no unsets
             pass
         # render the variables to export
         try:
-            exports = self.scopedef["environment"]["export"]
+            exports = self.scopedef["export"]
             for var, value in exports.items():
                 new_var = interp.interpolate(var)
                 new_value = interp.interpolate(value)
-                out.append(f'export {new_var}="{new_value}"')
+                output.append(f'export {new_var}="{new_value}"')
         except KeyError:
             # no exports
             pass
-        return "\n".join(out)
+        return "\n".join(output)
 
 
 class Fzf(GeneratorBase):

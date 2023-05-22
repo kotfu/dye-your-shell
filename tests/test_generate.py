@@ -328,7 +328,7 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
 
         [scope.gum]
         generator = "environment_variables"
-        environment.export.GUM_OPTS = " --cursor-foreground={phrase}"
+        export.GUM_OPTS = " --cursor-foreground={phrase}"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -344,8 +344,8 @@ def test_generate_environment_unset_list(thm_cmdline, capsys):
         [scope.ls]
         generator = "environment_variables"
         # set some environment variables
-        environment.unset = ["SOMEVAR", "{var:thevar}"]
-        environment.export.LS_COLORS = "ace ventura"
+        unset = ["SOMEVAR", "{var:thevar}"]
+        export.LS_COLORS = "ace ventura"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -360,7 +360,7 @@ def test_generate_environment_unset_string(thm_cmdline, capsys):
     tomlstr = """
         [scope.unset]
         generator = "environment_variables"
-        environment.unset = "NOLISTVAR"
+        unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()

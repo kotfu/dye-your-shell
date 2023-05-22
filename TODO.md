@@ -18,6 +18,10 @@
     processing them in every generator
 [x] add a style format for ansi codes on and off, so you can use
     the style in an 'echo' command
+[ ] create a way to save the output of a shell command in a variable
+[ ] make a way to interpolate current environment variables, like with
+    {env:HOME}
+
 
 - documentation and website
   - show how to set BAT_THEME
@@ -31,6 +35,8 @@
 - document enabled and enabled_if - enabled_if shell commands should not cause side effects because
   they can get executed on a "dry run" of generation
 - document shell generator, including multiline commands and usage with enable_if
+- recipe for changing starship config when you change a theme by changing the environment
+  variable containing the starship config file
 
 ## shell-themer subcommands
 
