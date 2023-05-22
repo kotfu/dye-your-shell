@@ -148,12 +148,12 @@ def test_generate_enabled(thm_cmdline, capsys):
         [scope.nolistvar]
         enabled = false
         generator = "environment_variables"
-        environment.unset = "NOLISTVAR"
+        unset = "NOLISTVAR"
 
         [scope.somevar]
         enabled = true
         generator = "environment_variables"
-        environment.unset = "SOMEVAR"
+        unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -169,7 +169,7 @@ def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
         enabled = false
         enabled_if = "[[ 1 == 1 ]]"
         generator = "environment_variables"
-        environment.unset = "NOLISTVAR"
+        unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -184,7 +184,7 @@ def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
         enabled = true
         enabled_if = "[[ 0 == 1 ]]"
         generator = "environment_variables"
-        environment.unset = "NOLISTVAR"
+        unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -198,7 +198,7 @@ def test_generate_enabled_invalid_value(thm_cmdline, capsys):
         [scope.unset]
         enabled = "notaboolean"
         generator = "environment_variables"
-        environment.unset = "NOLISTVAR"
+        unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -227,7 +227,7 @@ def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
         [scope.unset]
         enabled_if = "{cmd}"
         generator = "environment_variables"
-        environment.unset = "ENVVAR"
+        unset = "ENVVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -244,12 +244,12 @@ def test_generate_comments(thm_cmdline, capsys):
         [scope.nolistvar]
         enabled = false
         generator = "environment_variables"
-        environment.unset = "NOLISTVAR"
+        unset = "NOLISTVAR"
 
         [scope.somevar]
         enabled = true
         generator = "environment_variables"
-        environment.unset = "SOMEVAR"
+        unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate --comment", tomlstr)
     out, err = capsys.readouterr()
@@ -265,7 +265,7 @@ def test_unknown_generator(thm_cmdline, capsys):
     tomlstr = """
         [scope.myprog]
         generator = "mrfusion"
-        environment.unset = "SOMEVAR"
+        unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     _, err = capsys.readouterr()
