@@ -499,12 +499,7 @@ class Iterm(GeneratorBase):
     "generator to set iterm foreground and background colors"
 
     def generate(self):
-        """send the special escape sequences to make the iterm2
-        terminal emulator for macos change its foreground and backgroud
-        color
-
-        echo "\033]1337;SetColors=bg=331111\007"
-        """
+        """send escape sequences to iTerm to make it do stuff"""
         output = []
 
         # set the profile
@@ -526,7 +521,7 @@ class Iterm(GeneratorBase):
         """add commands to output to tell iterm to change to a profile"""
         try:
             profile = self.scopedef["profile"]
-            cmd = r'builtin echo -e "\e]1337;'
+            cmd = r'builtin echo -en "\e]1337;'
             cmd += f"SetProfile={profile}"
             cmd += r'\a"'
             output.append(cmd)
@@ -544,22 +539,22 @@ class Iterm(GeneratorBase):
                 # gotta use raw strings here so the \e and \a don't get
                 # interpreted by python, they need to be passed through
                 # to the echo command
-                cmd = r'builtin echo -e "\e]6;1;bg;*;default\a"'
+                cmd = r'builtin echo -en "\e]6;1;bg;*;default\a"'
                 output.append(cmd)
             else:
                 clr = style.color.get_truecolor()
                 # gotta use raw strings here so the \e and \a don't get
                 # interpreted by python, they need to be passed through
                 # to the echo command
-                cmd = r'builtin echo -e "\e]6;1;bg;red;brightness;'
+                cmd = r'builtin echo -en "\e]6;1;bg;red;brightness;'
                 cmd += f"{clr.red}"
                 cmd += r'\a"'
                 output.append(cmd)
-                cmd = r'builtin echo -e "\e]6;1;bg;green;brightness;'
+                cmd = r'builtin echo -en "\e]6;1;bg;green;brightness;'
                 cmd += f"{clr.green}"
                 cmd += r'\a"'
                 output.append(cmd)
-                cmd = r'builtin echo -e "\e]6;1;bg;blue;brightness;'
+                cmd = r'builtin echo -en "\e]6;1;bg;blue;brightness;'
                 cmd += f"{clr.blue}"
                 cmd += r'\a"'
                 output.append(cmd)
@@ -587,7 +582,7 @@ class Iterm(GeneratorBase):
             cursor = None
         if cursor:
             if cursor in self.CURSOR_MAP:
-                cmd = r'builtin echo -e "\e]1337;'
+                cmd = r'builtin echo -en "\e]1337;'
                 cmd += f"CursorShape={self.CURSOR_MAP[cursor]}"
                 cmd += r'\a"'
                 output.append(cmd)
@@ -611,7 +606,7 @@ class Iterm(GeneratorBase):
             # gotta use raw strings here so the \e and \a don't get
             # interpreted by python, they need to be passed through
             # to the echo command
-            cmd = r'builtin echo -e "\e]1337;'
+            cmd = r'builtin echo -en "\e]1337;'
             cmd += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
             cmd += r'\a"'
             output.append(cmd)

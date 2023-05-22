@@ -761,8 +761,8 @@ def test_iterm_fg_bg(thm_cmdline, capsys):
     assert not err
     lines = out.splitlines()
     assert len(lines) == 2
-    assert lines[0] == r'builtin echo -e "\e]1337;SetColors=fg=ffeebb\a"'
-    assert lines[1] == r'builtin echo -e "\e]1337;SetColors=bg=221122\a"'
+    assert lines[0] == r'builtin echo -en "\e]1337;SetColors=fg=ffeebb\a"'
+    assert lines[1] == r'builtin echo -en "\e]1337;SetColors=bg=221122\a"'
 
 
 def test_iterm_bg(thm_cmdline, capsys):
@@ -777,7 +777,7 @@ def test_iterm_bg(thm_cmdline, capsys):
     assert not err
     lines = out.splitlines()
     assert len(lines) == 1
-    assert lines[0] == r'builtin echo -e "\e]1337;SetColors=bg=b2cacd\a"'
+    assert lines[0] == r'builtin echo -en "\e]1337;SetColors=bg=b2cacd\a"'
 
 
 def test_iterm_profile(thm_cmdline, capsys):
@@ -796,7 +796,7 @@ def test_iterm_profile(thm_cmdline, capsys):
     # we have multiple directives in this scope, but the profile directive
     # should always come out first
     assert len(lines) == 3
-    assert lines[0] == r'builtin echo -e "\e]1337;SetProfile=myprofilename\a"'
+    assert lines[0] == r'builtin echo -en "\e]1337;SetProfile=myprofilename\a"'
 
 
 def test_iterm_cursor(thm_cmdline, capsys):
@@ -812,8 +812,8 @@ def test_iterm_cursor(thm_cmdline, capsys):
     assert not err
     lines = out.splitlines()
     assert len(lines) == 2
-    assert lines[0] == r'builtin echo -e "\e]1337;CursorShape=2\a"'
-    assert lines[1] == r'builtin echo -e "\e]1337;SetColors=curbg=cab2cd\a"'
+    assert lines[0] == r'builtin echo -en "\e]1337;CursorShape=2\a"'
+    assert lines[1] == r'builtin echo -en "\e]1337;SetColors=curbg=cab2cd\a"'
 
 
 CURSORS = [
@@ -842,7 +842,7 @@ def test_iterm_cursor_shape(thm_cmdline, capsys, name, code):
     assert len(lines) == 1
     # fr'...' lets us use f string interpolation, but the r disables
     # escape processing, just what we need for this test
-    assert lines[0] == rf'builtin echo -e "\e]1337;CursorShape={code}\a"'
+    assert lines[0] == rf'builtin echo -en "\e]1337;CursorShape={code}\a"'
 
 
 def test_iterm_cursor_shape_invalid(thm_cmdline, capsys):
@@ -870,7 +870,7 @@ def test_item_tab_default(thm_cmdline, capsys):
     assert not err
     lines = out.splitlines()
     assert len(lines) == 1
-    assert lines[0] == r'builtin echo -e "\e]6;1;bg;*;default\a"'
+    assert lines[0] == r'builtin echo -en "\e]6;1;bg;*;default\a"'
 
 
 def test_iterm_tab_color(thm_cmdline, capsys):
@@ -885,9 +885,9 @@ def test_iterm_tab_color(thm_cmdline, capsys):
     assert not err
     lines = out.splitlines()
     assert len(lines) == 3
-    assert lines[0] == r'builtin echo -e "\e]6;1;bg;red;brightness;51\a"'
-    assert lines[1] == r'builtin echo -e "\e]6;1;bg;green;brightness;119\a"'
-    assert lines[2] == r'builtin echo -e "\e]6;1;bg;blue;brightness;153\a"'
+    assert lines[0] == r'builtin echo -en "\e]6;1;bg;red;brightness;51\a"'
+    assert lines[1] == r'builtin echo -en "\e]6;1;bg;green;brightness;119\a"'
+    assert lines[2] == r'builtin echo -en "\e]6;1;bg;blue;brightness;153\a"'
 
 
 #
