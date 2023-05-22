@@ -30,6 +30,7 @@ import pytest
 from rich_argparse import RichHelpFormatter
 
 from shell_themer import Themer
+from shell_themer import __main__ as mainmodule
 
 
 #
@@ -38,7 +39,7 @@ from shell_themer import Themer
 def test_output_color_cmdline(thm_cmdline, mocker):
     # command line color arguments should override
     # all environment variables
-    RichHelpFormatter.styles["argparse.text"] == "#000000"
+    RichHelpFormatter.styles["argparse.text"] = "#000000"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"SHELL_THEMER_COLORS": "text=#f0f0f0"})
     mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"})
@@ -54,7 +55,7 @@ def test_output_color_cmdline(thm_cmdline, mocker):
 
 def test_output_color_no_color(thm_cmdline, mocker):
     mocker.patch.dict(os.environ, {}, clear=True)
-    RichHelpFormatter.styles["argparse.text"] == "#ff00ff"
+    RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"})
     thm_cmdline("--help")
@@ -64,7 +65,7 @@ def test_output_color_no_color(thm_cmdline, mocker):
 
 def test_output_color_envs_only(thm_cmdline, mocker):
     # NO_COLOR should override SHELL_THEMER_COLORS
-    RichHelpFormatter.styles["argparse.text"] == "#ff00ff"
+    RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"SHELL_THEMER_COLORS": "text=#f0f0f0"})
     mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"})
@@ -75,7 +76,7 @@ def test_output_color_envs_only(thm_cmdline, mocker):
 
 def test_output_color_env_color(thm_cmdline, mocker):
     # SHELL_THEMER_COLORS should override default colors
-    RichHelpFormatter.styles["argparse.text"] == "#ff00ff"
+    RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"SHELL_THEMER_COLORS": "text=#f0f0f0"})
     thm_cmdline("--help")
@@ -84,7 +85,7 @@ def test_output_color_env_color(thm_cmdline, mocker):
 
 def test_output_color_env_empty(thm_cmdline, mocker):
     # SHELL_THEMER_COLORS should override default colors
-    RichHelpFormatter.styles["argparse.text"] == "#ff00ff"
+    RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"SHELL_THEMER_COLORS": ""})
     thm_cmdline("--help")
@@ -190,8 +191,6 @@ def test_themer_main_unknown_command():
 
 
 def test___main__(mocker):
-    from shell_themer import __main__ as mainmodule
-
     mocker.patch("shell_themer.Themer.main", return_value=42)
     mocker.patch.object(mainmodule, "__name__", "__main__")
     with pytest.raises(SystemExit) as excinfo:
