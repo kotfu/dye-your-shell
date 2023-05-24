@@ -282,7 +282,7 @@ def test_no_generator(thm_cmdline, capsys):
     exit_code = thm_cmdline("generate", tomlstr)
     _, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
-    assert "does not have a generator defined" in err
+    assert "does not have a generator" in err
     assert "myscope" in err
 
 
@@ -297,12 +297,8 @@ ENV_INTERPOLATIONS = [
         "{style:dark_orange:ansi_on}hello there{style:dark_orange:ansi_off}",
         "\x1B[38;2;255;108;28mhello there\x1B[0m",
     ),
-    # for an unknown format or style, don't do any replacement
-    ("{style:current_line}", "{style:current_line}"),
-    ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
     # we have to have the style keyword, or it all just gets passed through
     ("{dark_orange}", "{dark_orange}"),
-    ("{variable:green}", "{variable:green}"),
     # escaped opening bracket, becasue this is toml, if you want a backslash
     # you have to you \\ because toml strings can contain escape sequences
     (r"\\{style:bright_blue}", "{style:bright_blue}"),

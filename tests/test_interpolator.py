@@ -31,12 +31,11 @@ import rich.style
 
 from shell_themer.interpolator import Interpolator
 from shell_themer.parsers import StyleParser
+from shell_themer import ThemeError
+
 
 INTERPOLATIONS = [
     ("{style:dark_orange:hex}", "#ff6c1c"),
-    # for an unknown format or style, don't do any replacement
-    ("{style:current_line}", "{style:current_line}"),
-    ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
     ("{env:THEMER_COLORS} {variable:password}", "text=#f0f0f0 newenglandclamchowder"),
     # we have to have the 'style' or 'variable' keyword, or
     # it all just gets passed through
@@ -87,11 +86,10 @@ STYLEPOLATIONS = [
     ("{style:dark_orange:ansi_off}", "\x1b[0m"),
     # multiple styles
     ("{style:dark_orange}-{style:dark_orange:hexnohash}", "#ff6c1c-ff6c1c"),
-    # for an unknown format or style, don't do any replacement
-    ("{style:current_line}", "{style:current_line}"),
-    ("{style:dark_orange:unknown}", "{style:dark_orange:unknown}"),
     # we have to have the style keyword, or it all just gets passed through
     ("{dark_orange}", "{dark_orange}"),
+    # even though the variable is defined, we shouldn't replace it because
+    # we are only going to interpolate styles
     ("{variable:exists}", "{variable:exists}"),
     # escaped opening bracket means we should not interpolate
     (r"\{style:dark_orange}", "{style:dark_orange}"),
@@ -109,12 +107,29 @@ def test_interpolate_styles(text, resolved):
     styles = {"dark_orange": rich.style.Style.parse("#ff6c1c")}
     # create a variable, so we can check that it doesn't get interpolated
     variables = {"exists": "yup"}
-    interp = Interpolator(styles, variables)
+    interp = Interpolator(styles, variables, prog="theprog", scope="thescope")
     assert resolved == interp.interpolate_styles(text)
 
 
+STYLE_ERRORS = [
+    # unknown style
+    "{style:text}",
+    # unknown format
+    "{style:dark_orange:unknownformat}",
+]
+
+
+@pytest.mark.parametrize("text", STYLE_ERRORS)
+def test_interpolate_unknown_style(text):
+    styles = {"dark_orange": rich.style.Style.parse("#ff6c1c")}
+    # create a variable, so we can check that it doesn't get interpolated
+    variables = {"exists": "yup"}
+    interp = Interpolator(styles, variables, prog="theprog", scope="thescope")
+    with pytest.raises(ThemeError):
+        interp.interpolate_styles(text)
+
+
 VARPOLATIONS = [
-    ("{variable:green}", "{variable:green}"),
     ("{variable:someopts}", "--option=fred -v"),
     # multiple variables
     (
@@ -153,6 +168,12 @@ def test_interpolate_variables(text, resolved):
     # create our interpolator
     interp = Interpolator(styles, variables)
     assert resolved == interp.interpolate_variables(text)
+
+
+def test_interpolate_unknown_variable():
+    interp = Interpolator(None, None, prog="theprog", scope="thescope")
+    with pytest.raises(ThemeError):
+        interp.interpolate_variables("{var:one}")
 
 
 ENVPOLATIONS = [

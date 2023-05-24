@@ -409,7 +409,9 @@ class Themer(AssertBool):
             # create a new interpolator each time through the loop so
             # we can interpolate variables into other variables as they
             # are defined
-            interp = Interpolator(self.styles, resolved_vars)
+            interp = Interpolator(
+                self.styles, resolved_vars, prog=self.prog, scope="variables"
+            )
             resolved_vars[var] = interp.interpolate(defined)
 
         # finally set the variables on this object, which will be used by a
@@ -475,7 +477,7 @@ class Themer(AssertBool):
             # no enabled_if key, so we must be enabled
             return True
 
-        interp = Interpolator(self.styles, self.variables)
+        interp = Interpolator(self.styles, self.variables, prog=self.prog, scope=scope)
         resolved_cmd = interp.interpolate(enabled_if)
         proc = subprocess.run(
             resolved_cmd, shell=True, check=False, capture_output=True

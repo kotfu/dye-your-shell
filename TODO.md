@@ -29,6 +29,9 @@
 [ ] make iterm generator smart enabled, ie check if iterm is the terminal emulator
     and if not, don't generate any output, but maybe generate a comment
 [ ] make enabled_if and enabled generate more detailed comments
+[ ] how can/should we interpolate values from a style that has bold, or both
+    foreground and background definitions?
+
 
 - documentation and website
   - show how to set BAT_THEME

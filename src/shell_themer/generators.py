@@ -71,6 +71,10 @@ class GeneratorBase(abc.ABC, AssertBool):
             raw_styles = {}
         parser = StyleParser(styles, variables)
         self.scope_styles = parser.parse_dict(raw_styles)
+        # create an interpolator
+        self.interp = Interpolator(
+            self.styles, self.variables, prog=self.prog, scope=self.scope
+        )
 
     @classmethod
     def _name_of(cls, name: str) -> str:
@@ -143,7 +147,6 @@ class EnvironmentVariables(GeneratorBase):
 
     def generate(self) -> str:
         output = []
-        interp = Interpolator(self.styles, self.variables)
         try:
             unsets = self.scopedef["unset"]
             if isinstance(unsets, str):
@@ -152,7 +155,7 @@ class EnvironmentVariables(GeneratorBase):
                 # each letter in the string
                 unsets = [unsets]
             for unset in unsets:
-                output.append(f"unset {interp.interpolate(unset)}")
+                output.append(f"unset {self.interp.interpolate(unset)}")
         except KeyError:
             # no unsets
             pass
@@ -160,8 +163,8 @@ class EnvironmentVariables(GeneratorBase):
         try:
             exports = self.scopedef["export"]
             for var, value in exports.items():
-                new_var = interp.interpolate(var)
-                new_value = interp.interpolate(value)
+                new_var = self.interp.interpolate(var)
+                new_value = self.interp.interpolate(value)
                 output.append(f'export {new_var}="{new_value}"')
         except KeyError:
             # no exports
@@ -175,8 +178,6 @@ class Fzf(GeneratorBase):
     def generate(self) -> str:
         """render attribs into a shell statement to set an environment variable"""
         optstr = ""
-        interp = Interpolator(self.styles, self.variables)
-
         # process all the command line options
         try:
             opts = self.scopedef["opt"]
@@ -185,7 +186,7 @@ class Fzf(GeneratorBase):
 
         for key, value in opts.items():
             if isinstance(value, str):
-                interp_value = interp.interpolate_variables(value)
+                interp_value = self.interp.interpolate(value)
                 optstr += f" {key}='{interp_value}'"
             elif isinstance(value, bool) and value:
                 optstr += f" {key}"
@@ -208,7 +209,7 @@ class Fzf(GeneratorBase):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = interp.interpolate_variables(varname)
+            varname = self.interp.interpolate(varname)
             print(f'export {varname}="{optstr}{colorstr}"')
         except KeyError as exc:
             raise ThemeError(
@@ -368,8 +369,7 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            interp = Interpolator(self.styles, self.variables)
-            varname = interp.interpolate(varname)
+            varname = self.interp.interpolate(varname)
         except KeyError:
             varname = "LS_COLORS"
 
@@ -483,8 +483,7 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            interp = Interpolator(self.styles, self.variables)
-            varname = interp.interpolate(varname)
+            varname = self.interp.interpolate(varname)
         except KeyError:
             varname = "EXA_COLORS"
 
@@ -620,11 +619,10 @@ class Shell(GeneratorBase):
 
     def generate(self):
         out = []
-        interp = Interpolator(self.styles, self.variables)
         try:
             cmds = self.scopedef["command"]
             for _, cmd in cmds.items():
-                out.append(interp.interpolate(cmd))
+                out.append(self.interp.interpolate(cmd))
         except KeyError:
             pass
         return "\n".join(out)

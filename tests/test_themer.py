@@ -101,6 +101,15 @@ def test_process_definition_capture_error(thm):
         thm.loads(tomlstr)
 
 
+def test_process_definition_undefined_variable(thm):
+    tomlstr = """
+        [variables]
+        one = "{var:two}"
+    """
+    with pytest.raises(ThemeError):
+        thm.loads(tomlstr)
+
+
 # TODO this should test the init in GeneratorBase which sets scope_styles
 # def test_styles_from(thm):
 #     tomlstr = """

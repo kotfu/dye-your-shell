@@ -27,35 +27,23 @@ import functools
 import os
 import re
 
-import rich.errors
-import rich.style
+from .exceptions import ThemeError
 
 
 class Interpolator:
     """Interpolate style and variable keywords"""
 
-    def __init__(self, styles, variables):
+    def __init__(self, styles=None, variables=None, **msgdata):
         super().__init__()
-        self.styles = styles
-        self.variables = variables
-
-    def value_of(self, variable):
-        """return the value or contents of a variable
-
-        performs variable interpolation at access time, not at
-        parse time
-
-        return None if variable is not defined
-        """
-        try:
-            definedvalue = self.variables[variable]
-            # we can only interpolate variables in string type values
-            if isinstance(definedvalue, str):
-                return self.interpolate(definedvalue)
-            return definedvalue
-        except KeyError:
-            # variable not defined
-            return None
+        if styles is None:
+            self.styles = {}
+        else:
+            self.styles = styles
+        if variables is None:
+            self.variables = {}
+        else:
+            self.variables = variables
+        self.msgdata = msgdata
 
     def interpolate(self, text: str) -> str:
         "interpolate variables and styles in the given text"
@@ -111,21 +99,24 @@ class Interpolator:
             # the only thing we replace is the backslash, the rest of it gets
             # passed through as is, which the regex conveniently has for us
             # in match group 2
-            out = f"{phrase}"
-        else:
-            value = self.value_of(varname)
-            if value is None:
-                # we can't find the variable, so don't do a replacement
-                out = match.group(0)
+            return f"{phrase}"
+
+        try:
+            value = self.variables[varname]
+            if isinstance(value, bool):
+                # toml booleans are all lower case, python are not
+                # since the source toml is all lower case, we will
+                # make the replacement be the same
+                out = str(value).lower()
             else:
-                if isinstance(value, bool):
-                    # toml booleans are all lower case, python are not
-                    # since the source toml is all lower case, we will
-                    # make the replacement be the same
-                    out = str(value).lower()
-                else:
-                    out = str(value)
-        return out
+                out = str(value)
+            return out
+        except KeyError as exc:
+            # we can't find the variable, which is an error
+            raise ThemeError(
+                f"{self.msgdata['prog']}: undefined variable '{varname}'"
+                f" referenced in scope '{self.msgdata['scope']}"
+            ) from exc
 
     def interpolate_environment(self, text: str) -> str:
         """interpolate environment variables in a passed value"""
@@ -224,8 +215,8 @@ class Interpolator:
         # the entire phrase, including the braces
         phrase = match.group(2)
         # the stuff after the opening brace but before the colon
-        # this is the defition of the style
-        styledef = match.group(3)
+        # this is the name of the style
+        style_name = match.group(3)
         # the stuff after the colon but before the closing brace
         fmt = match.group(4)
 
@@ -233,44 +224,34 @@ class Interpolator:
             # the only thing we replace is the backslash, the rest of it gets
             # passed through as is, which the regex conveniently has for us
             # in match group 2
-            out = f"{phrase}"
-        else:
-            try:
-                style = self._get_style(styledef)
-            except rich.errors.StyleSyntaxError:
-                style = None
+            return f"{phrase}"
 
-            if not style:
-                # the style wasn't found, so don't do any replacement
-                out = match.group(0)
-            elif fmt in [None, "", "hex"]:
-                # no format, or empty string format, or hex, the match with the hex code
-                out = style.color.triplet.hex
-            elif fmt == "hexnohash":
-                # replace the match with the hex code without the hash
-                out = style.color.triplet.hex.replace("#", "")
-            elif fmt == "ansi_on":
-                splitter = "-----"
-                ansistring = style.render(splitter)
-                out, _ = ansistring.split(splitter)
-            elif fmt == "ansi_off":
-                splitter = "-----"
-                ansistring = style.render(splitter)
-                _, out = ansistring.split(splitter)
-            else:
-                # unknown format, so don't do any replacement
-                out = phrase
-
-        return out
-
-    def _get_style(self, styledef):
-        """convert a string into rich.style.Style object"""
-        # first check if this definition is already in our list of styles
         try:
-            style = self.styles[styledef]
-        except KeyError:
-            style = None
-        # nope, parse the input as a style
-        if not style:
-            style = rich.style.Style.parse(styledef)
-        return style
+            style = self.styles[style_name]
+        except KeyError as exc:
+            raise ThemeError(
+                f"{self.msgdata['prog']}: undefined style '{style_name}'"
+                f" while processing scope '{self.msgdata['scope']}'"
+            ) from exc
+
+        if fmt in [None, "", "hex"]:
+            # no format, or empty string format, or hex, the match with the hex code
+            out = style.color.triplet.hex
+        elif fmt == "hexnohash":
+            # replace the match with the hex code without the hash
+            out = style.color.triplet.hex.replace("#", "")
+        elif fmt == "ansi_on":
+            splitter = "-----"
+            ansistring = style.render(splitter)
+            out, _ = ansistring.split(splitter)
+        elif fmt == "ansi_off":
+            splitter = "-----"
+            ansistring = style.render(splitter)
+            _, out = ansistring.split(splitter)
+        else:
+            # an unknown format is an error
+            raise ThemeError(
+                f"{self.msgdata['prog']}: unknown style interpolation format"
+                f" '{fmt}' while processing scope '{self.msgdata['scope']}'"
+            )
+        return out
