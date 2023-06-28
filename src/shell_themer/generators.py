@@ -580,7 +580,10 @@ class Iterm(GeneratorBase):
         except KeyError:
             cursor = None
         if cursor:
-            if cursor in self.CURSOR_MAP:
+            if cursor == "profile":
+                cmd = r'builtin echo -en "\e[0q"'
+                output.append(cmd)
+            elif cursor in self.CURSOR_MAP:
                 cmd = r'builtin echo -en "\e]1337;'
                 cmd += f"CursorShape={self.CURSOR_MAP[cursor]}"
                 cmd += r'\a"'

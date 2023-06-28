@@ -812,7 +812,7 @@ def test_iterm_cursor(thm_cmdline, capsys):
     assert lines[1] == r'builtin echo -en "\e]1337;SetColors=curbg=cab2cd\a"'
 
 
-CURSORS = [
+CURSOR_SHAPES = [
     ("block", "0"),
     ("box", "0"),
     ("vertical_bar", "1"),
@@ -823,7 +823,7 @@ CURSORS = [
 ]
 
 
-@pytest.mark.parametrize("name, code", CURSORS)
+@pytest.mark.parametrize("name, code", CURSOR_SHAPES)
 def test_iterm_cursor_shape(thm_cmdline, capsys, name, code):
     tomlstr = f"""
         [scope.iterm]
@@ -839,6 +839,24 @@ def test_iterm_cursor_shape(thm_cmdline, capsys, name, code):
     # fr'...' lets us use f string interpolation, but the r disables
     # escape processing, just what we need for this test
     assert lines[0] == rf'builtin echo -en "\e]1337;CursorShape={code}\a"'
+
+
+def test_iterm_cursor_profile(thm_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        generator = "iterm"
+        profile = "smoov"
+        cursor = "profile"
+    """
+    exit_code = thm_cmdline("generate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 2
+    # fr'...' lets us use f string interpolation, but the r disables
+    # escape processing, just what we need for this test
+    assert lines[1] == r'builtin echo -en "\e[0q"'
 
 
 def test_iterm_cursor_shape_invalid(thm_cmdline, capsys):
