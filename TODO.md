@@ -1,5 +1,6 @@
 # TODO list for shell-themer
 
+[ ] noctis theme ideas: https://github.com/liviuschera/noctis/pull/11
 [ ] figure out how to set emacs theme
 [x] make a mini-language so that environment_render() can put styles
     in various color formats into an environment variable

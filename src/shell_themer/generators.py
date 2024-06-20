@@ -494,6 +494,124 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
 
+class EzaColors(GeneratorBase, LsColorsFromStyle):
+    "generator for environment variables for eza"
+    #
+    # this is basically the same as the exa generator, but it's
+    # copied instead of refactored becasue exa will probably go
+    # away soon
+    #
+    # eza color generator
+    #
+    EZA_COLORS_BASE_MAP = {
+        # map both a friendly name and the "real" name
+        "text": "no",
+        "file": "fi",
+        "directory": "di",
+        "symlink": "ln",
+        "multi_hard_link": "mh",
+        "pipe": "pi",
+        "socket": "so",
+        "door": "do",
+        "block_device": "bd",
+        "character_device": "cd",
+        "broken_symlink": "or",
+        "missing_symlink_target": "mi",
+        "setuid": "su",
+        "setgid": "sg",
+        "sticky": "st",
+        "other_writable": "ow",
+        "sticky_other_writable": "tw",
+        "executable_file": "ex",
+        "file_with_capability": "ca",
+        "perms_user_read": "ur",
+        "perms_user_write": "uw",
+        "perms_user_execute_files": "ux",
+        "perms_user_execute_directories": "ue",
+        "perms_group_read": "gr",
+        "perms_group_write": "gw",
+        "perms_group_execute": "gx",
+        "perms_other_read": "tr",
+        "perms_other_write": "tw",
+        "perms_other_execute": "tx",
+        "perms_suid_files": "su",
+        "perms_sticky_directories": "sf",
+        "perms_extended_attribute": "xa",
+        "size_number": "sn",
+        "size_unit": "sb",
+        "df": "df",
+        "ds": "ds",
+        "uu": "uu",
+        "un": "un",
+        "gu": "gu",
+        "gn": "gn",
+        "lc": "lc",
+        "lm": "lm",
+        "ga": "ga",
+        "gm": "gm",
+        "gd": "gd",
+        "gv": "gv",
+        "gt": "gt",
+        "punctuation": "xx",
+        "date_time": "da",
+        "in": "in",
+        "bl": "bl",
+        "column_headers": "hd",
+        "lp": "lp",
+        "cc": "cc",
+        "b0": "b0",
+    }
+    # this map allows you to either use the 'native' exa code, or the
+    # 'friendly' name defined by shell-themer
+    EZA_COLORS_MAP = {}
+    for friendly, actual in EZA_COLORS_BASE_MAP.items():
+        EZA_COLORS_MAP[friendly] = actual
+        EZA_COLORS_MAP[actual] = actual
+
+    def generate(self):
+        "Render a EZA_COLORS variable suitable for eza"
+        outlist = []
+        # figure out if we are clearing builtin styles
+        try:
+            clear_builtin = self.scopedef["clear_builtin"]
+            self.assert_bool(
+                clear_builtin,
+                key="clear_builtin",
+                generator=self.generator,
+                prog=self.prog,
+                scope=self.scope,
+            )
+        except KeyError:
+            clear_builtin = False
+
+        if clear_builtin:
+            # this tells exa to not use any built-in/hardcoded colors
+            outlist.append("reset")
+
+        # iterate over the styles given in our configuration
+        for name, style in self.scope_styles.items():
+            if style:
+                _, render = self.ls_colors_from_style(
+                    name, style, self.EZA_COLORS_MAP, prog=self.prog, scope=self.scope
+                )
+                outlist.append(render)
+
+        # process the filesets
+
+        # figure out which environment variable to put it in
+        try:
+            varname = self.scopedef["environment_variable"]
+            varname = self.interp.interpolate(varname)
+        except KeyError:
+            varname = "EZA_COLORS"
+
+        # even if outlist is empty, we have to set the variable, because
+        # when we are switching a theme, there may be contents in the
+        # environment variable already, and we need to tromp over them
+        # we chose to set the variable to empty instead of unsetting it
+        print(f'''export {varname}="{':'.join(outlist)}"''')
+
+
 class Iterm(GeneratorBase):
     "generator to set iterm foreground and background colors"
 
