@@ -10,7 +10,7 @@ $ git clone git@github.com:kotfu/shell-themer.git
 
 ## Install Dependencies
 
-You'll need python 3.7 or higher. You should probably create a virtual
+You'll need python 3.9 or higher. You should probably create a virtual
 environment first too.
 
 Install all the development dependencies:
