@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,10 +27,9 @@ import os
 import pytest
 import rich.style
 
+from shell_themer import ThemeError
 from shell_themer.interpolator import Interpolator
 from shell_themer.parsers import StyleParser
-from shell_themer import ThemeError
-
 
 INTERPOLATIONS = [
     ("{style:dark_orange:hex}", "#ff6c1c"),

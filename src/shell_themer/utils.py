@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,7 +22,6 @@
 """utility classes"""
 
 from .exceptions import ThemeError
-from .interpolator import Interpolator
 
 
 class AssertBool:

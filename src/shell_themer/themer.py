@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,11 +22,11 @@
 """command line tool for maintaining and switching color schemes"""
 
 import argparse
+import contextlib
 import os
 import pathlib
 import subprocess
 import sys
-
 
 import rich.box
 import rich.color
@@ -36,15 +34,15 @@ import rich.console
 import rich.errors
 import rich.layout
 import rich.style
-from rich_argparse import RichHelpFormatter
 import tomlkit
+from rich_argparse import RichHelpFormatter
 
-from .version import version_string
-from .interpolator import Interpolator
-from .generators import GeneratorBase
-from .parsers import StyleParser
 from .exceptions import ThemeError
+from .generators import GeneratorBase
+from .interpolator import Interpolator
+from .parsers import StyleParser
 from .utils import AssertBool
+from .version import version_string
 
 
 class Themer(AssertBool):
@@ -333,10 +331,8 @@ class Themer(AssertBool):
                 if not fname.is_file():
                     raise ThemeError(f"{self.prog}: {args.theme}: theme not found")
         else:
-            try:
+            with contextlib.suppress(KeyError):
                 fname = pathlib.Path(os.environ["THEME_FILE"])
-            except KeyError:
-                pass
         if not fname:
             raise ThemeError(f"{self.prog}: no theme or theme file specified")
 
@@ -347,7 +343,7 @@ class Themer(AssertBool):
 
     def loads(self, tomlstring=None):
         """Load a theme from a given string"""
-        if tomlstring:
+        if tomlstring:  # noqa: SIM108
             toparse = tomlstring
         else:
             # tomlkit can't parse None, so if we got it as the default
@@ -395,11 +391,9 @@ class Themer(AssertBool):
             reg_vars = dict(self.definition["variables"])
         except KeyError:
             reg_vars = {}
-        try:
+        # if no capture variables, we don't care
+        with contextlib.suppress(KeyError):
             del reg_vars["capture"]
-        except KeyError:
-            # no capture variables, but we don't care
-            pass
 
         for var, defined in reg_vars.items():
             if var in resolved_vars:
@@ -432,11 +426,9 @@ class Themer(AssertBool):
     def scopedef_for(self, scope):
         "Extract all the data for a given scope, or an empty dict if there is none"
         scopedef = {}
-        try:
+        # key error if scope doesn't exist, which is fine
+        with contextlib.suppress(KeyError):
             scopedef = self.definition["scope"][scope]
-        except KeyError:
-            # scope doesn't exist
-            pass
         return scopedef
 
     def is_enabled(self, scope):
@@ -482,7 +474,7 @@ class Themer(AssertBool):
         proc = subprocess.run(
             resolved_cmd, shell=True, check=False, capture_output=True
         )
-        if proc.returncode != 0:
+        if proc.returncode != 0:  # noqa: SIM103
             # the shell command returned a non-zero exit code
             # and this scope should therefore be disabled
             return False
@@ -514,10 +506,8 @@ class Themer(AssertBool):
             # if they didn't specify a text style, tell Rich to just use
             # whatever the default is for the terminal
             text_style = "default"
-        try:
+        with contextlib.suppress(KeyError):
             del mystyles["background"]
-        except KeyError:
-            pass
 
         outer_table = rich.table.Table(
             box=rich.box.SIMPLE_HEAD, expand=True, show_header=False
@@ -587,7 +577,7 @@ class Themer(AssertBool):
         else:
             to_generate = []
             try:
-                for scope in self.definition["scope"].keys():
+                for scope in self.definition["scope"]:
                     to_generate.append(scope)
             except KeyError:
                 pass

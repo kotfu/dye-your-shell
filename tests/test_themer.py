@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,8 +26,8 @@ import argparse
 import os
 
 import pytest
-import rich.style
 import rich.errors
+import rich.style
 
 from shell_themer import ThemeError
 

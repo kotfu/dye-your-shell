@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,18 +21,13 @@
 #
 """retrive version information for this package"""
 
-try:
-    # for python 3.8+
-    import importlib.metadata as importlib_metadata
-except ImportError:  # pragma: nocover
-    # for python < 3.8
-    import importlib_metadata
+from importlib import metadata
 
 
 def version_string():
     """return a version string suitable for display to a user"""
     try:
-        ver = importlib_metadata.version("shell_themer")
-    except importlib_metadata.PackageNotFoundError:  # pragma: nocover
+        ver = metadata.version("shell_themer")
+    except metadata.PackageNotFoundError:  # pragma: nocover
         ver = "unknown"
     return ver

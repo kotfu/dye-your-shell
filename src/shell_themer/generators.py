@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,9 +26,9 @@ import re
 
 import rich.color
 
+from .exceptions import ThemeError
 from .interpolator import Interpolator
 from .parsers import StyleParser
-from .exceptions import ThemeError
 from .utils import AssertBool
 
 
@@ -119,10 +117,8 @@ class LsColorsFromStyle:
             # i.e. style.text or style.directory we know what to do with, but
             # style.bundleid we don't know how to map, so we generate an error
             raise ThemeError(
-                (
-                    f"{msgdata['prog']}: unknown style '{name}' while processing"
-                    f" scope '{msgdata['scope']}'"
-                )
+                f"{msgdata['prog']}: unknown style '{name}' while processing"
+                f" scope '{msgdata['scope']}'"
             ) from exc
 
         if style.color.type == rich.color.ColorType.DEFAULT:
@@ -213,10 +209,8 @@ class Fzf(GeneratorBase):
             print(f'export {varname}="{optstr}{colorstr}"')
         except KeyError as exc:
             raise ThemeError(
-                (
-                    f"{self.prog}: fzf generator requires 'environment_variable'"
-                    f" key to process scope '{self.scope}'"
-                )
+                f"{self.prog}: fzf generator requires 'environment_variable'"
+                f" key to process scope '{self.scope}'"
             ) from exc
 
     def _fzf_from_style(self, name, style):
@@ -293,6 +287,7 @@ class Fzf(GeneratorBase):
 
 class LsColors(GeneratorBase, LsColorsFromStyle):
     "generator for LS_COLORS environment variable"
+
     LS_COLORS_BASE_MAP = {
         # map both a friendly name and the "real" name
         "text": "no",
@@ -354,7 +349,7 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
             # go through all the color codes, and render them with the
             # 'default' style and add them to the output
             for name, code in self.LS_COLORS_BASE_MAP.items():
-                if not code in havecodes:
+                if code not in havecodes:
                     _, render = self.ls_colors_from_style(
                         name,
                         style,
@@ -382,6 +377,7 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
 
 class ExaColors(GeneratorBase, LsColorsFromStyle):
     "generator for environment variables for exa"
+
     #
     # exa color generator
     #
@@ -496,6 +492,7 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
 
 class EzaColors(GeneratorBase, LsColorsFromStyle):
     "generator for environment variables for eza"
+
     #
     # this is basically the same as the exa generator, but it's
     # copied instead of refactored becasue exa will probably go
@@ -708,10 +705,8 @@ class Iterm(GeneratorBase):
                 output.append(cmd)
             else:
                 raise ThemeError(
-                    (
-                        f"{self.prog}: unknown cursor '{cursor}'"
-                        f" while processing scope '{self.scope}'"
-                    )
+                    f"{self.prog}: unknown cursor '{cursor}'"
+                    f" while processing scope '{self.scope}'"
                 )
         # render the cursor color
         # iterm has curbg and curfg color codes, but as far as I can tell

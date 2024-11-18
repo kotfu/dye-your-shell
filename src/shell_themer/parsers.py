@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,6 +20,8 @@
 # THE SOFTWARE.
 #
 """parser classes"""
+
+import contextlib
 
 import rich
 
@@ -50,11 +50,14 @@ class StyleParser:
         if self.styles:
             # we have styles, so do a lookup to see if 'text' refers
             # to a style we already have
-            try:
+            # If we get a KeyError, then style is already none
+            with contextlib.suppress(KeyError):
                 style = self.styles[resolved]
-            except KeyError:
-                # style is already none
-                pass
+            # try:
+            #     style = self.styles[resolved]
+            # except KeyError:
+            #     # style is already none
+            #     pass
         # if not there parse the input as a style after interpolating variables
         if not style:
             style = rich.style.Style.parse(resolved)

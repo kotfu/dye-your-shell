@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -103,7 +101,7 @@ class Interpolator:
 
         try:
             value = self.variables[varname]
-            if isinstance(value, bool):
+            if isinstance(value, bool):  # noqa: SIM108
                 # toml booleans are all lower case, python are not
                 # since the source toml is all lower case, we will
                 # make the replacement be the same
@@ -162,7 +160,7 @@ class Interpolator:
         # group 4 contains the name of the environment variable
         varname = match.group(4)
 
-        if backslash:
+        if backslash:  # noqa: SIM108
             # the only thing we replace is the backslash, the rest of it gets
             # passed through as is, which the regex conveniently has for us
             # in match group 2

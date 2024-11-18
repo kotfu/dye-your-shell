@@ -49,7 +49,7 @@ dev = [
     "pytest-cov",
     "codecov",
     "pylint",
-    "black",
+    "ruff",
     "wheel",
     "twine",
     "rope",
@@ -95,3 +95,23 @@ confidence = ''
 # --disable=W".
 disable = '''duplicate-code,
 '''
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]

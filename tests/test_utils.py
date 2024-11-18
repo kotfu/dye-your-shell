@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,8 +24,8 @@
 
 import pytest
 
-from shell_themer.utils import AssertBool
 from shell_themer.exceptions import ThemeError
+from shell_themer.utils import AssertBool
 
 BOOL_TESTS = [
     (True, True),

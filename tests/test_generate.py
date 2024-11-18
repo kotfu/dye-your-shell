@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,8 +23,8 @@
 # pylint: disable=missing-module-docstring, unused-variable
 
 import pytest
-import rich.style
 import rich.errors
+import rich.style
 
 import shell_themer.generators
 from shell_themer import Themer
@@ -160,7 +158,7 @@ def test_generate_enabled(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert "unset SOMEVAR" in out
-    assert not "unset NOLISTVAR" in out
+    assert "unset NOLISTVAR" not in out
 
 
 def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
@@ -258,7 +256,7 @@ def test_generate_comments(thm_cmdline, capsys):
     assert "# [scope.nolistvar]" in out
     assert "# [scope.somevar]" in out
     assert "unset SOMEVAR" in out
-    assert not "unset NOLISTVAR" in out
+    assert "unset NOLISTVAR" not in out
 
 
 def test_unknown_generator(thm_cmdline, capsys):
@@ -295,7 +293,7 @@ ENV_INTERPOLATIONS = [
     ("{style:dark_orange:hexnohash}", "ff6c1c"),
     (
         "{style:dark_orange:ansi_on}hello there{style:dark_orange:ansi_off}",
-        "\x1B[38;2;255;108;28mhello there\x1B[0m",
+        "\x1b[38;2;255;108;28mhello there\x1b[0m",
     ),
     # we have to have the style keyword, or it all just gets passed through
     ("{dark_orange}", "{dark_orange}"),
@@ -1072,7 +1070,7 @@ def test_shell_ansi(thm_cmdline, capsys):
         [scope.shortcut]
         generator = "shell"
         command.first = "echo {style:purple:ansi_on}{var:greeting}{style:purple:ansi_off}"
-    """
+    """  # noqa: E501
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS

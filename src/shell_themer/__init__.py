@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,5 +21,7 @@
 #
 """command line tool for maintaining and switching color schemes"""
 
-from .themer import Themer
 from .exceptions import ThemeError
+from .themer import Themer
+
+__all__ = ["Themer", "ThemeError"]
