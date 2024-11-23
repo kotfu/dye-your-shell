@@ -100,9 +100,9 @@ style.query = "pink"
 
 ## Installation
 
-You'll need python version 3.7 or higher. Install with pip:
+You'll need python version 3.9 or higher. Install with [pipx](https://pipx.pypa.io/stable/):
 ```
-pip install shell_themer
+$ pipx install shell_themer
 ```
 
 You need a *nix-ish bash shell environment. Probably works in Windows Subsystem
