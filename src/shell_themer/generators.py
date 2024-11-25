@@ -35,7 +35,8 @@ from .utils import AssertBool
 class GeneratorBase(abc.ABC, AssertBool):
     """Abstract Base Class for all generators
 
-    Subclass and implement generate()
+    Subclass and implement `generate()`. The first line of the class docstring
+    is displayed by `shell-themer generators` as the description of the generator
 
     Creates a registry of all subclasses in cls.generators
 
@@ -139,7 +140,7 @@ class LsColorsFromStyle:
 
 
 class EnvironmentVariables(GeneratorBase):
-    "generate statements to export and unset environment variables"
+    "Export and unset environment variables"
 
     def generate(self) -> str:
         output = []
@@ -169,7 +170,7 @@ class EnvironmentVariables(GeneratorBase):
 
 
 class Fzf(GeneratorBase):
-    "generate fzf options and environment variables"
+    "Set fzf options and environment variables"
 
     def generate(self) -> str:
         """render attribs into a shell statement to set an environment variable"""
@@ -286,7 +287,7 @@ class Fzf(GeneratorBase):
 
 
 class LsColors(GeneratorBase, LsColorsFromStyle):
-    "generator for LS_COLORS environment variable"
+    "Create LS_COLORS environment variable for use with GNU ls"
 
     LS_COLORS_BASE_MAP = {
         # map both a friendly name and the "real" name
@@ -376,7 +377,7 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
 
 
 class ExaColors(GeneratorBase, LsColorsFromStyle):
-    "generator for environment variables for exa"
+    "Create EXA_COLORS environment variable for use with ls replacement exa"
 
     #
     # exa color generator
@@ -491,7 +492,7 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
 
 
 class EzaColors(GeneratorBase, LsColorsFromStyle):
-    "generator for environment variables for eza"
+    "Create EZA_COLORS environment variable for use with ls replacement eza"
 
     #
     # this is basically the same as the exa generator, but it's
@@ -610,7 +611,7 @@ class EzaColors(GeneratorBase, LsColorsFromStyle):
 
 
 class Iterm(GeneratorBase):
-    "generator to set iterm foreground and background colors"
+    "Send escape sequences to iTerm terminal emulator"
 
     def generate(self):
         """send escape sequences to iTerm to make it do stuff"""
@@ -731,7 +732,7 @@ class Iterm(GeneratorBase):
 
 
 class Shell(GeneratorBase):
-    "generator for shell commands"
+    "Execute arbitary shell commands"
 
     def generate(self):
         out = []

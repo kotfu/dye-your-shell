@@ -23,6 +23,7 @@
 
 import argparse
 import contextlib
+import inspect
 import os
 import pathlib
 import subprocess
@@ -130,6 +131,9 @@ class Themer(AssertBool):
             "-c", "--comment", action="store_true", help=comment_help
         )
 
+        generators_help = "list all known generators"
+        subparsers.add_parser("generators", help=generators_help)
+
         list_help = "list all themes in $THEMES_DIR"
         subparsers.add_parser("list", help=list_help)
 
@@ -229,6 +233,8 @@ class Themer(AssertBool):
                 exit_code = self.dispatch_preview(args)
             elif args.command == "generate":
                 exit_code = self.dispatch_generate(args)
+            elif args.command == "generators":
+                exit_code = self.dispatch_generators(args)
             else:
                 print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
                 exit_code = self.EXIT_USAGE
@@ -623,4 +629,27 @@ class Themer(AssertBool):
                     ) from exc
             else:
                 raise ThemeError(f"{self.prog}: {scope}: no such scope")
+        return self.EXIT_SUCCESS
+
+    def dispatch_generators(self, _):
+        """list all available generators and a short description of each
+        """
+        # ignore all other args
+        generators = {}
+        for generator in GeneratorBase.classmap:
+            desc = inspect.getdoc(GeneratorBase.classmap[generator])
+            if desc:
+                desc = desc.split("\n")[0]
+            generators[generator] = desc
+
+        table = rich.table.Table(
+            box=rich.box.SIMPLE_HEAD, show_edge=False, pad_edge=False
+        )
+        table.add_column("Generator")
+        table.add_column("Description")
+
+        for generator in sorted(generators):
+            table.add_row(generator, generators[generator])
+        self.console.print(table)
+
         return self.EXIT_SUCCESS

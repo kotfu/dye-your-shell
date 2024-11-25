@@ -62,6 +62,7 @@
 [x] add --no-color option
 [x] add --colors= option
 [x] add SHELL_THEMER_COLORS env variable
+[x] add a command which shows all the known generators, with a short description of each
 
 
 ## Recipe ideas
