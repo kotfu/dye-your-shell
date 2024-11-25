@@ -26,7 +26,6 @@ import contextlib
 import inspect
 import os
 import pathlib
-import subprocess
 import sys
 
 import rich.box
@@ -35,13 +34,11 @@ import rich.console
 import rich.errors
 import rich.layout
 import rich.style
-import tomlkit
 from rich_argparse import RichHelpFormatter
 
 from .exceptions import ThemeError
 from .generators import GeneratorBase
-from .interpolator import Interpolator
-from .parsers import StyleParser
+from .theme import Theme
 from .utils import AssertBool
 from .version import version_string
 
@@ -186,15 +183,7 @@ class Themer(AssertBool):
             highlight=False,
         )
 
-        # the path to the theme file if we loaded from a file
-        # note that this can be None even with a valid loaded theme
-        # because of self.loads()
-        self.theme_file = None
-        self.definition = {}
-        self.styles = {}
-        self.variables = {}
-
-        self.loads()
+        self.theme = Theme(self.prog)
 
     @property
     def theme_dir(self):
@@ -342,149 +331,10 @@ class Themer(AssertBool):
         if not fname:
             raise ThemeError(f"{self.prog}: no theme or theme file specified")
 
+        self.theme = Theme(prog=self.prog)
         with open(fname, "rb") as file:
-            self.definition = tomlkit.load(file)
-        self.theme_file = fname
-        self._process_definition()
-
-    def loads(self, tomlstring=None):
-        """Load a theme from a given string"""
-        if tomlstring:  # noqa: SIM108
-            toparse = tomlstring
-        else:
-            # tomlkit can't parse None, so if we got it as the default
-            # or if the caller pased None intentionally...
-            toparse = ""
-        self.definition = tomlkit.loads(toparse)
-        self._process_definition()
-
-    def _process_definition(self):
-        """process a newly loaded definition, including variables and styles
-
-        this sets self.styles and self.variables
-        """
-        # process the styles, with no base styles or variables
-        parser = StyleParser(None, None)
-        try:
-            raw_styles = self.definition["styles"]
-        except KeyError:
-            raw_styles = {}
-        self.styles = parser.parse_dict(raw_styles)
-        # Process the capture variables, without interpolation.
-        # We can't interpolate because the toml parser has to group
-        # all the "capture" items in a separate table, they can't be
-        # interleaved with the regular variables in the order they are
-        # defined. So we have to choose to process either the [variables]
-        # table or the [variables][capture] table first. We choose the
-        # [variables][capture] table.
-        resolved_vars = {}
-        try:
-            cap_vars = self.definition["variables"]["capture"]
-        except KeyError:
-            cap_vars = {}
-        for var, cmd in cap_vars.items():
-            proc = subprocess.run(cmd, shell=True, check=False, capture_output=True)
-            if proc.returncode != 0:
-                raise ThemeError(
-                    f"{self.prog}: capture variable '{var}' returned"
-                    " a non-zero exit code."
-                )
-            resolved_vars[var] = str(proc.stdout, "UTF-8")
-        # then add the regular variables, interpolating as we go
-        try:
-            # make a shallow copy, because we are gonna delete something
-            # and we want the definition to stay pristine
-            reg_vars = dict(self.definition["variables"])
-        except KeyError:
-            reg_vars = {}
-        # if no capture variables, we don't care
-        with contextlib.suppress(KeyError):
-            del reg_vars["capture"]
-
-        for var, defined in reg_vars.items():
-            if var in resolved_vars:
-                raise ThemeError(
-                    f"{self.prog}: a variable named '{var}' is already defined."
-                )
-            # create a new interpolator each time through the loop so
-            # we can interpolate variables into other variables as they
-            # are defined
-            interp = Interpolator(
-                self.styles, resolved_vars, prog=self.prog, scope="variables"
-            )
-            resolved_vars[var] = interp.interpolate(defined)
-
-        # finally set the variables on this object, which will be used by a
-        # lot of other stuff
-        self.variables = resolved_vars
-
-    #
-    # scope, parsing, and validation methods
-    #
-    def has_scope(self, scope):
-        """Check if the given scope exists."""
-        try:
-            _ = self.definition["scope"][scope]
-            return True
-        except KeyError:
-            return False
-
-    def scopedef_for(self, scope):
-        "Extract all the data for a given scope, or an empty dict if there is none"
-        scopedef = {}
-        # key error if scope doesn't exist, which is fine
-        with contextlib.suppress(KeyError):
-            scopedef = self.definition["scope"][scope]
-        return scopedef
-
-    def is_enabled(self, scope):
-        """Determine if the scope is enabled
-        The default is that the scope is enabled
-
-        If can be disabled by:
-
-            enabled = false
-
-        or:
-            enabled_if = "{shell cmd}" returns a non-zero exit code
-
-        if 'enabled = false' is present, then enabled_if is not checked
-        """
-        scopedef = self.scopedef_for(scope)
-        try:
-            enabled = scopedef["enabled"]
-            self.assert_bool(
-                enabled,
-                key="enabled",
-                prog=self.prog,
-                scope=scope,
-            )
-            # this is authoritative, if it exists, ignore enabled_if below
-            return enabled
-        except KeyError:
-            # no enabled command, but we need to still keep checking
-            pass
-
-        try:
-            enabled_if = scopedef["enabled_if"]
-            if not enabled_if:
-                # we have a key, but an empty value (aka command)
-                # by rule we say it's enabled
-                return True
-        except KeyError:
-            # no enabled_if key, so we must be enabled
-            return True
-
-        interp = Interpolator(self.styles, self.variables, prog=self.prog, scope=scope)
-        resolved_cmd = interp.interpolate(enabled_if)
-        proc = subprocess.run(
-            resolved_cmd, shell=True, check=False, capture_output=True
-        )
-        if proc.returncode != 0:  # noqa: SIM103
-            # the shell command returned a non-zero exit code
-            # and this scope should therefore be disabled
-            return False
-        return True
+            self.theme.load(file)
+            self.theme.theme_file = fname
 
     #
     # dispatchers
@@ -505,7 +355,7 @@ class Themer(AssertBool):
         """Display a preview of the styles in a theme"""
         self.load_from_args(args)
 
-        mystyles = self.styles.copy()
+        mystyles = self.theme.styles.copy()
         try:
             text_style = mystyles["text"]
         except KeyError:
@@ -520,14 +370,14 @@ class Themer(AssertBool):
         )
 
         summary_table = rich.table.Table(box=None, expand=True, show_header=False)
-        summary_table.add_row("Theme file:", str(self.theme_file))
+        summary_table.add_row("Theme file:", str(self.theme.theme_file))
         try:
-            name = self.definition["name"]
+            name = self.theme.definition["name"]
         except KeyError:
             name = ""
         summary_table.add_row("Name:", name)
         try:
-            version = self.definition["version"]
+            version = self.theme.definition["version"]
         except KeyError:
             version = ""
         summary_table.add_row("Version:", version)
@@ -547,7 +397,7 @@ class Themer(AssertBool):
         scopes_table.add_column("Scope", ratio=0.4)
         scopes_table.add_column("Generator", ratio=0.6)
         try:
-            for name, scopedef in self.definition["scope"].items():
+            for name, scopedef in self.theme.definition["scope"].items():
                 try:
                     generator = scopedef["generator"]
                 except KeyError:
@@ -583,7 +433,7 @@ class Themer(AssertBool):
         else:
             to_generate = []
             try:
-                for scope in self.definition["scope"]:
+                for scope in self.theme.definition["scope"]:
                     to_generate.append(scope)
             except KeyError:
                 pass
@@ -591,8 +441,8 @@ class Themer(AssertBool):
         for scope in to_generate:
             # checking here in case they supplied a scope on the command line that
             # doesn't exist
-            if self.has_scope(scope):
-                scopedef = self.scopedef_for(scope)
+            if self.theme.has_scope(scope):
+                scopedef = self.theme.scopedef_for(scope)
                 # find the generator for this scope
                 try:
                     generator = scopedef["generator"]
@@ -600,7 +450,7 @@ class Themer(AssertBool):
                     errmsg = f"{self.prog}: scope '{scope}' does not have a generator."
                     raise ThemeError(errmsg) from exc
                 # check if the scope is disabled
-                if not self.is_enabled(scope):
+                if not self.theme.is_enabled(scope):
                     if args.comment:
                         print(f"# [scope.{scope}] skipped because it is not enabled")
                     continue
@@ -614,8 +464,8 @@ class Themer(AssertBool):
                     # initialize the class with the scope and scope definition
                     ginst = gcls(
                         scopedef,
-                        self.styles,
-                        self.variables,
+                        self.theme.styles,
+                        self.theme.variables,
                         prog=self.prog,
                         scope=scope,
                     )
@@ -632,15 +482,14 @@ class Themer(AssertBool):
         return self.EXIT_SUCCESS
 
     def dispatch_generators(self, _):
-        """list all available generators and a short description of each
-        """
+        """list all available generators and a short description of each"""
         # ignore all other args
         generators = {}
-        for generator in GeneratorBase.classmap:
-            desc = inspect.getdoc(GeneratorBase.classmap[generator])
+        for name, clss in GeneratorBase.classmap:
+            desc = inspect.getdoc(clss)
             if desc:
                 desc = desc.split("\n")[0]
-            generators[generator] = desc
+            generators[name] = desc
 
         table = rich.table.Table(
             box=rich.box.SIMPLE_HEAD, show_edge=False, pad_edge=False

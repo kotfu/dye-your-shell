@@ -22,6 +22,6 @@
 """command line tool for maintaining and switching color schemes"""
 
 from .exceptions import ThemeError
-from .themer import Themer
+from .themer import Theme, Themer
 
-__all__ = ["Themer", "ThemeError"]
+__all__ = ["Themer", "Theme", "ThemeError"]

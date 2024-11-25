@@ -35,7 +35,7 @@ from shell_themer import ThemeError
 #
 # test style and variable processing on initialization
 #
-def test_process_definition(thm):
+def test_process_definition(theme):
     tomlstr = """
         [styles]
         background =  "#282a36"
@@ -58,37 +58,37 @@ def test_process_definition(thm):
         igreen = "{style:green:hexnohash}"
         capture.anothervar = "printf '%s' myvalue"
     """
-    thm.loads(tomlstr)
+    theme.loads(tomlstr)
     # check the styles
-    assert isinstance(thm.styles, dict)
-    assert isinstance(thm.styles["cyan"], rich.style.Style)
-    assert thm.styles["cyan"].color.name == "#8be9fd"
-    assert thm.styles["yellow"].color.name == "#f1fa8c"
-    assert len(thm.styles) == 10
+    assert isinstance(theme.styles, dict)
+    assert isinstance(theme.styles["cyan"], rich.style.Style)
+    assert theme.styles["cyan"].color.name == "#8be9fd"
+    assert theme.styles["yellow"].color.name == "#f1fa8c"
+    assert len(theme.styles) == 10
     # check the variables
-    assert len(thm.variables) == 7
+    assert len(theme.variables) == 7
     # capture doesn't interpolate variables
-    assert thm.variables["somevar"] == "{var:replace}"
+    assert theme.variables["somevar"] == "{var:replace}"
     # make sure capture variable actually captures
-    assert thm.variables["anothervar"] == "myvalue"
+    assert theme.variables["anothervar"] == "myvalue"
     # styles interpolate into variables
-    assert thm.variables["igreen"] == "50fa7b"
+    assert theme.variables["igreen"] == "50fa7b"
     # variables interpolate into variables
-    assert thm.variables["replace"] == "5555"
-    assert thm.variables["myred"] == "fred5555"
+    assert theme.variables["replace"] == "5555"
+    assert theme.variables["myred"] == "fred5555"
 
 
-def test_process_definition_duplicate_variables(thm):
+def test_process_definition_duplicate_variables(theme):
     tomlstr = """
         [variables]
         capture.thevar = "printf '%s' thevalue"
         thevar = "fred"
     """
     with pytest.raises(ThemeError):
-        thm.loads(tomlstr)
+        theme.loads(tomlstr)
 
 
-def test_process_definition_capture_error(thm):
+def test_process_definition_capture_error(theme):
     # the extra f in printff should return a non-zero
     # exit code, which is an error
     tomlstr = """
@@ -96,16 +96,16 @@ def test_process_definition_capture_error(thm):
         capture.thevar = "printff '%s' thevalue"
     """
     with pytest.raises(ThemeError):
-        thm.loads(tomlstr)
+        theme.loads(tomlstr)
 
 
-def test_process_definition_undefined_variable(thm):
+def test_process_definition_undefined_variable(theme):
     tomlstr = """
         [variables]
         one = "{var:two}"
     """
     with pytest.raises(ThemeError):
-        thm.loads(tomlstr)
+        theme.loads(tomlstr)
 
 
 # TODO this should test the init in GeneratorBase which sets scope_styles
@@ -189,15 +189,15 @@ def test_process_definition_undefined_variable(thm):
 #
 # test scope, parsing, and validation methods
 #
-def test_scopedef(thm):
+def test_scopedef(theme):
     tomlstr = """
         [scope.iterm]
         generator = "iterm"
         style.foreground = "blue"
         style.background = "white"
     """
-    thm.loads(tomlstr)
-    scopedef = thm.scopedef_for("iterm")
+    theme.loads(tomlstr)
+    scopedef = theme.scopedef_for("iterm")
     assert isinstance(scopedef, dict)
     assert scopedef["generator"] == "iterm"
     assert len(scopedef) == 2
@@ -207,29 +207,29 @@ def test_scopedef(thm):
     # assert isinstance(styles["foreground"], rich.style.Style)
 
 
-def test_scopedef_notfound(thm):
+def test_scopedef_notfound(theme):
     tomlstr = """
         [scope.iterm]
         generator = "iterm"
         style.foreground = "blue"
         style.background = "white"
     """
-    thm.loads(tomlstr)
-    scopedef = thm.scopedef_for("notfound")
+    theme.loads(tomlstr)
+    scopedef = theme.scopedef_for("notfound")
     assert isinstance(scopedef, dict)
     assert scopedef == {}
 
 
-def test_has_scope(thm):
+def test_has_scope(theme):
     tomlstr = """
         [scope.qqq]
         generator = "iterm"
         style.foreground = "blue"
         style.background = "white"
     """
-    thm.loads(tomlstr)
-    assert thm.has_scope("qqq")
-    assert not thm.has_scope("fred")
+    theme.loads(tomlstr)
+    assert theme.has_scope("qqq")
+    assert not theme.has_scope("fred")
 
 
 #
@@ -289,8 +289,8 @@ def test_load_from_args_filename(thm, mocker, tmp_path):
     args.theme = None
 
     thm.load_from_args(args)
-    assert thm.definition
-    assert thm.styles
+    assert thm.theme.definition
+    assert thm.theme.styles
 
 
 def test_load_from_args_invalid_filename(thm, mocker, tmp_path):
@@ -331,8 +331,8 @@ def test_load_from_args_env(thm, mocker, tmp_path):
     args.theme = None
 
     thm.load_from_args(args)
-    assert thm.definition
-    assert thm.styles
+    assert thm.theme.definition
+    assert thm.theme.styles
 
 
 def test_load_from_args_env_invalid(thm, mocker, tmp_path):
@@ -366,8 +366,8 @@ def test_load_from_args_theme_file(thm, mocker, tmp_path):
     args.theme = "themefile.toml"
 
     thm.load_from_args(args)
-    assert thm.definition
-    assert thm.styles
+    assert thm.theme.definition
+    assert thm.theme.styles
 
 
 def test_load_from_args_theme_file_invalid(thm, mocker, tmp_path):
@@ -401,16 +401,16 @@ def test_load_from_args_theme_name(thm, mocker, tmp_path):
     args.theme = "themefile"
 
     thm.load_from_args(args)
-    assert thm.definition
-    assert thm.styles
+    assert thm.theme.definition
+    assert thm.theme.styles
 
 
 #
 # test loads() method
 #
-def test_loads_empty(thm):
-    thm.loads("")
-    assert isinstance(thm.definition, dict)
-    assert thm.definition == {}
-    assert isinstance(thm.styles, dict)
-    assert thm.styles == {}
+def test_loads_empty(theme):
+    theme.loads("")
+    assert isinstance(theme.definition, dict)
+    assert theme.definition == {}
+    assert isinstance(theme.styles, dict)
+    assert theme.styles == {}
