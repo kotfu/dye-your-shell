@@ -91,7 +91,7 @@ class GeneratorBase(abc.ABC, AssertBool):
 class LsColorsFromStyle:
     """Generator mixin to create ls_colors type styles"""
 
-    def ls_colors_from_style(self, name, style, mapp, **msgdata):
+    def ls_colors_from_style(self, name, style, mapp, allow_unknown=False, **msgdata):
         """create an entry suitable for LS_COLORS from a style
 
         name should be a valid LS_COLORS entry, could be a code representing
@@ -101,6 +101,10 @@ class LsColorsFromStyle:
 
         mapp is a dictionary of friendly color names to native color names
             ie map['directory'] = 'di'
+
+        allow_unknown - whether to allow [name] that is not in [mapp]. If false,
+        an error will be generated if you use a [name] that is not in [mapp]. If
+        true, [mapp] will only be used as a "friendly" name lookup.
 
         **msgdata - used for generating useful error messages
         prog = the name of the program
@@ -114,13 +118,17 @@ class LsColorsFromStyle:
         try:
             mapname = mapp[name]
         except KeyError as exc:
-            # they used a style for a file attribute that we don't know how to map
-            # i.e. style.text or style.directory we know what to do with, but
-            # style.bundleid we don't know how to map, so we generate an error
-            raise ThemeError(
-                f"{msgdata['prog']}: unknown style '{name}' while processing"
-                f" scope '{msgdata['scope']}'"
-            ) from exc
+            if allow_unknown:
+                # no problem if we didn't find name in mapp, we'll just use name
+                # as is
+                mapname = name
+            else:
+                # they used a style for a file attribute that isn't in the map
+                # which is not allowed, so we generate an error
+                raise ThemeError(
+                    f"{msgdata['prog']}: unknown style '{name}' while processing"
+                    f" scope '{msgdata['scope']}'"
+                ) from exc
 
         if style.color.type == rich.color.ColorType.DEFAULT:
             ansicodes = "0"
@@ -339,7 +347,12 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
         for name, style in self.scope_styles.items():
             if style:
                 mapcode, render = self.ls_colors_from_style(
-                    name, style, self.LS_COLORS_MAP, prog=self.prog, scope=self.scope
+                    name,
+                    style,
+                    self.LS_COLORS_MAP,
+                    allow_unknown=False,
+                    prog=self.prog,
+                    scope=self.scope,
                 )
                 havecodes.append(mapcode)
                 outlist.append(render)
@@ -355,6 +368,7 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
                         name,
                         style,
                         self.LS_COLORS_MAP,
+                        allow_unknown=False,
                         prog=self.prog,
                         scope=self.scope,
                     )
@@ -471,7 +485,12 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
         for name, style in self.scope_styles.items():
             if style:
                 _, render = self.ls_colors_from_style(
-                    name, style, self.EXA_COLORS_MAP, prog=self.prog, scope=self.scope
+                    name,
+                    style,
+                    self.EXA_COLORS_MAP,
+                    allow_unknown=False,
+                    prog=self.prog,
+                    scope=self.scope,
                 )
                 outlist.append(render)
 
@@ -495,33 +514,24 @@ class EzaColors(GeneratorBase, LsColorsFromStyle):
     "Create EZA_COLORS environment variable for use with ls replacement eza"
 
     #
-    # this is basically the same as the exa generator, but it's
+    # this is similar to the exa generator, but it's
     # copied instead of refactored becasue exa will probably go
     # away soon
     #
     # eza color generator
     #
     EZA_COLORS_BASE_MAP = {
-        # map both a friendly name and the "real" name
-        "text": "no",
+        # map both a friendly name and the "real" code
         "file": "fi",
         "directory": "di",
         "symlink": "ln",
-        "multi_hard_link": "mh",
         "pipe": "pi",
         "socket": "so",
-        "door": "do",
         "block_device": "bd",
         "character_device": "cd",
         "broken_symlink": "or",
-        "missing_symlink_target": "mi",
-        "setuid": "su",
-        "setgid": "sg",
-        "sticky": "st",
-        "other_writable": "ow",
-        "sticky_other_writable": "tw",
         "executable_file": "ex",
-        "file_with_capability": "ca",
+        "perms_octal": "oc",
         "perms_user_read": "ur",
         "perms_user_write": "uw",
         "perms_user_execute_files": "ux",
@@ -532,16 +542,28 @@ class EzaColors(GeneratorBase, LsColorsFromStyle):
         "perms_other_read": "tr",
         "perms_other_write": "tw",
         "perms_other_execute": "tx",
-        "perms_suid_files": "su",
+        "perms_setuid_files": "su",
         "perms_sticky_directories": "sf",
         "perms_extended_attribute": "xa",
         "size_number": "sn",
+        "nb": "nb",
+        "nk": "nk",
+        "nm": "nm",
+        "ng": "ng",
+        "nt": "nt",
         "size_unit": "sb",
+        "ub": "ub",
+        "uk": "uk",
+        "um": "um",
+        "ug": "ug",
+        "ut": "ut",
         "df": "df",
         "ds": "ds",
         "uu": "uu",
+        "uR": "uR",
         "un": "un",
         "gu": "gu",
+        "gR": "gR",
         "gn": "gn",
         "lc": "lc",
         "lm": "lm",
@@ -550,16 +572,42 @@ class EzaColors(GeneratorBase, LsColorsFromStyle):
         "gd": "gd",
         "gv": "gv",
         "gt": "gt",
+        "gi": "gi",
+        "gc": "gc",
+        "Gm": "Gm",
+        "Go": "Go",
+        "Gc": "Gc",
+        "Gd": "Gd",
         "punctuation": "xx",
         "date_time": "da",
         "in": "in",
         "bl": "bl",
         "column_headers": "hd",
-        "lp": "lp",
+        "symlink_path": "lp",
         "cc": "cc",
-        "b0": "b0",
+        "broken_symlink_overlay": "b0",
+        "special": "sp",
+        "mount_point": "mp",
+        "image": "im",
+        "video": "vi",
+        "lossy_music": "mu",
+        "lossless_music": "lo",
+        "cryptography": "cr",
+        "document": "do",
+        "compressed": "co",
+        "temporary": "tm",
+        "compilation_artifact": "cm",
+        "build": "bu",
+        "source_code": "sc",
+        "icon": "ic",
+        "Sn": "Sn",
+        "Su": "Su",
+        "Sr": "Sr",
+        "St": "St",
+        "Sl": "Sl",
+        "ff": "ff",
     }
-    # this map allows you to either use the 'native' exa code, or the
+    # this map allows you to either use the 'native' eza code, or the
     # 'friendly' name defined by shell-themer
     EZA_COLORS_MAP = {}
     for friendly, actual in EZA_COLORS_BASE_MAP.items():
@@ -590,7 +638,12 @@ class EzaColors(GeneratorBase, LsColorsFromStyle):
         for name, style in self.scope_styles.items():
             if style:
                 _, render = self.ls_colors_from_style(
-                    name, style, self.EZA_COLORS_MAP, prog=self.prog, scope=self.scope
+                    name,
+                    style,
+                    self.EZA_COLORS_MAP,
+                    allow_unknown=True,
+                    prog=self.prog,
+                    scope=self.scope,
                 )
                 outlist.append(render)
 

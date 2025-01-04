@@ -504,7 +504,12 @@ def test_ls_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
     genny = shell_themer.generators.LsColors(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
-        name, style, genny.LS_COLORS_MAP, prog="prog", scope="scope"
+        name,
+        style,
+        genny.LS_COLORS_MAP,
+        allow_unknown=False,
+        prog="prog",
+        scope="scope",
     )
     assert render == expected
     assert code == expected[0:2]
@@ -638,7 +643,12 @@ def test_exa_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
     genny = shell_themer.generators.ExaColors(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
-        name, style, genny.EXA_COLORS_MAP, prog="prog", scope="scope"
+        name,
+        style,
+        genny.EXA_COLORS_MAP,
+        allow_unknown=False,
+        prog="prog",
+        scope="scope",
     )
     assert render == expected
     assert code == expected[0:2]
@@ -742,27 +752,21 @@ def test_exa_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
 # so we don't really need to test much of that
 STYLE_TO_EZACOLORS = [
-    ("text", "", ""),
-    ("text", "default", "no=0"),
     ("file", "default", "fi=0"),
     ("directory", "#8be9fd", "di=38;2;139;233;253"),
     ("symlink", "green4 bold", "ln=1;38;5;28"),
-    ("multi_hard_link", "blue on white", "mh=34;47"),
+    ("lc", "blue on white", "lc=34;47"),
     ("pi", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
     ("socket", "bright_white", "so=97"),
-    ("door", "bright_white", "do=97"),
     ("block_device", "default", "bd=0"),
     ("character_device", "black", "cd=30"),
     ("broken_symlink", "bright_blue", "or=94"),
-    ("missing_symlink_target", "bright_blue", "mi=94"),
-    ("setuid", "bright_blue", "su=94"),
-    ("setgid", "bright_red", "sg=91"),
-    ("sticky", "blue_violet", "st=38;5;57"),
-    ("other_writable", "blue_violet italic", "ow=3;38;5;57"),
-    ("sticky_other_writable", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
+    ("perms_setuid_files", "bright_blue", "su=94"),
+    ("perms_sticky_directories", "bright_red", "sf=91"),
+    ("perms_other_write", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
     ("executable_file", "cornflower_blue on grey82", "ex=38;5;69;48;5;252"),
-    ("file_with_capability", "red on black", "ca=31;40"),
     ("sn", "#7060eb", "sn=38;2;112;96;235"),
+    ("*.toml", "#8be9fd", "*.toml=38;2;139;233;253"),
 ]
 
 
@@ -771,10 +775,15 @@ def test_eza_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
     genny = shell_themer.generators.EzaColors(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
-        name, style, genny.EZA_COLORS_MAP, prog="prog", scope="scope"
+        name,
+        style,
+        genny.EZA_COLORS_MAP,
+        allow_unknown=True,
+        prog="prog",
+        scope="scope",
     )
     assert render == expected
-    assert code == expected[0:2]
+    assert code == expected.split("=", 1)[0]
 
 
 def test_eza_colors_no_styles(thm_cmdline, capsys):
@@ -787,19 +796,6 @@ def test_eza_colors_no_styles(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     assert out == 'export EZA_COLORS=""\n'
-
-
-def test_eza_colors_unknown_style(thm_cmdline, capsys):
-    tomlstr = """
-        [scope.exac]
-        generator = "eza_colors"
-        style.bundleid = "default"
-    """
-    exit_code = thm_cmdline("generate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_ERROR
-    assert "unknown style" in err
-    assert "exac" in err
 
 
 def test_eza_colors_environment_variable(thm_cmdline, capsys):
