@@ -24,10 +24,11 @@ source code instead of copying files to the python `site-packages` folder.
 
 ## Branches, Tags, and Versions
 
-This project uses a simplified version of the [git flow branching strategy](http://nvie.com/posts/a-successful-git-branching-model/). We don't use release
-branches, and we generally don't do hotfixes, so we don't have any of those branches
-either. The `main` branch always contains the latest release of the code uploaded to
-PyPI, with a tag for the version number of that release.
+This project uses a simplified version of the
+[git flow branching strategy](http://nvie.com/posts/a-successful-git-branching-model/).
+We don't use release branches, and we generally don't do hotfixes, so we don't have
+any of those branches either. The `main` branch always contains the latest release of
+the code uploaded to PyPI, with a tag for the version number of that release.
 
 The `develop` branch is where all the action occurs. Feature branches are welcome.
 When it's time for a release, we merge `develop` into `main`.
@@ -141,34 +142,40 @@ following:
 
 3. Review and update `CHANGELOG.md`.
 
-4. Update and close the milestone corresponding to the release at
+4. Push the **develop** branch to github.
+
+5. Update and close the milestone corresponding to the release at
    [https://github.com/kotfu/shell-themer/milestones](https://github.com/kotfu/shell-themer/milestones)
 
-5. Push the **develop** branch to github.
-
 6. Create a pull request on github to merge the **develop** branch into
-   **main**. Wait for the checks to pass
+   **main**. Wait for the checks to pass. Do not merge the pull request
+   from the GitHub UI.
 
-7. Merge the **develop** branch into the **main** branch and close the pull
-   request.
+7. In your local repo, tag the last commit on your develop branch with the
+   release number
 
-8.  Create a new release on Github, and have it create the new tag when you
-    publish the release. Publish the release.
+8. Merge the **develop** branch into the **main** branch in your local repo.  Make
+   sure you do a fast-forward merge. That should result in the tagged commit
+   being present on both the **develop** and **main** branches.
 
-9.  Switch to the **main** branch, and fetch the changes, including the newly
-    created tag
+9.  ??? See what happens to the pull request, it's been merged, do you just
+   close it now?
 
-10. Build source distribution, wheel distribution, and upload them to testpypi:
+10. Create a new release on Github with the tag you have pushed. Publish the release.
+
+11. Switch to the **main** branch in your local repo.
+
+12. Build source distribution, wheel distribution, and upload them to testpypi:
 ```
 $ invoke pypi-test
 ```
 
-1.  Build source distribution, wheel distribution, and upload them to pypi:
+1.   Build source distribution, wheel distribution, and upload them to pypi:
 ```
 $ invoke pypi
 ```
 
-1.  Switch back to the **develop** branch.
+1.   Switch back to the **develop** branch.
 
-2.  Add an **Unreleased** section to the top of `CHANGELOG.md`. Push the
+2.   Add an **Unreleased** section to the top of `CHANGELOG.md`. Push the
     change to github.
