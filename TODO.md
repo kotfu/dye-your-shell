@@ -63,6 +63,18 @@
 [x] add --colors= option
 [x] add SHELL_THEMER_COLORS env variable
 [x] add a command which shows all the known generators, with a short description of each
+[ ] rationalize command line arguments. Some commands like list don't use -f or -t. But multiple
+    commands (list, preview) use -f and -t. Currently -f and -t are not in a subparser, so you can
+    supply those arguments with the list command, but that's incorrect.
+[ ] create the concept of a palette, which defines a set of standard named styles. Make the
+    palette saved in a file separate from the theme. The out of the box themes reference
+    the standard named styles, making it possible for users to create a new palette with their
+    desired colors instead of reworking an entire theme. Then we can create one standard theme
+    included with shell-themer which includes all the generators. Many users can just choose
+    a color palette instead of modifying or creating a theme.
+[ ] see if we can download/convert/create our palettes from an online repository of color themes
+[ ] add generator for GREP_COLORS https://www.gnu.org/software/grep/manual/grep.html#index-GREP_005fCOLORS-environment-variable
+
 
 
 ## Recipe ideas
