@@ -7,7 +7,7 @@ using a full 16.7 million color palette. For example:
 * [dust](https://github.com/bootandy/dust)
 * [bat](https://github.com/sharkdp/bat)
 * [gum](https://github.com/charmbracelet/gum)
-* [exa](https://the.exa.website/)
+* [eza](https://eza.rocks/)
 
 Even the venerable `ls` can show various types of files in different colors.
 
@@ -66,11 +66,11 @@ style.background = "background"
 
 [scope.ls_colors]
 generator = "environment_variables"
-environment.export.LS_COLORS = "$(vivid generate dracula)"
+export.LS_COLORS = "$(vivid generate dracula)"
 
 [scope.bat]
 generator = "environment_variables"
-environment.export.BAT_THEME="Dracula"
+export.BAT_THEME = "Dracula"
 
 [scope.fzf]
 generator = "fzf"
