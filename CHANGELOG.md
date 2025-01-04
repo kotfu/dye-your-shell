@@ -8,15 +8,16 @@ format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [0.4.0] - 2025-01-03
 
 ### Added
 
-- New generator for [eza](https://github.com/eza-community/eza)
+- New command "generators" which lists all known generators
+- New generator for [eza](https://github.com/eza-community/eza) colors
 - `ansi_on` and `ansi_off` style formats
-- Add new iterm generator directives for changing cursor color and shape
-- Add new iterm generator directive to change the iterm profile
-- Add new iterm generator directive to change the tab or window title background color
+- Add iterm generator directives for changing cursor color and shape
+- Add iterm generator directive to change the iterm profile
+- Add iterm generator directive to change the tab or window title background color
 - Add new {env:HOME} interpolation for shell environment variables
 - Add capture variables which set their value from the output of shell commands
 
