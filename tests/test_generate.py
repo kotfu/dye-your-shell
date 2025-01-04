@@ -289,8 +289,8 @@ def test_no_generator(thm_cmdline, capsys):
 #
 ENV_INTERPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
-    ("{style:dark_orange:hex}", "#ff6c1c"),
-    ("{style:dark_orange:hexnohash}", "ff6c1c"),
+    ("{style:dark_orange:fghex}", "#ff6c1c"),
+    ("{style:dark_orange:fghexnohash}", "ff6c1c"),
     (
         "{style:dark_orange:ansi_on}hello there{style:dark_orange:ansi_off}",
         "\x1b[38;2;255;108;28mhello there\x1b[0m",

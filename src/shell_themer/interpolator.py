@@ -232,12 +232,18 @@ class Interpolator:
                 f" while processing scope '{self.msgdata['scope']}'"
             ) from exc
 
-        if fmt in [None, "", "hex"]:
-            # no format, or empty string format, or hex, the match with the hex code
-            out = style.color.triplet.hex
-        elif fmt == "hexnohash":
-            # replace the match with the hex code without the hash
-            out = style.color.triplet.hex.replace("#", "")
+        if fmt in [None, "", "fg", "fghex"]:
+            # default is hex of the foreground color
+            out = style.color.triplet.hex if style.color else ""
+        elif fmt == "fghexnohash":
+            # foreground color hex code without the hash
+            out = style.color.triplet.hex.replace("#", "") if style.color else ""
+        elif fmt in ["bg", "bghex"]:
+            # background color in hex
+            out = style.bgcolor.triplet.hex if style.bgcolor else ""
+        elif fmt == "bghexnohash":
+            # background color in hex without the hash
+            out = style.bgcolor.triplet.hex.replace("#", "") if style.bgcolor else ""
         elif fmt == "ansi_on":
             splitter = "-----"
             ansistring = style.render(splitter)
