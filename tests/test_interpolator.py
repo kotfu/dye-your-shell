@@ -32,7 +32,7 @@ from shell_themer.interpolator import Interpolator
 from shell_themer.parsers import StyleParser
 
 INTERPOLATIONS = [
-    ("{style:dark_orange:hex}", "#ff6c1c"),
+    ("{style:dark_orange:fghex}", "#ff6c1c"),
     ("{env:THEMER_COLORS} {variable:password}", "text=#f0f0f0 newenglandclamchowder"),
     # we have to have the 'style' or 'variable' keyword, or
     # it all just gets passed through
@@ -77,12 +77,22 @@ def test_interpolate(mocker, text, resolved):
 
 STYLEPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
-    ("{style:dark_orange:hex}", "#ff6c1c"),
-    ("{style:dark_orange:hexnohash}", "ff6c1c"),
+    ("{style:dark_orange:fghex}", "#ff6c1c"),
+    ("{style:dark_orange:bghex}", ""),
+    ("{style:dark_orange:fghexnohash}", "ff6c1c"),
+    ("{style:dark_orange:bghexnohash}", ""),
     ("{style:dark_orange:ansi_on}", "\x1b[38;2;255;108;28m"),
     ("{style:dark_orange:ansi_off}", "\x1b[0m"),
+    ("{style:white_on_blue}", "#ffffff"),
+    ("{style:white_on_blue:fg}", "#ffffff"),
+    ("{style:white_on_blue:fghex}", "#ffffff"),
+    ("{style:white_on_blue:fghexnohash}", "ffffff"),
+    ("{style:white_on_blue:bg}", "#093147"),
+    ("{style:white_on_blue:bghex}", "#093147"),
+    ("{style:white_on_blue:bghexnohash}", "093147"),
     # multiple styles
-    ("{style:dark_orange}-{style:dark_orange:hexnohash}", "#ff6c1c-ff6c1c"),
+    ("{style:dark_orange}-{style:dark_orange:fghexnohash}", "#ff6c1c-ff6c1c"),
+    ("{style:dark_orange:fghex}-{style:dark_orange:fghexnohash}", "#ff6c1c-ff6c1c"),
     # we have to have the style keyword, or it all just gets passed through
     ("{dark_orange}", "{dark_orange}"),
     # even though the variable is defined, we shouldn't replace it because
@@ -101,7 +111,10 @@ STYLEPOLATIONS = [
 
 @pytest.mark.parametrize("text, resolved", STYLEPOLATIONS)
 def test_interpolate_styles(text, resolved):
-    styles = {"dark_orange": rich.style.Style.parse("#ff6c1c")}
+    styles = {
+        "dark_orange": rich.style.Style.parse("#ff6c1c"),
+        "white_on_blue": rich.style.Style.parse("bold #ffffff on #093147"),
+    }
     # create a variable, so we can check that it doesn't get interpolated
     variables = {"exists": "yup"}
     interp = Interpolator(styles, variables, prog="theprog", scope="thescope")
@@ -113,6 +126,7 @@ STYLE_ERRORS = [
     "{style:text}",
     # unknown format
     "{style:dark_orange:unknownformat}",
+    "{style:white_on_blue:hex}",
 ]
 
 

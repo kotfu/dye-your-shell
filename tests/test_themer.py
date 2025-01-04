@@ -55,7 +55,7 @@ def test_process_definition(theme):
         replace = "{var:secondhalf}"
         firsthalf = "fred"
         myred = "{var:firsthalf}{variable:secondhalf}"
-        igreen = "{style:green:hexnohash}"
+        igreen = "{style:green:fghexnohash}"
         capture.anothervar = "printf '%s' myvalue"
     """
     theme.loads(tomlstr)

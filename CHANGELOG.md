@@ -8,6 +8,20 @@ format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
+## [0.5.0] - 2025-01-04
+
+### Added
+
+- New style formats `bg` and `bghex` to output the background color
+- New style format `fg` and `fghex` to output the foreground color
+
+
+### Changed
+
+- `hex` and `hexnohash` are no longer a valid style interpolation formats, use
+  `fghex`, `bghex`, `fghexnohash` or `bghexnohash` instead.
+
+
 ## [0.4.0] - 2025-01-03
 
 ### Added
