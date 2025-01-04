@@ -12,6 +12,8 @@ format of this file follows recommendations from
 
 ### Added
 
+- `eza` generator now allows defining styles for arbitrary file globs
+
 ### Changed
 
 
@@ -28,7 +30,6 @@ format of this file follows recommendations from
 
 - New style formats `bg` and `bghex` to output the background color
 - New style format `fg` and `fghex` to output the foreground color
-
 
 ### Changed
 
