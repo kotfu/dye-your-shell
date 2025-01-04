@@ -752,20 +752,20 @@ def test_exa_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
 # so we don't really need to test much of that
 STYLE_TO_EZACOLORS = [
-    ("file", "default", "fi=0"),
-    ("directory", "#8be9fd", "di=38;2;139;233;253"),
-    ("symlink", "green4 bold", "ln=1;38;5;28"),
+    ("filekinds:normal", "default", "fi=0"),
+    ("filekinds:directory", "#8be9fd", "di=38;2;139;233;253"),
+    ("filekinds:symlink", "green4 bold", "ln=1;38;5;28"),
     ("lc", "blue on white", "lc=34;47"),
     ("pi", "#f8f8f2 on #44475a underline", "pi=4;38;2;248;248;242;48;2;68;71;90"),
-    ("socket", "bright_white", "so=97"),
-    ("block_device", "default", "bd=0"),
-    ("character_device", "black", "cd=30"),
+    ("filekinds:socket", "bright_white", "so=97"),
+    ("filekinds:block_device", "default", "bd=0"),
+    ("filekinds:char_device", "black", "cd=30"),
     ("broken_symlink", "bright_blue", "or=94"),
-    ("perms_setuid_files", "bright_blue", "su=94"),
-    ("perms_sticky_directories", "bright_red", "sf=91"),
-    ("perms_other_write", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
-    ("executable_file", "cornflower_blue on grey82", "ex=38;5;69;48;5;252"),
-    ("sn", "#7060eb", "sn=38;2;112;96;235"),
+    ("perms:special_user_file", "bright_blue", "su=94"),
+    ("perms:special_other", "bright_red", "sf=91"),
+    ("perms:other_write", "deep_pink2 on #ffffaf", "tw=38;5;197;48;2;255;255;175"),
+    ("filekinds:executable", "cornflower_blue on grey82", "ex=38;5;69;48;5;252"),
+    ("size:number_style", "#7060eb", "sn=38;2;112;96;235"),
     ("*.toml", "#8be9fd", "*.toml=38;2;139;233;253"),
 ]
 
@@ -803,8 +803,8 @@ def test_eza_colors_environment_variable(thm_cmdline, capsys):
         [scope.exac]
         generator = "eza_colors"
         environment_variable = "OTHER_EZA_COLOR"
-        style.file = "default"
-        style.size_number = "#7060eb"
+        style.'filekinds:normal' = "default"
+        style.'size:number_style' = "#7060eb"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -823,8 +823,8 @@ def test_eza_colors_styles_variables(thm_cmdline, capsys):
 
         [scope.lsc]
         generator = "eza_colors"
-        style.file = "warning"
-        style.directory = "{var:pinkvar}"
+        style.'filekinds:normal' = "warning"
+        style.'filekinds:directory' = "{var:pinkvar}"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -838,7 +838,7 @@ def test_eza_colors_clear_builtin(thm_cmdline, capsys):
         [scope.exac]
         generator = "eza_colors"
         clear_builtin = true
-        style.directory = "bright_blue"
+        style.'filekinds:directory' = "bright_blue"
         style.uu = "bright_red"
         style.punctuation = "#555555"
     """

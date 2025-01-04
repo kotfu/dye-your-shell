@@ -16,6 +16,9 @@ format of this file follows recommendations from
 
 ### Changed
 
+- `eza` generator uses the same style names as the theme files used by eza,
+  instead of the custom ones
+
 
 ## [0.6.0] - 2025-01-04
 

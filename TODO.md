@@ -74,7 +74,7 @@
     a color palette instead of modifying or creating a theme.
 [ ] see if we can download/convert/create our palettes from an online repository of color themes
 [ ] add generator for GREP_COLORS https://www.gnu.org/software/grep/manual/grep.html#index-GREP_005fCOLORS-environment-variable
-
+[ ] figure out how to add support for eza theme files
 
 
 ## Recipe ideas
