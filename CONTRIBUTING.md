@@ -151,21 +151,21 @@ following:
    **main**. Wait for the checks to pass. Do not merge the pull request
    from the GitHub UI.
 
-7. In your local repo, tag the last commit on your develop branch with the
-   release number
+7. In your local repo, merge develop into main
 
-8. Merge the **develop** branch into the **main** branch in your local repo.  Make
-   sure you do a fast-forward merge. That should result in the tagged commit
-   being present on both the **develop** and **main** branches.
+8. In your local repo, merge main into develop. You should now have the same commit at
+   the HEAD of each branch
 
-9.  ??? See what happens to the pull request, it's been merged, do you just
-   close it now?
+9. Tag the head commit on main with the new release number
 
-10. Create a new release on Github with the tag you have pushed. Publish the release.
+10. Push main and develop to GitHub. This will automatically mark the pull request
+    as Merged
 
-11. Switch to the **main** branch in your local repo.
+11. Create a new release on Github with the existing tag you have pushed. Publish the release.
 
-12. Build source distribution, wheel distribution, and upload them to testpypi:
+12. Switch to the **main** branch in your local repo.
+
+13. Build source distribution, wheel distribution, and upload them to testpypi:
 ```
 $ invoke pypi-test
 ```
