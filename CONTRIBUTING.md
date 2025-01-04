@@ -151,10 +151,11 @@ following:
    **main**. Wait for the checks to pass. Do not merge the pull request
    from the GitHub UI.
 
-7. In your local repo, merge develop into main
+7. In your local repo, merge develop into main.
 
-8. In your local repo, merge main into develop. You should now have the same commit at
-   the HEAD of each branch
+8. If you don't have the same commit at HEAD of main and develop, then in your
+   local repo, merge main into develop. You should now have the same commit at
+   the HEAD of main and develop
 
 9. Tag the head commit on main with the new release number
 
@@ -170,15 +171,15 @@ following:
 $ invoke pypi-test
 ```
 
-13. Build source distribution, wheel distribution, and upload them to pypi:
+1.  Build source distribution, wheel distribution, and upload them to pypi:
 ```
 $ invoke pypi
 ```
 
-14. Switch back to the **develop** branch.
+1.  Switch back to the **develop** branch.
 
-15. Add an **Unreleased** section to the top of `CHANGELOG.md`. Push the
+2.  Add an **Unreleased** section to the top of `CHANGELOG.md`. Push the
     change to github.
 
-16. Run `$ pip install -e .[dev]` to ensure your venv gets an updated
+3.  Run `$ pip install -e .[dev]` to ensure your venv gets an updated
     development version string
