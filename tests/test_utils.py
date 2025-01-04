@@ -19,9 +19,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""command line tool for maintaining and switching color schemes"""
+# pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
+# pylint: disable=missing-module-docstring, unused-variable
 
-from .exceptions import ThemeError
-from .themer import Theme, Themer
+import pytest
 
-__all__ = ["Themer", "Theme", "ThemeError"]
+from shell_themer.exceptions import ThemeError
+from shell_themer.utils import AssertBool
+
+BOOL_TESTS = [
+    (True, True),
+    (False, True),
+    ("something", False),
+    (0, False),
+    (1, False),
+    (0.5, False),
+]
+
+
+@pytest.mark.parametrize("val, expected", BOOL_TESTS)
+def test_assert_bool(val, expected):
+    asserter = AssertBool()
+    if expected:
+        asserter.assert_bool(
+            val, key="val", prog="prog", generator="generator", scope="scope"
+        )
+    else:
+        with pytest.raises(ThemeError):
+            asserter.assert_bool(
+                val, key="val", prog="prog", geneartor="generator", scope="scope"
+            )

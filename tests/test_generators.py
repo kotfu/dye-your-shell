@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2023 Jared Crapo
+# Copyright (c) 2025 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,9 +19,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""command line tool for maintaining and switching color schemes"""
+# pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
+# pylint: disable=missing-module-docstring, unused-variable
 
-from .exceptions import ThemeError
-from .themer import Theme, Themer
+from shell_themer import Themer
 
-__all__ = ["Themer", "Theme", "ThemeError"]
+
+#
+# test the generators command (which shows the list of available generators)
+#
+def test_list(thm_cmdline, capsys):
+    # now go run the command, which should list the themes
+    exit_code = thm_cmdline("generators")
+    out, err = capsys.readouterr()
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert not err
+    generators = [
+        "environment_variables",
+        "exa_colors",
+        "eza_colors",
+        "fzf",
+        "iterm",
+        "ls_colors",
+        "shell",
+    ]
+    for genny in generators:
+        assert genny in out

@@ -1,7 +1,7 @@
 #
-# -*- coding: utf-8 -*-
 """Development related tasks to be run with 'invoke'"""
 
+import contextlib
 import os
 import shutil
 
@@ -19,10 +19,8 @@ def rmrf(items, verbose=True):
             print(f"Removing {item}")
         shutil.rmtree(item, ignore_errors=True)
         # rmtree doesn't remove bare files
-        try:
+        with contextlib.suppress(FileNotFoundError):
             os.remove(item)
-        except FileNotFoundError:
-            pass
 
 
 # create namespaces
@@ -70,23 +68,31 @@ namespace.add_task(pylint)
 namespace_check.add_task(pylint)
 
 
-@invoke.task
-def black_check(context):
-    """Check if code is properly formatted using black"""
-    context.run("black --check *.py tests src", echo=True)
+@invoke.task(name="ruff")
+def ruff_lint(context):
+    "Check code quality using ruff"
+    context.run("ruff check *.py tests src", echo=True)
 
 
-namespace.add_task(black_check)
-namespace_check.add_task(black_check)
+namespace_check.add_task(ruff_lint)
 
 
-@invoke.task
-def black(context):
-    """Format code using black"""
-    context.run("black *.py tests src", echo=True)
+@invoke.task(name="format")
+def format_check(context):
+    """Check if code is properly formatted using ruff"""
+    context.run("ruff format --check *.py tests src", echo=True)
 
 
-namespace.add_task(black)
+namespace_check.add_task(format_check)
+
+
+@invoke.task()
+def format(context):
+    """Format code using ruff"""
+    context.run("ruff format *.py tests src", echo=True)
+
+
+namespace.add_task(format)
 
 
 #####

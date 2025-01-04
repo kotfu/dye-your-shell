@@ -19,9 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""command line tool for maintaining and switching color schemes"""
+"""Exceptions and errors"""
 
-from .exceptions import ThemeError
-from .themer import Theme, Themer
 
-__all__ = ["Themer", "Theme", "ThemeError"]
+class ThemeError(Exception):
+    """Exception for theme processing errors"""

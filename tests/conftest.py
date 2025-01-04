@@ -1,6 +1,4 @@
 #
-# -*- coding: utf-8 -*-
-#
 # Copyright (c) 2023 Jared Crapo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,13 +24,19 @@
 
 import pytest
 
-from shell_themer import Themer
+from shell_themer import Theme, Themer
 
 
 @pytest.fixture
 def thm():
     thm = Themer(prog="shell-themer")
     return thm
+
+
+@pytest.fixture
+def theme():
+    theme = Theme(prog="shell-themer")
+    return theme
 
 
 @pytest.fixture
@@ -63,7 +67,7 @@ def thm_cmdline(thm, mocker):
         except SystemExit as err:
             return err.code
         if toml:
-            thm.loads(toml)
+            thm.theme.loads(toml)
         # monkeypatch load_from_args() because that won't work so well
         mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
         return thm.dispatch(args)
