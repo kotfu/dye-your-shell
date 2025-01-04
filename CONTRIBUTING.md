@@ -152,21 +152,23 @@ following:
 7. Merge the **develop** branch into the **main** branch and close the pull
    request.
 
-8.  Create a new release on Github.
+8.  Create a new release on Github, and have it create the new tag when you
+    publish the release. Publish the release.
 
-9. Switch to the **main** branch, tag it with the new version number, and push the tag.
+9.  Switch to the **main** branch, and fetch the changes, including the newly
+    created tag
 
 10. Build source distribution, wheel distribution, and upload them to testpypi:
 ```
 $ invoke pypi-test
 ```
 
-11. Build source distribution, wheel distribution, and upload them to pypi:
+1.  Build source distribution, wheel distribution, and upload them to pypi:
 ```
 $ invoke pypi
 ```
 
-12. Switch back to the **develop** branch.
+1.  Switch back to the **develop** branch.
 
-13. Add an **Unreleased** section to the top of `CHANGELOG.md`. Push the
+2.  Add an **Unreleased** section to the top of `CHANGELOG.md`. Push the
     change to github.
