@@ -8,11 +8,11 @@ format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
-
-### Added
+## [0.6.0] - 2025-01-04
 
 ### Changed
+
+- minor changes and improvements to release process, no code changes
 
 
 ## [0.5.0] - 2025-01-04
