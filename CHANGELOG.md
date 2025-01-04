@@ -8,6 +8,13 @@ format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
+## [Unreleased]
+
+### Added
+
+### Changed
+
+
 ## [0.5.0] - 2025-01-04
 
 ### Added
