@@ -485,7 +485,7 @@ class Themer(AssertBool):
         """list all available generators and a short description of each"""
         # ignore all other args
         generators = {}
-        for name, clss in GeneratorBase.classmap:
+        for name, clss in GeneratorBase.classmap.items():
             desc = inspect.getdoc(clss)
             if desc:
                 desc = desc.split("\n")[0]
