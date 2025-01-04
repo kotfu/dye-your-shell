@@ -140,7 +140,8 @@ following:
 
 2. Run `pytest` to make sure the tests pass in all the supported python versions.
 
-3. Review and update `CHANGELOG.md`.
+3. Review and update `CHANGELOG.md`, change the **Unreleased** section name to
+   the new release number and add today's date.
 
 4. Push the **develop** branch to github.
 
