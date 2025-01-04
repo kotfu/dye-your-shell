@@ -87,7 +87,8 @@ style.file_with_capability = ""
 
 
 [scope.bat]
-environment.export.BAT_THEME="Dracula"
+generator = "environment_variables"
+export.BAT_THEME = "Dracula"
 
 # default for the fzf command
 [scope.fzf]
