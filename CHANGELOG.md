@@ -12,6 +12,7 @@ format of this file follows recommendations from
 
 ### Added
 
+- New generator for [eza](https://github.com/eza-community/eza)
 - `ansi_on` and `ansi_off` style formats
 - Add new iterm generator directives for changing cursor color and shape
 - Add new iterm generator directive to change the iterm profile
