@@ -170,12 +170,15 @@ following:
 $ invoke pypi-test
 ```
 
-1.   Build source distribution, wheel distribution, and upload them to pypi:
+13. Build source distribution, wheel distribution, and upload them to pypi:
 ```
 $ invoke pypi
 ```
 
-1.   Switch back to the **develop** branch.
+14. Switch back to the **develop** branch.
 
-2.   Add an **Unreleased** section to the top of `CHANGELOG.md`. Push the
+15. Add an **Unreleased** section to the top of `CHANGELOG.md`. Push the
     change to github.
+
+16. Run `$ pip install -e .[dev]` to ensure your venv gets an updated
+    development version string
