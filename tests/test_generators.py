@@ -37,7 +37,7 @@ def test_list(thm_cmdline, capsys):
     generators = [
         "environment_variables",
         "exa_colors",
-        "eza_colors",
+        "eza",
         "fzf",
         "iterm",
         "ls_colors",

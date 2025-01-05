@@ -16,6 +16,7 @@ format of this file follows recommendations from
 
 ### Changed
 
+- `eza_colors` generator renamed to `eza`
 - `eza` generator uses the same style names as the theme files used by eza,
   instead of the custom ones
 

@@ -773,7 +773,7 @@ STYLE_TO_EZACOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EZACOLORS)
 def test_eza_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.generators.EzaColors(None, None, None, None, None)
+    genny = shell_themer.generators.Eza(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
         name,
         style,
@@ -789,7 +789,7 @@ def test_eza_colors_from_style(name, styledef, expected):
 def test_eza_colors_no_styles(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "eza_colors"
+        generator = "eza"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -801,7 +801,7 @@ def test_eza_colors_no_styles(thm_cmdline, capsys):
 def test_eza_colors_environment_variable(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "eza_colors"
+        generator = "eza"
         environment_variable = "OTHER_EZA_COLOR"
         style.'filekinds:normal' = "default"
         style.'size:number_style' = "#7060eb"
@@ -822,7 +822,7 @@ def test_eza_colors_styles_variables(thm_cmdline, capsys):
         warning = "yellow on red"
 
         [scope.lsc]
-        generator = "eza_colors"
+        generator = "eza"
         style.'filekinds:normal' = "warning"
         style.'filekinds:directory' = "{var:pinkvar}"
     """
@@ -836,7 +836,7 @@ def test_eza_colors_styles_variables(thm_cmdline, capsys):
 def test_eza_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "eza_colors"
+        generator = "eza"
         clear_builtin = true
         style.'filekinds:directory' = "bright_blue"
         style.uu = "bright_red"
@@ -853,7 +853,7 @@ def test_eza_colors_clear_builtin(thm_cmdline, capsys):
 def test_eza_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "eza_colors"
+        generator = "eza"
         clear_builtin = "error"
         style.directory = "bright_blue"
     """

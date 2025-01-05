@@ -510,7 +510,7 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
 
-class EzaColors(GeneratorBase, LsColorsFromStyle):
+class Eza(GeneratorBase, LsColorsFromStyle):
     "Create EZA_COLORS environment variable for use with ls replacement eza"
 
     #
