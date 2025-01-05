@@ -75,6 +75,13 @@
 [ ] see if we can download/convert/create our palettes from an online repository of color themes
 [ ] add generator for GREP_COLORS https://www.gnu.org/software/grep/manual/grep.html#index-GREP_005fCOLORS-environment-variable
 [ ] figure out how to add support for eza theme files
+[ ] make a filecopy generator, that just copies a file from one location to another, you can use
+    this to support many tools which look at their own config file for color information, you
+    create multiple config files, and this generator copies the one that matches your theme
+    to the "real config" file. Tools like eza themes, starship, etc. could use this
+[ ] make a recipe that shows how to use the shell_command generator to copy files, like to
+    support multiple starship configs
+[ ] create a page that shows various ways to create table entries (i.e. inline method style.directory, or separate table method)
 
 
 ## Recipe ideas
