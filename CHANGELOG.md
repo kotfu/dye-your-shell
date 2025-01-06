@@ -21,7 +21,8 @@ format of this file follows recommendations from
   instead of the custom ones
 - `fzf` generator no longer requires `environment_variable` directive, if
   not specified it defaults to `FZF_DEFAULT_OPTS`
-
+- `fzf` generator now has foreground/background combined style support for
+  `selected-line`
 
 ## [0.6.0] - 2025-01-04
 

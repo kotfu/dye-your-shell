@@ -387,7 +387,7 @@ def test_fzf_attribs_from_style(styledef, fzf):
 
 
 STYLE_TO_FZF = [
-    # text, current_line, and preview styles have special processing
+    # text, current-line, selected-line and preview styles have special processing
     # for foreground and background colors
     ("text", "", ""),
     ("text", "default", "fg:-1:regular"),
@@ -397,9 +397,14 @@ STYLE_TO_FZF = [
     ("text", "bright_white", "fg:15:regular"),
     ("text", "bright_yellow on color(4)", "fg:11:regular,bg:4"),
     ("text", "green4", "fg:28:regular"),
-    ("current_line", "navy_blue dim on grey82", "fg+:17:regular:dim,bg+:252"),
-    # other styles do not
+    ("current-line", "navy_blue dim on grey82", "fg+:17:regular:dim,bg+:252"),
+    (
+        "selected-line",
+        "navy_blue dim on grey82",
+        "selected-fg:17:regular:dim,selected-bg:252",
+    ),
     ("preview", "#af00ff on bright_white", "preview-fg:#af00ff:regular,preview-bg:15"),
+    # other styles do not
     ("border", "magenta", "border:5:regular"),
     ("query", "#2932dc", "query:#2932dc:regular"),
 ]

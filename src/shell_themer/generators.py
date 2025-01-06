@@ -225,43 +225,34 @@ class Fzf(GeneratorBase):
 
     def _fzf_from_style(self, name, style):
         """turn a rich.style into a valid fzf color"""
-        fzf = []
-        if name == "text":
-            # turn this into fg and bg color names
+        # fzf has different color names for foreground and background items
+        # we combine them
+        name_map = {
+            "text": ("fg", "bg"),
+            "current-line": ("fg+", "bg+"),
+            "selected-line": ("selected-fg", "selected-bg"),
+            "preview": ("preview-fg", "preview-bg"),
+        }
+
+        fzf_colors = []
+        if name in name_map:
+            fgname, bgname = name_map[name]
             if style.color:
                 fzfc = self._fzf_color_from_rich_color(style.color)
                 fzfa = self._fzf_attribs_from_style(style)
-                fzf.append(f"fg:{fzfc}:{fzfa}")
+                fzf_colors.append(f"{fgname}:{fzfc}:{fzfa}")
             if style.bgcolor:
                 fzfc = self._fzf_color_from_rich_color(style.bgcolor)
-                fzf.append(f"bg:{fzfc}")
-        elif name == "current_line":
-            # turn this into fg+ and bg+ color names
-            if style.color:
-                fzfc = self._fzf_color_from_rich_color(style.color)
-                fzfa = self._fzf_attribs_from_style(style)
-                fzf.append(f"fg+:{fzfc}:{fzfa}")
-            if style.bgcolor:
-                fzfc = self._fzf_color_from_rich_color(style.bgcolor)
-                fzf.append(f"bg+:{fzfc}")
-        elif name == "preview":
-            # turn this into fg+ and bg+ color names
-            if style.color:
-                fzfc = self._fzf_color_from_rich_color(style.color)
-                fzfa = self._fzf_attribs_from_style(style)
-                fzf.append(f"preview-fg:{fzfc}:{fzfa}")
-            if style.bgcolor:
-                fzfc = self._fzf_color_from_rich_color(style.bgcolor)
-                fzf.append(f"preview-bg:{fzfc}")
+                fzf_colors.append(f"{bgname}:{fzfc}")
         else:
             # we only use the foreground color of the style, and ignore
             # any background color specified by the style
             if style.color:
                 fzfc = self._fzf_color_from_rich_color(style.color)
                 fzfa = self._fzf_attribs_from_style(style)
-                fzf.append(f"{name}:{fzfc}:{fzfa}")
+                fzf_colors.append(f"{name}:{fzfc}:{fzfa}")
 
-        return ",".join(fzf)
+        return ",".join(fzf_colors)
 
     def _fzf_color_from_rich_color(self, color):
         """turn a rich.color into it's fzf equivilent"""
