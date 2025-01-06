@@ -214,13 +214,14 @@ class Fzf(GeneratorBase):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = self.interp.interpolate(varname)
-            print(f'export {varname}="{optstr}{colorstr}"')
-        except KeyError as exc:
-            raise ThemeError(
-                f"{self.prog}: fzf generator requires 'environment_variable'"
-                f" key to process scope '{self.scope}'"
-            ) from exc
+        except KeyError:
+            varname = "FZF_DEFAULT_OPTS"
+            # raise ThemeError(
+            #     f"{self.prog}: fzf generator requires 'environment_variable'"
+            #     f" key to process scope '{self.scope}'"
+            # ) from exc
+        varname = self.interp.interpolate(varname)
+        print(f'export {varname}="{optstr}{colorstr}"')
 
     def _fzf_from_style(self, name, style):
         """turn a rich.style into a valid fzf color"""

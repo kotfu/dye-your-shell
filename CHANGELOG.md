@@ -19,6 +19,8 @@ format of this file follows recommendations from
 - `eza_colors` generator renamed to `eza`
 - `eza` generator uses the same style names as the theme files used by eza,
   instead of the custom ones
+- `fzf` generator no longer requires `environment_variable` directive, if
+  not specified it defaults to `FZF_DEFAULT_OPTS`
 
 
 ## [0.6.0] - 2025-01-04

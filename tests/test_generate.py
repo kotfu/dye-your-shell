@@ -464,9 +464,8 @@ def test_fzf_no_varname(thm_cmdline, capsys):
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_ERROR
-    assert not out
-    assert "fzf generator requires 'environment_variable'" in err
+    assert exit_code == Themer.EXIT_SUCCESS
+    assert "FZF_DEFAULT_OPTS" in out
 
 
 #
