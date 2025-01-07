@@ -82,6 +82,10 @@
 [ ] make a recipe that shows how to use the shell_command generator to copy files, like to
     support multiple starship configs
 [ ] create a page that shows various ways to create table entries (i.e. inline method style.directory, or separate table method)
+[ ] create a 'template-jinja' generator which can process a template file or inline string and then write
+    write it out to the filesystem somewhere. Use this to get your theme info into other config
+    files like starship.toml. So you would create starship.toml.template and 'shell-themer' would
+    process it and insert your theme colors/variables/etc and output a starship.toml for you
 
 
 ## Recipe ideas
