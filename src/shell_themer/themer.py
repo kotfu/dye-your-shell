@@ -63,7 +63,7 @@ class Themer(AssertBool):
         RichHelpFormatter.group_name_formatter = str.lower
 
         parser = argparse.ArgumentParser(
-            description="generate shell code to activate a theme",
+            description="activate a theme",
             formatter_class=RichHelpFormatter,
             add_help=False,
             epilog=(
@@ -114,17 +114,15 @@ class Themer(AssertBool):
             help="action to perform, which must be one of the following:",
         )
 
-        generate_help = (
-            "generate shell code to make the theme effective in your environment"
+        activate_help = "activate a theme"
+        activate_parser = subparsers.add_parser(
+            "activate",
+            help=activate_help,
         )
-        generate_parser = subparsers.add_parser(
-            "generate",
-            help=generate_help,
-        )
-        scope_help = "only generate the given scope"
-        generate_parser.add_argument("-s", "--scope", help=scope_help)
-        comment_help = "add comments to the generated output"
-        generate_parser.add_argument(
+        scope_help = "only activate the given scope"
+        activate_parser.add_argument("-s", "--scope", help=scope_help)
+        comment_help = "add comments to the generated shell output"
+        activate_parser.add_argument(
             "-c", "--comment", action="store_true", help=comment_help
         )
 
@@ -220,8 +218,8 @@ class Themer(AssertBool):
                 exit_code = self.dispatch_list(args)
             elif args.command == "preview":
                 exit_code = self.dispatch_preview(args)
-            elif args.command == "generate":
-                exit_code = self.dispatch_generate(args)
+            elif args.command == "activate":
+                exit_code = self.dispatch_activate(args)
             elif args.command == "agents":
                 exit_code = self.dispatch_agents(args)
             else:
@@ -420,7 +418,7 @@ class Themer(AssertBool):
         self.console.print(rich.panel.Panel(outer_table, style=text_style))
         return self.EXIT_SUCCESS
 
-    def dispatch_generate(self, args):
+    def dispatch_activate(self, args):
         """render the output for given scope(s), or all scopes if none specified
 
         output is suitable for bash eval $()
@@ -429,16 +427,16 @@ class Themer(AssertBool):
         self.load_from_args(args)
 
         if args.scope:
-            to_generate = args.scope.split(",")
+            to_activate = args.scope.split(",")
         else:
-            to_generate = []
+            to_activate = []
             try:
                 for scope in self.theme.definition["scope"]:
-                    to_generate.append(scope)
+                    to_activate.append(scope)
             except KeyError:
                 pass
 
-        for scope in to_generate:
+        for scope in to_activate:
             # checking here in case they supplied a scope on the command line that
             # doesn't exist
             if self.theme.has_scope(scope):
@@ -469,7 +467,7 @@ class Themer(AssertBool):
                         prog=self.prog,
                         scope=scope,
                     )
-                    # generate and print the output
+                    # run the agent, printing any shell commands it returns
                     output = ginst.run()
                     if output:
                         print(output)

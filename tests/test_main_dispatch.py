@@ -134,7 +134,8 @@ def test_no_command(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_USAGE
     assert not out
     # check a few things in the usage message
-    assert "generate" in err
+    assert "activate" in err
+    assert "preview" in err
     assert "--theme" in err
 
 
@@ -145,7 +146,8 @@ def test_help_command(thm_cmdline, capsys):
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
     # check a few things in the usage message
-    assert "generate" in out
+    assert "activate" in out
+    assert "preview" in out
     assert "--theme" in out
 
 

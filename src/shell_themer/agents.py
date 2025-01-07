@@ -85,7 +85,7 @@ class AgentBase(abc.ABC, AssertBool):
 
     @abc.abstractmethod
     def run(self) -> str:
-        """generate a string of text, with newlines, which can be sourced by bash"""
+        """Do agent work. Anything returned will be sourced by the shell"""
 
 
 class LsColorsFromStyle:
@@ -124,7 +124,7 @@ class LsColorsFromStyle:
                 mapname = name
             else:
                 # they used a style for a file attribute that isn't in the map
-                # which is not allowed, so we generate an error
+                # which is not allowed
                 raise ThemeError(
                     f"{msgdata['prog']}: unknown style '{name}' while processing"
                     f" scope '{msgdata['scope']}'"
@@ -729,7 +729,7 @@ class Iterm(AgentBase):
     }
 
     def _iterm_cursor(self, output):
-        """generate echo commands to change the cursor shape,
+        """create echo commands to change the cursor shape,
         foreground, and background colors
         """
         # check the cursor shape

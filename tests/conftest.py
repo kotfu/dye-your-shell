@@ -45,14 +45,15 @@ def thm_cmdline(thm, mocker):
     # allows us to call the fixture and pass parameters to it
     # ie:
     #
-    # def test_generate_environment_unset_list(thm_cmdline, capsys):
+    # def test_activate_environment_unset_list(thm_cmdline, capsys):
     #     tomlstr = """
     #     [scope.ls]
+    #     agent = "environment_variables"
     #     # set some environment variables
-    #     environment.unset = ["SOMEVAR", "ANOTHERVAR"]
-    #     environment.export.LS_COLORS = "ace ventura"
+    #     unset = ["SOMEVAR", "ANOTHERVAR"]
+    #     export.LS_COLORS = "ace ventura"
     #     """
-    #     exit_code = thm_cmdline("generate", tomlstr)
+    #     exit_code = thm_cmdline("activate", tomlstr)
     #     ...
 
     def _executor(cmdline, toml=None):
