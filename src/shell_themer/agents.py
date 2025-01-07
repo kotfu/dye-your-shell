@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""generator implementations and their base class"""
+"""agent implementations and their base class"""
 
 import abc
 import re
@@ -32,13 +32,13 @@ from .parsers import StyleParser
 from .utils import AssertBool
 
 
-class GeneratorBase(abc.ABC, AssertBool):
-    """Abstract Base Class for all generators
+class AgentBase(abc.ABC, AssertBool):
+    """Abstract Base Class for all agents
 
-    Subclass and implement `generate()`. The first line of the class docstring
-    is displayed by `shell-themer generators` as the description of the generator
+    Subclass and implement `run()`. The first line of the class docstring
+    is displayed by `shell-themer agents` as the description of the agent
 
-    Creates a registry of all subclasses in cls.generators
+    Creates a registry of all subclasses in cls.agents
 
     The string to use in your theme configuration file is the underscored
     class name, ie:
@@ -57,7 +57,7 @@ class GeneratorBase(abc.ABC, AssertBool):
 
     def __init__(self, scopedef, styles, variables, prog=None, scope=None):
         super().__init__()
-        self.generator = self._name_of(self.__class__.__name__)
+        self.agent = self._name_of(self.__class__.__name__)
         self.scopedef = scopedef
         self.styles = styles
         self.variables = variables
@@ -84,7 +84,7 @@ class GeneratorBase(abc.ABC, AssertBool):
         return name.lower()
 
     @abc.abstractmethod
-    def generate(self) -> str:
+    def run(self) -> str:
         """generate a string of text, with newlines, which can be sourced by bash"""
 
 
@@ -147,10 +147,10 @@ class LsColorsFromStyle:
         return mapname, f"{mapname}={ansicodes}"
 
 
-class EnvironmentVariables(GeneratorBase):
+class EnvironmentVariables(AgentBase):
     "Export and unset environment variables"
 
-    def generate(self) -> str:
+    def run(self) -> str:
         output = []
         try:
             unsets = self.scopedef["unset"]
@@ -177,10 +177,10 @@ class EnvironmentVariables(GeneratorBase):
         return "\n".join(output)
 
 
-class Fzf(GeneratorBase):
+class Fzf(AgentBase):
     "Set fzf options and environment variables"
 
-    def generate(self) -> str:
+    def run(self) -> str:
         """render attribs into a shell statement to set an environment variable"""
         optstr = ""
         # process all the command line options
@@ -216,10 +216,6 @@ class Fzf(GeneratorBase):
             varname = self.scopedef["environment_variable"]
         except KeyError:
             varname = "FZF_DEFAULT_OPTS"
-            # raise ThemeError(
-            #     f"{self.prog}: fzf generator requires 'environment_variable'"
-            #     f" key to process scope '{self.scope}'"
-            # ) from exc
         varname = self.interp.interpolate(varname)
         print(f'export {varname}="{optstr}{colorstr}"')
 
@@ -286,7 +282,7 @@ class Fzf(GeneratorBase):
         return attribs
 
 
-class LsColors(GeneratorBase, LsColorsFromStyle):
+class LsColors(AgentBase, LsColorsFromStyle):
     "Create LS_COLORS environment variable for use with GNU ls"
 
     LS_COLORS_BASE_MAP = {
@@ -318,7 +314,7 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
         LS_COLORS_MAP[friendly] = actual
         LS_COLORS_MAP[actual] = actual
 
-    def generate(self):
+    def run(self):
         "Render a LS_COLORS variable suitable for GNU ls"
         outlist = []
         havecodes = []
@@ -328,7 +324,7 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
             self.assert_bool(
                 clear_builtin,
                 key="clear_builtin",
-                generator=self.generator,
+                agent=self.agent,
                 prog=self.prog,
                 scope=self.scope,
             )
@@ -382,12 +378,9 @@ class LsColors(GeneratorBase, LsColorsFromStyle):
         return f'''export {varname}="{':'.join(outlist)}"'''
 
 
-class ExaColors(GeneratorBase, LsColorsFromStyle):
+class ExaColors(AgentBase, LsColorsFromStyle):
     "Create EXA_COLORS environment variable for use with ls replacement exa"
 
-    #
-    # exa color generator
-    #
     EXA_COLORS_BASE_MAP = {
         # map both a friendly name and the "real" name
         "text": "no",
@@ -453,7 +446,7 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
         EXA_COLORS_MAP[friendly] = actual
         EXA_COLORS_MAP[actual] = actual
 
-    def generate(self):
+    def run(self):
         "Render a EXA_COLORS variable suitable for exa"
         outlist = []
         # figure out if we are clearing builtin styles
@@ -462,7 +455,7 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
             self.assert_bool(
                 clear_builtin,
                 key="clear_builtin",
-                generator=self.generator,
+                agent=self.agent,
                 prog=self.prog,
                 scope=self.scope,
             )
@@ -502,16 +495,9 @@ class ExaColors(GeneratorBase, LsColorsFromStyle):
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
 
-class Eza(GeneratorBase, LsColorsFromStyle):
+class Eza(AgentBase, LsColorsFromStyle):
     "Create EZA_COLORS environment variable for use with ls replacement eza"
 
-    #
-    # this is similar to the exa generator, but it's
-    # copied instead of refactored becasue exa will probably go
-    # away soon
-    #
-    # eza color generator
-    #
     EZA_COLORS_BASE_MAP = {
         # create a map of friendly names to real codes.
         # we use the same friendly names as the theme.yml
@@ -617,7 +603,7 @@ class Eza(GeneratorBase, LsColorsFromStyle):
         EZA_COLORS_MAP[friendly] = actual
         EZA_COLORS_MAP[actual] = actual
 
-    def generate(self):
+    def run(self):
         "Render a EZA_COLORS variable suitable for eza"
         outlist = []
         # figure out if we are clearing builtin styles
@@ -626,7 +612,7 @@ class Eza(GeneratorBase, LsColorsFromStyle):
             self.assert_bool(
                 clear_builtin,
                 key="clear_builtin",
-                generator=self.generator,
+                agent=self.agent,
                 prog=self.prog,
                 scope=self.scope,
             )
@@ -666,10 +652,10 @@ class Eza(GeneratorBase, LsColorsFromStyle):
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
 
-class Iterm(GeneratorBase):
+class Iterm(AgentBase):
     "Send escape sequences to iTerm terminal emulator"
 
-    def generate(self):
+    def run(self):
         """send escape sequences to iTerm to make it do stuff"""
         output = []
 
@@ -787,10 +773,10 @@ class Iterm(GeneratorBase):
             pass
 
 
-class Shell(GeneratorBase):
+class Shell(AgentBase):
     "Execute arbitary shell commands"
 
-    def generate(self):
+    def run(self):
         out = []
         try:
             cmds = self.scopedef["command"]

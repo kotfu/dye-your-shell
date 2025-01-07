@@ -41,11 +41,9 @@ BOOL_TESTS = [
 def test_assert_bool(val, expected):
     asserter = AssertBool()
     if expected:
-        asserter.assert_bool(
-            val, key="val", prog="prog", generator="generator", scope="scope"
-        )
+        asserter.assert_bool(val, key="val", prog="prog", agent="agent", scope="scope")
     else:
         with pytest.raises(ThemeError):
             asserter.assert_bool(
-                val, key="val", prog="prog", geneartor="generator", scope="scope"
+                val, key="val", prog="prog", geneartor="agent", scope="scope"
             )

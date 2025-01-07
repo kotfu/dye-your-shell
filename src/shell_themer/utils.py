@@ -30,24 +30,24 @@ class AssertBool:
     :raises ThemeError: if the value is not boolean
     """
 
-    def assert_bool(self, value, generator=None, **msgdata):
+    def assert_bool(self, value, agent=None, **msgdata):
         """raise ThemeError if value is not a boolean
 
         msgdata is a dictionary of items used to create a useful
         error message.
 
-        generator = the name of the generator that triggered the error
-                    if not present, null, or empty, the error message
-                    won't include which generator caused the error.
-                    generator is optional
+        agent = the name of the agent that triggered the error
+                if not present, null, or empty, the error message
+                won't include which agent caused the error.
+                agent is optional
         prog = the name of the program, required
         scope = the name of the scope to include in the error message, required
         key = the key which must contain the true or false value, required
         """
         if not isinstance(value, bool):
-            if generator:
+            if agent:
                 errmsg = (
-                    f"{msgdata['prog']}: {generator} generator for"
+                    f"{msgdata['prog']}: {agent} agent for"
                     f" scope '{msgdata['scope']}' requires '{msgdata['key']}'"
                     f" to be true or false"
                 )

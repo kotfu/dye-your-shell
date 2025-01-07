@@ -192,14 +192,14 @@ def test_process_definition_undefined_variable(theme):
 def test_scopedef(theme):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.foreground = "blue"
         style.background = "white"
     """
     theme.loads(tomlstr)
     scopedef = theme.scopedef_for("iterm")
     assert isinstance(scopedef, dict)
-    assert scopedef["generator"] == "iterm"
+    assert scopedef["agent"] == "iterm"
     assert len(scopedef) == 2
     # TODO this should be tested on the GeneratorBase, not here
     # styles = thm.styles_from(scopedef)
@@ -210,7 +210,7 @@ def test_scopedef(theme):
 def test_scopedef_notfound(theme):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.foreground = "blue"
         style.background = "white"
     """
@@ -223,7 +223,7 @@ def test_scopedef_notfound(theme):
 def test_has_scope(theme):
     tomlstr = """
         [scope.qqq]
-        generator = "iterm"
+        agent = "iterm"
         style.foreground = "blue"
         style.background = "white"
     """

@@ -36,8 +36,8 @@ import rich.layout
 import rich.style
 from rich_argparse import RichHelpFormatter
 
+from .agents import AgentBase
 from .exceptions import ThemeError
-from .generators import GeneratorBase
 from .theme import Theme
 from .utils import AssertBool
 from .version import version_string
@@ -128,8 +128,8 @@ class Themer(AssertBool):
             "-c", "--comment", action="store_true", help=comment_help
         )
 
-        generators_help = "list all known generators"
-        subparsers.add_parser("generators", help=generators_help)
+        agents_help = "list all known agentss"
+        subparsers.add_parser("agents", help=agents_help)
 
         list_help = "list all themes in $THEMES_DIR"
         subparsers.add_parser("list", help=list_help)
@@ -222,8 +222,8 @@ class Themer(AssertBool):
                 exit_code = self.dispatch_preview(args)
             elif args.command == "generate":
                 exit_code = self.dispatch_generate(args)
-            elif args.command == "generators":
-                exit_code = self.dispatch_generators(args)
+            elif args.command == "agents":
+                exit_code = self.dispatch_agents(args)
             else:
                 print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
                 exit_code = self.EXIT_USAGE
@@ -399,10 +399,10 @@ class Themer(AssertBool):
         try:
             for name, scopedef in self.theme.definition["scope"].items():
                 try:
-                    generator = scopedef["generator"]
+                    agent = scopedef["agent"]
                 except KeyError:
-                    generator = ""
-                scopes_table.add_row(name, generator)
+                    agent = ""
+                scopes_table.add_row(name, agent)
         except KeyError:  # pragma: nocover
             # no scopes defined in the theme
             pass
@@ -443,11 +443,11 @@ class Themer(AssertBool):
             # doesn't exist
             if self.theme.has_scope(scope):
                 scopedef = self.theme.scopedef_for(scope)
-                # find the generator for this scope
+                # find the agent for this scope
                 try:
-                    generator = scopedef["generator"]
+                    agent = scopedef["agent"]
                 except KeyError as exc:
-                    errmsg = f"{self.prog}: scope '{scope}' does not have a generator."
+                    errmsg = f"{self.prog}: scope '{scope}' does not have an agent."
                     raise ThemeError(errmsg) from exc
                 # check if the scope is disabled
                 if not self.theme.is_enabled(scope):
@@ -459,8 +459,8 @@ class Themer(AssertBool):
                     print(f"# [scope.{scope}]")
 
                 try:
-                    # go get the apropriate class for the generator
-                    gcls = GeneratorBase.classmap[generator]
+                    # go get the apropriate class for the agent
+                    gcls = AgentBase.classmap[agent]
                     # initialize the class with the scope and scope definition
                     ginst = gcls(
                         scopedef,
@@ -470,35 +470,33 @@ class Themer(AssertBool):
                         scope=scope,
                     )
                     # generate and print the output
-                    output = ginst.generate()
+                    output = ginst.run()
                     if output:
                         print(output)
                 except KeyError as exc:
-                    raise ThemeError(
-                        f"{self.prog}: {generator}: unknown generator"
-                    ) from exc
+                    raise ThemeError(f"{self.prog}: {agent}: unknown agent") from exc
             else:
                 raise ThemeError(f"{self.prog}: {scope}: no such scope")
         return self.EXIT_SUCCESS
 
-    def dispatch_generators(self, _):
-        """list all available generators and a short description of each"""
+    def dispatch_agents(self, _):
+        """list all available agents and a short description of each"""
         # ignore all other args
-        generators = {}
-        for name, clss in GeneratorBase.classmap.items():
+        agents = {}
+        for name, clss in AgentBase.classmap.items():
             desc = inspect.getdoc(clss)
             if desc:
-                desc = desc.split("\n")[0]
-            generators[name] = desc
+                desc = desc.split("\n", maxsplit=1)[0]
+            agents[name] = desc
 
         table = rich.table.Table(
             box=rich.box.SIMPLE_HEAD, show_edge=False, pad_edge=False
         )
-        table.add_column("Generator")
+        table.add_column("Agent")
         table.add_column("Description")
 
-        for generator in sorted(generators):
-            table.add_row(generator, generators[generator])
+        for agent in sorted(agents):
+            table.add_row(agent, agents[agent])
         self.console.print(table)
 
         return self.EXIT_SUCCESS

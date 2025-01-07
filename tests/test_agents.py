@@ -26,15 +26,15 @@ from shell_themer import Themer
 
 
 #
-# test the generators command (which shows the list of available generators)
+# test the agents command (which shows the list of available agents)
 #
-def test_list(thm_cmdline, capsys):
+def test_agents(thm_cmdline, capsys):
     # now go run the command, which should list the themes
-    exit_code = thm_cmdline("generators")
+    exit_code = thm_cmdline("agents")
     out, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_SUCCESS
     assert not err
-    generators = [
+    agents = [
         "environment_variables",
         "exa_colors",
         "eza",
@@ -43,5 +43,5 @@ def test_list(thm_cmdline, capsys):
         "ls_colors",
         "shell",
     ]
-    for genny in generators:
-        assert genny in out
+    for agent in agents:
+        assert agent in out

@@ -38,12 +38,12 @@ def test_preview(thm_cmdline, capsys):
         comment =  "#6272a4"
 
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.foreground = "foreground"
         style.background = "background"
 
         [scope.fzf]
-        generator = "fzf"
+        agent = "fzf"
         environment_variable = "FZF_DEFAULT_OPTS"
         style.text = "foreground"
 

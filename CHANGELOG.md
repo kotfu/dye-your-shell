@@ -12,17 +12,19 @@ format of this file follows recommendations from
 
 ### Added
 
-- `eza` generator now allows defining styles for arbitrary file globs
+- `eza` agent now allows defining styles for arbitrary file globs
 
 ### Changed
 
-- `eza_colors` generator renamed to `eza`
-- `eza` generator uses the same style names as the theme files used by eza,
+- generators are now called agents
+- `eza_colors` agent renamed to `eza`
+- `eza` agent uses the same style names as the theme files used by eza,
   instead of the custom ones
-- `fzf` generator no longer requires `environment_variable` directive, if
+- `fzf` agent no longer requires `environment_variable` directive, if
   not specified it defaults to `FZF_DEFAULT_OPTS`
-- `fzf` generator now has foreground/background combined style support for
+- `fzf` agent now has foreground/background combined style support for
   `selected-line`
+
 
 ## [0.6.0] - 2025-01-04
 

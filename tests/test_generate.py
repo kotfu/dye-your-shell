@@ -26,25 +26,25 @@ import pytest
 import rich.errors
 import rich.style
 
-import shell_themer.generators
+import shell_themer.agents
 from shell_themer import Themer
 
 
 #
 # test GeneratorBase functionality
 #
-def test_generator_classmap():
-    classmap = shell_themer.generators.GeneratorBase.classmap
+def test_agent_classmap():
+    classmap = shell_themer.agents.AgentBase.classmap
     assert "environment_variables" in classmap
-    assert "bogusgenerator" not in classmap
+    assert "bogusagent" not in classmap
     assert classmap["environment_variables"].__name__ == "EnvironmentVariables"
 
 
-def test_generator_name():
-    envgen = shell_themer.generators.EnvironmentVariables(None, None, None)
-    assert envgen.generator == "environment_variables"
-    fzfgen = shell_themer.generators.Fzf(None, None, None)
-    assert fzfgen.generator == "fzf"
+def test_agent_name():
+    envgen = shell_themer.agents.EnvironmentVariables(None, None, None)
+    assert envgen.agent == "environment_variables"
+    fzfgen = shell_themer.agents.Fzf(None, None, None)
+    assert fzfgen.agent == "fzf"
 
 
 #
@@ -66,12 +66,12 @@ def test_generate_single_scope(thm_cmdline, capsys):
         yellow =  "#f1fa8c"
 
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.foreground = "foreground"
         style.background = "background"
 
         [scope.fzf]
-        generator = "fzf"
+        agent = "fzf"
 
         # attributes specific to fzf
         environment_variable = "FZF_DEFAULT_OPTS"
@@ -109,7 +109,7 @@ def test_generate_unknown_scope(thm_cmdline, capsys):
         foreground =  "#f8f8f2"
 
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.foreground = "foreground"
         style.background = "background"
 
@@ -145,12 +145,12 @@ def test_generate_enabled(thm_cmdline, capsys):
     tomlstr = """
         [scope.nolistvar]
         enabled = false
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "NOLISTVAR"
 
         [scope.somevar]
         enabled = true
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -166,7 +166,7 @@ def test_generate_enabled_false_enabled_if_ignored(thm_cmdline, capsys):
         [scope.unset]
         enabled = false
         enabled_if = "[[ 1 == 1 ]]"
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -181,7 +181,7 @@ def test_generate_enabled_true_enabed_if_ignored(thm_cmdline, capsys):
         [scope.unset]
         enabled = true
         enabled_if = "[[ 0 == 1 ]]"
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -195,7 +195,7 @@ def test_generate_enabled_invalid_value(thm_cmdline, capsys):
     tomlstr = """
         [scope.unset]
         enabled = "notaboolean"
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -224,7 +224,7 @@ def test_generate_enabled_if(cmd, enabled, thm_cmdline, capsys):
 
         [scope.unset]
         enabled_if = "{cmd}"
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "ENVVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -241,12 +241,12 @@ def test_generate_comments(thm_cmdline, capsys):
     tomlstr = """
         [scope.nolistvar]
         enabled = false
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "NOLISTVAR"
 
         [scope.somevar]
         enabled = true
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate --comment", tomlstr)
@@ -259,20 +259,20 @@ def test_generate_comments(thm_cmdline, capsys):
     assert "unset NOLISTVAR" not in out
 
 
-def test_unknown_generator(thm_cmdline, capsys):
+def test_unknown_agent(thm_cmdline, capsys):
     tomlstr = """
         [scope.myprog]
-        generator = "mrfusion"
+        agent = "mrfusion"
         unset = "SOMEVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     _, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
-    assert "unknown generator" in err
+    assert "unknown agent" in err
     assert "mrfusion" in err
 
 
-def test_no_generator(thm_cmdline, capsys):
+def test_no_agent(thm_cmdline, capsys):
     tomlstr = """
         [scope.myscope]
         enabled = false
@@ -280,12 +280,12 @@ def test_no_generator(thm_cmdline, capsys):
     exit_code = thm_cmdline("generate", tomlstr)
     _, err = capsys.readouterr()
     assert exit_code == Themer.EXIT_ERROR
-    assert "does not have a generator" in err
+    assert "does not have an agent" in err
     assert "myscope" in err
 
 
 #
-# test the environment_variables generator
+# test the environment_variables agent
 #
 ENV_INTERPOLATIONS = [
     ("{style:dark_orange}", "#ff6c1c"),
@@ -321,7 +321,7 @@ def test_generate_environment_interpolation(thm_cmdline, capsys, phrase, interpo
         dark_orange = "#ff6c1c"
 
         [scope.gum]
-        generator = "environment_variables"
+        agent = "environment_variables"
         export.GUM_OPTS = " --cursor-foreground={phrase}"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -336,7 +336,7 @@ def test_generate_environment_unset_list(thm_cmdline, capsys):
         thevar = "ANOTHERVAR"
 
         [scope.ls]
-        generator = "environment_variables"
+        agent = "environment_variables"
         # set some environment variables
         unset = ["SOMEVAR", "{var:thevar}"]
         export.LS_COLORS = "ace ventura"
@@ -353,7 +353,7 @@ def test_generate_environment_unset_list(thm_cmdline, capsys):
 def test_generate_environment_unset_string(thm_cmdline, capsys):
     tomlstr = """
         [scope.unset]
-        generator = "environment_variables"
+        agent = "environment_variables"
         unset = "NOLISTVAR"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -364,7 +364,7 @@ def test_generate_environment_unset_string(thm_cmdline, capsys):
 
 
 #
-# test the fzf generator
+# test the fzf agent
 #
 ATTRIBS_TO_FZF = [
     ("bold", "regular:bold"),
@@ -382,7 +382,7 @@ ATTRIBS_TO_FZF = [
 @pytest.mark.parametrize("styledef, fzf", ATTRIBS_TO_FZF)
 def test_fzf_attribs_from_style(styledef, fzf):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.generators.Fzf(None, None, None, None, None)
+    genny = shell_themer.agents.Fzf(None, None, None, None, None)
     assert fzf == genny._fzf_attribs_from_style(style)
 
 
@@ -413,7 +413,7 @@ STYLE_TO_FZF = [
 @pytest.mark.parametrize("name, styledef, fzf", STYLE_TO_FZF)
 def test_fzf_from_style(name, styledef, fzf):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.generators.Fzf(None, None, None, None, None)
+    genny = shell_themer.agents.Fzf(None, None, None, None, None)
     assert fzf == genny._fzf_from_style(name, style)
 
 
@@ -426,7 +426,7 @@ def test_fzf(thm_cmdline, capsys):
         bstyle = "rounded"
 
         [scope.fzf]
-        generator = "fzf"
+        agent = "fzf"
         environment_variable = "QQQ"
         opt."+i" = true
         opt.--border = "{var:bstyle}"
@@ -450,7 +450,7 @@ def test_fzf_no_opts(thm_cmdline, capsys):
         varname = "ZZ"
 
         [scope.fzf]
-        generator = "fzf"
+        agent = "fzf"
         environment_variable = "Q{var:varname}QQ"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -463,7 +463,7 @@ def test_fzf_no_opts(thm_cmdline, capsys):
 def test_fzf_no_varname(thm_cmdline, capsys):
     tomlstr = """
         [scope.fzf]
-        generator = "fzf"
+        agent = "fzf"
         opt."+i" = true
         opt.--border = "rounded"
     """
@@ -474,7 +474,7 @@ def test_fzf_no_varname(thm_cmdline, capsys):
 
 
 #
-# test the ls_colors generator
+# test the ls_colors agent
 #
 # we only reallly have to test that the style name maps to the right code in ls_colors
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
@@ -506,7 +506,7 @@ STYLE_TO_LSCOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_LSCOLORS)
 def test_ls_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.generators.LsColors(None, None, None, None, None)
+    genny = shell_themer.agents.LsColors(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
         name,
         style,
@@ -522,7 +522,7 @@ def test_ls_colors_from_style(name, styledef, expected):
 def test_ls_colors_no_styles(thm_cmdline, capsys):
     tomlstr = """
         [scope.lsc]
-        generator = "ls_colors"
+        agent = "ls_colors"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -534,7 +534,7 @@ def test_ls_colors_no_styles(thm_cmdline, capsys):
 def test_ls_colors_unknown_style(thm_cmdline, capsys):
     tomlstr = """
         [scope.lsc]
-        generator = "ls_colors"
+        agent = "ls_colors"
         style.bundleid = "default"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -547,7 +547,7 @@ def test_ls_colors_unknown_style(thm_cmdline, capsys):
 def test_ls_colors_environment_variable(thm_cmdline, capsys):
     tomlstr = """
         [scope.lsc]
-        generator = "ls_colors"
+        agent = "ls_colors"
         environment_variable = "OTHER_LS_COLOR"
         style.file = "default"
     """
@@ -567,7 +567,7 @@ def test_ls_colors_styles_variables(thm_cmdline, capsys):
         warning = "yellow on red"
 
         [scope.lsc]
-        generator = "ls_colors"
+        agent = "ls_colors"
         style.file = "warning"
         style.directory = "{var:pinkvar}"
     """
@@ -581,7 +581,7 @@ def test_ls_colors_styles_variables(thm_cmdline, capsys):
 def test_ls_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
         [scope.lsc]
-        generator = "ls_colors"
+        agent = "ls_colors"
         clear_builtin = true
         style.directory = "bright_blue"
     """
@@ -600,7 +600,7 @@ def test_ls_colors_clear_builtin(thm_cmdline, capsys):
 def test_ls_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
     tomlstr = """
         [scope.lsc]
-        generator = "ls_colors"
+        agent = "ls_colors"
         clear_builtin = "error"
         style.directory = "bright_blue"
     """
@@ -612,7 +612,7 @@ def test_ls_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
 
 
 #
-# test the exa_colors generator
+# test the exa_colors agent
 #
 # we only reallly have to test that the style name maps to the right code in ls_colors
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
@@ -645,7 +645,7 @@ STYLE_TO_EXACOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EXACOLORS)
 def test_exa_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.generators.ExaColors(None, None, None, None, None)
+    genny = shell_themer.agents.ExaColors(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
         name,
         style,
@@ -661,7 +661,7 @@ def test_exa_colors_from_style(name, styledef, expected):
 def test_exa_colors_no_styles(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "exa_colors"
+        agent = "exa_colors"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -673,7 +673,7 @@ def test_exa_colors_no_styles(thm_cmdline, capsys):
 def test_exa_colors_unknown_style(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "exa_colors"
+        agent = "exa_colors"
         style.bundleid = "default"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -686,7 +686,7 @@ def test_exa_colors_unknown_style(thm_cmdline, capsys):
 def test_exa_colors_environment_variable(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "exa_colors"
+        agent = "exa_colors"
         environment_variable = "OTHER_EXA_COLOR"
         style.file = "default"
         style.size_number = "#7060eb"
@@ -707,7 +707,7 @@ def test_exa_colors_styles_variables(thm_cmdline, capsys):
         warning = "yellow on red"
 
         [scope.lsc]
-        generator = "exa_colors"
+        agent = "exa_colors"
         style.file = "warning"
         style.directory = "{var:pinkvar}"
     """
@@ -721,7 +721,7 @@ def test_exa_colors_styles_variables(thm_cmdline, capsys):
 def test_exa_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "exa_colors"
+        agent = "exa_colors"
         clear_builtin = true
         style.directory = "bright_blue"
         style.uu = "bright_red"
@@ -738,7 +738,7 @@ def test_exa_colors_clear_builtin(thm_cmdline, capsys):
 def test_exa_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "exa_colors"
+        agent = "exa_colors"
         clear_builtin = "error"
         style.directory = "bright_blue"
     """
@@ -750,7 +750,7 @@ def test_exa_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
 
 
 #
-# test the eza_colors generator
+# test the eza_colors agent
 #
 # we only reallly have to test that the style name maps to the right code in ls_colors
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
@@ -777,7 +777,7 @@ STYLE_TO_EZACOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EZACOLORS)
 def test_eza_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.generators.Eza(None, None, None, None, None)
+    genny = shell_themer.agents.Eza(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
         name,
         style,
@@ -793,7 +793,7 @@ def test_eza_colors_from_style(name, styledef, expected):
 def test_eza_colors_no_styles(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "eza"
+        agent = "eza"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()
@@ -805,7 +805,7 @@ def test_eza_colors_no_styles(thm_cmdline, capsys):
 def test_eza_colors_environment_variable(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "eza"
+        agent = "eza"
         environment_variable = "OTHER_EZA_COLOR"
         style.'filekinds:normal' = "default"
         style.'size:number_style' = "#7060eb"
@@ -826,7 +826,7 @@ def test_eza_colors_styles_variables(thm_cmdline, capsys):
         warning = "yellow on red"
 
         [scope.lsc]
-        generator = "eza"
+        agent = "eza"
         style.'filekinds:normal' = "warning"
         style.'filekinds:directory' = "{var:pinkvar}"
     """
@@ -840,7 +840,7 @@ def test_eza_colors_styles_variables(thm_cmdline, capsys):
 def test_eza_colors_clear_builtin(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "eza"
+        agent = "eza"
         clear_builtin = true
         style.'filekinds:directory' = "bright_blue"
         style.uu = "bright_red"
@@ -857,7 +857,7 @@ def test_eza_colors_clear_builtin(thm_cmdline, capsys):
 def test_eza_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
     tomlstr = """
         [scope.exac]
-        generator = "eza"
+        agent = "eza"
         clear_builtin = "error"
         style.directory = "bright_blue"
     """
@@ -869,7 +869,7 @@ def test_eza_colors_clear_builtin_not_boolean(thm_cmdline, capsys):
 
 
 #
-# test the iterm generator
+# test the iterm agent
 #
 def test_iterm_fg_bg(thm_cmdline, capsys):
     tomlstr = """
@@ -878,7 +878,7 @@ def test_iterm_fg_bg(thm_cmdline, capsys):
         background = "#221122"
 
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.foreground = "foreground"
         style.background = "background"
     """
@@ -895,7 +895,7 @@ def test_iterm_fg_bg(thm_cmdline, capsys):
 def test_iterm_bg(thm_cmdline, capsys):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.background = "#b2cacd"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -910,7 +910,7 @@ def test_iterm_bg(thm_cmdline, capsys):
 def test_iterm_profile(thm_cmdline, capsys):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         cursor = "box"
         style.cursor = "#b2cacd"
         profile = "myprofilename"
@@ -929,7 +929,7 @@ def test_iterm_profile(thm_cmdline, capsys):
 def test_iterm_cursor(thm_cmdline, capsys):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         cursor = "underline"
         style.cursor = "#cab2cd"
     """
@@ -958,7 +958,7 @@ CURSOR_SHAPES = [
 def test_iterm_cursor_shape(thm_cmdline, capsys, name, code):
     tomlstr = f"""
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         cursor = "{name}"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -975,7 +975,7 @@ def test_iterm_cursor_shape(thm_cmdline, capsys, name, code):
 def test_iterm_cursor_profile(thm_cmdline, capsys):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         profile = "smoov"
         cursor = "profile"
     """
@@ -993,7 +993,7 @@ def test_iterm_cursor_profile(thm_cmdline, capsys):
 def test_iterm_cursor_shape_invalid(thm_cmdline, capsys):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         cursor = "ibeam"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -1006,7 +1006,7 @@ def test_iterm_cursor_shape_invalid(thm_cmdline, capsys):
 def test_item_tab_default(thm_cmdline, capsys):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.tab = "default"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -1021,7 +1021,7 @@ def test_item_tab_default(thm_cmdline, capsys):
 def test_iterm_tab_color(thm_cmdline, capsys):
     tomlstr = """
         [scope.iterm]
-        generator = "iterm"
+        agent = "iterm"
         style.tab = "#337799"
     """
     exit_code = thm_cmdline("generate", tomlstr)
@@ -1036,7 +1036,7 @@ def test_iterm_tab_color(thm_cmdline, capsys):
 
 
 #
-# test the shell generator
+# test the shell agent
 #
 def test_shell(thm_cmdline, capsys):
     tomlstr = """
@@ -1047,7 +1047,7 @@ def test_shell(thm_cmdline, capsys):
         purple = "#A020F0"
 
         [scope.shortcut]
-        generator = "shell"
+        agent = "shell"
         command.first = "echo {var:greeting}"
         command.next = "echo general kenobi"
         command.last = "echo {style:purple}"
@@ -1068,7 +1068,7 @@ def test_shell_ansi(thm_cmdline, capsys):
         purple = "#A020F0"
 
         [scope.shortcut]
-        generator = "shell"
+        agent = "shell"
         command.first = "echo {style:purple:ansi_on}{var:greeting}{style:purple:ansi_off}"
     """  # noqa: E501
     exit_code = thm_cmdline("generate", tomlstr)
@@ -1080,10 +1080,10 @@ def test_shell_ansi(thm_cmdline, capsys):
 
 def test_shell_enabled_if(thm_cmdline, capsys):
     # we have separate tests for enabled_if, but since it's super useful with the
-    # shell generator, i'm including another test here
+    # shell agent, i'm including another test here
     tomlstr = """
         [scope.shortcut]
-        generator = "shell"
+        agent = "shell"
         enabled_if = "[[ 1 == 0 ]]"
         command.first = "shortcuts run 'My Shortcut Name'"
     """
@@ -1097,7 +1097,7 @@ def test_shell_enabled_if(thm_cmdline, capsys):
 def test_shell_multiline(thm_cmdline, capsys):
     tomlstr = """
         [scope.multiline]
-        generator = "shell"
+        agent = "shell"
         command.long = '''
 echo hello there
 echo general kenobi
@@ -1129,7 +1129,7 @@ fi
 def test_shell_no_commands(thm_cmdline, capsys):
     tomlstr = """
         [scope.shortcut]
-        generator = "shell"
+        agent = "shell"
     """
     exit_code = thm_cmdline("generate", tomlstr)
     out, err = capsys.readouterr()

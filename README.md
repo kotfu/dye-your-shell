@@ -60,20 +60,20 @@ red =  "#ff5555"
 yellow =  "#f1fa8c"
 
 [scope.iterm]
-generator = "iterm"
+agent = "iterm"
 style.foreground = "foreground"
 style.background = "background"
 
 [scope.ls_colors]
-generator = "environment_variables"
+agent = "environment_variables"
 export.LS_COLORS = "$(vivid generate dracula)"
 
 [scope.bat]
-generator = "environment_variables"
+agent = "environment_variables"
 export.BAT_THEME = "Dracula"
 
 [scope.fzf]
-generator = "fzf"
+agent = "fzf"
 environment_variable = "FZF_DEFAULT_OPTS"
 colorbase = "dark"
 
