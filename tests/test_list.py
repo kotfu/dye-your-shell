@@ -24,7 +24,7 @@
 
 from unittest import mock
 
-from shell_themer import Themer
+from dye import Themer
 
 
 #

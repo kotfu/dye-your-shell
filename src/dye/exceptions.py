@@ -22,5 +22,5 @@
 """Exceptions and errors"""
 
 
-class ThemeError(Exception):
-    """Exception for theme processing errors"""
+class DyeError(Exception):
+    """Exception for dye processing errors"""

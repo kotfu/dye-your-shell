@@ -25,7 +25,7 @@ import functools
 import os
 import re
 
-from .exceptions import ThemeError
+from .exceptions import DyeError
 
 
 class Interpolator:
@@ -111,7 +111,7 @@ class Interpolator:
             return out
         except KeyError as exc:
             # we can't find the variable, which is an error
-            raise ThemeError(
+            raise DyeError(
                 f"{self.msgdata['prog']}: undefined variable '{varname}'"
                 f" referenced in scope '{self.msgdata['scope']}"
             ) from exc
@@ -227,7 +227,7 @@ class Interpolator:
         try:
             style = self.styles[style_name]
         except KeyError as exc:
-            raise ThemeError(
+            raise DyeError(
                 f"{self.msgdata['prog']}: undefined style '{style_name}'"
                 f" while processing scope '{self.msgdata['scope']}'"
             ) from exc
@@ -254,7 +254,7 @@ class Interpolator:
             _, out = ansistring.split(splitter)
         else:
             # an unknown format is an error
-            raise ThemeError(
+            raise DyeError(
                 f"{self.msgdata['prog']}: unknown style interpolation format"
                 f" '{fmt}' while processing scope '{self.msgdata['scope']}'"
             )

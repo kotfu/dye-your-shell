@@ -26,24 +26,24 @@ import pytest
 import rich.errors
 import rich.style
 
-import shell_themer.agents
-from shell_themer import Themer
+import dye.agents
+from dye import Themer
 
 
 #
 # test GeneratorBase functionality
 #
 def test_agent_classmap():
-    classmap = shell_themer.agents.AgentBase.classmap
+    classmap = dye.agents.AgentBase.classmap
     assert "environment_variables" in classmap
     assert "bogusagent" not in classmap
     assert classmap["environment_variables"].__name__ == "EnvironmentVariables"
 
 
 def test_agent_name():
-    envgen = shell_themer.agents.EnvironmentVariables(None, None, None)
+    envgen = dye.agents.EnvironmentVariables(None, None, None)
     assert envgen.agent == "environment_variables"
-    fzfgen = shell_themer.agents.Fzf(None, None, None)
+    fzfgen = dye.agents.Fzf(None, None, None)
     assert fzfgen.agent == "fzf"
 
 
@@ -382,7 +382,7 @@ ATTRIBS_TO_FZF = [
 @pytest.mark.parametrize("styledef, fzf", ATTRIBS_TO_FZF)
 def test_fzf_attribs_from_style(styledef, fzf):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.agents.Fzf(None, None, None, None, None)
+    genny = dye.agents.Fzf(None, None, None, None, None)
     assert fzf == genny._fzf_attribs_from_style(style)
 
 
@@ -413,7 +413,7 @@ STYLE_TO_FZF = [
 @pytest.mark.parametrize("name, styledef, fzf", STYLE_TO_FZF)
 def test_fzf_from_style(name, styledef, fzf):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.agents.Fzf(None, None, None, None, None)
+    genny = dye.agents.Fzf(None, None, None, None, None)
     assert fzf == genny._fzf_from_style(name, style)
 
 
@@ -506,7 +506,7 @@ STYLE_TO_LSCOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_LSCOLORS)
 def test_ls_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.agents.LsColors(None, None, None, None, None)
+    genny = dye.agents.LsColors(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
         name,
         style,
@@ -645,7 +645,7 @@ STYLE_TO_EXACOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EXACOLORS)
 def test_exa_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.agents.ExaColors(None, None, None, None, None)
+    genny = dye.agents.ExaColors(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
         name,
         style,
@@ -777,7 +777,7 @@ STYLE_TO_EZACOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EZACOLORS)
 def test_eza_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = shell_themer.agents.Eza(None, None, None, None, None)
+    genny = dye.agents.Eza(None, None, None, None, None)
     code, render = genny.ls_colors_from_style(
         name,
         style,

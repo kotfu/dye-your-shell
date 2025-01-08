@@ -26,7 +26,7 @@ import subprocess
 
 import tomlkit
 
-from .exceptions import ThemeError
+from .exceptions import DyeError
 from .interpolator import Interpolator
 from .parsers import StyleParser
 from .utils import AssertBool
@@ -97,7 +97,7 @@ class Theme(AssertBool):
         for var, cmd in cap_vars.items():
             proc = subprocess.run(cmd, shell=True, check=False, capture_output=True)
             if proc.returncode != 0:
-                raise ThemeError(
+                raise DyeError(
                     f"{self.prog}: capture variable '{var}' returned"
                     " a non-zero exit code."
                 )
@@ -115,7 +115,7 @@ class Theme(AssertBool):
 
         for var, defined in reg_vars.items():
             if var in resolved_vars:
-                raise ThemeError(
+                raise DyeError(
                     f"{self.prog}: a variable named '{var}' is already defined."
                 )
             # create a new interpolator each time through the loop so

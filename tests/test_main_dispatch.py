@@ -27,8 +27,8 @@ import os
 import pytest
 from rich_argparse import RichHelpFormatter
 
-from shell_themer import Themer
-from shell_themer import __main__ as mainmodule
+from dye import Themer
+from dye import __main__ as mainmodule
 
 
 #

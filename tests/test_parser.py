@@ -26,7 +26,7 @@ import pytest
 import rich.errors
 import rich.style
 
-from shell_themer.parsers import StyleParser
+from dye.parsers import StyleParser
 
 
 def test_parse_text_plain():

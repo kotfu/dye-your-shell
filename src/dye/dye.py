@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""command line tool for maintaining and switching color schemes"""
+"""the 'dye' command line tool for maintaining and switching color schemes"""
 
 import argparse
 import contextlib
@@ -37,13 +37,13 @@ import rich.style
 from rich_argparse import RichHelpFormatter
 
 from .agents import AgentBase
-from .exceptions import ThemeError
+from .exceptions import DyeError
 from .theme import Theme
 from .utils import AssertBool
 from .version import version_string
 
 
-class Themer(AssertBool):
+class Dye(AssertBool):
     """parse and translate a theme file for various command line programs"""
 
     EXIT_SUCCESS = 0
@@ -189,9 +189,9 @@ class Themer(AssertBool):
         try:
             tdir = pathlib.Path(os.environ["THEME_DIR"])
         except KeyError as exc:
-            raise ThemeError(f"{self.prog}: $THEME_DIR not set") from exc
+            raise DyeError(f"{self.prog}: $THEME_DIR not set") from exc
         if not tdir.is_dir():
-            raise ThemeError(f"{self.prog}: {tdir}: no such directory")
+            raise DyeError(f"{self.prog}: {tdir}: no such directory")
         return tdir
 
     #
@@ -225,7 +225,7 @@ class Themer(AssertBool):
             else:
                 print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
                 exit_code = self.EXIT_USAGE
-        except ThemeError as err:
+        except DyeError as err:
             self.error_console.print(err)
             exit_code = self.EXIT_ERROR
 
@@ -322,12 +322,12 @@ class Themer(AssertBool):
             if not fname.is_file():
                 fname = self.theme_dir / f"{args.theme}.toml"
                 if not fname.is_file():
-                    raise ThemeError(f"{self.prog}: {args.theme}: theme not found")
+                    raise DyeError(f"{self.prog}: {args.theme}: theme not found")
         else:
             with contextlib.suppress(KeyError):
                 fname = pathlib.Path(os.environ["THEME_FILE"])
         if not fname:
-            raise ThemeError(f"{self.prog}: no theme or theme file specified")
+            raise DyeError(f"{self.prog}: no theme or theme file specified")
 
         self.theme = Theme(prog=self.prog)
         with open(fname, "rb") as file:
@@ -446,7 +446,7 @@ class Themer(AssertBool):
                     agent = scopedef["agent"]
                 except KeyError as exc:
                     errmsg = f"{self.prog}: scope '{scope}' does not have an agent."
-                    raise ThemeError(errmsg) from exc
+                    raise DyeError(errmsg) from exc
                 # check if the scope is disabled
                 if not self.theme.is_enabled(scope):
                     if args.comment:
@@ -472,9 +472,9 @@ class Themer(AssertBool):
                     if output:
                         print(output)
                 except KeyError as exc:
-                    raise ThemeError(f"{self.prog}: {agent}: unknown agent") from exc
+                    raise DyeError(f"{self.prog}: {agent}: unknown agent") from exc
             else:
-                raise ThemeError(f"{self.prog}: {scope}: no such scope")
+                raise DyeError(f"{self.prog}: {scope}: no such scope")
         return self.EXIT_SUCCESS
 
     def dispatch_agents(self, _):

@@ -24,8 +24,8 @@
 
 import pytest
 
-from shell_themer.exceptions import ThemeError
-from shell_themer.utils import AssertBool
+from dye.exceptions import DyeError
+from dye.utils import AssertBool
 
 BOOL_TESTS = [
     (True, True),
@@ -43,7 +43,7 @@ def test_assert_bool(val, expected):
     if expected:
         asserter.assert_bool(val, key="val", prog="prog", agent="agent", scope="scope")
     else:
-        with pytest.raises(ThemeError):
+        with pytest.raises(DyeError):
             asserter.assert_bool(
                 val, key="val", prog="prog", geneartor="agent", scope="scope"
             )

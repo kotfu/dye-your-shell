@@ -19,9 +19,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""command line tool for maintaining and switching color schemes"""
+"""
+Entry point for 'dye' command line program.
+"""
 
-from .exceptions import ThemeError
-from .themer import Theme, Themer
+import sys
 
-__all__ = ["Themer", "Theme", "ThemeError"]
+from dye import Dye
+
+
+def doit():
+    """made this so we can test it"""
+    if __name__ == "__main__":
+        sys.exit(Dye.main())
+
+
+doit()

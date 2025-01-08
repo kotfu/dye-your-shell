@@ -29,7 +29,7 @@ import pytest
 import rich.errors
 import rich.style
 
-from shell_themer import ThemeError
+from dye import DyeError
 
 
 #
@@ -84,7 +84,7 @@ def test_process_definition_duplicate_variables(theme):
         capture.thevar = "printf '%s' thevalue"
         thevar = "fred"
     """
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         theme.loads(tomlstr)
 
 
@@ -95,7 +95,7 @@ def test_process_definition_capture_error(theme):
         [variables]
         capture.thevar = "printff '%s' thevalue"
     """
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         theme.loads(tomlstr)
 
 
@@ -104,7 +104,7 @@ def test_process_definition_undefined_variable(theme):
         [variables]
         one = "{var:two}"
     """
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         theme.loads(tomlstr)
 
 
@@ -244,14 +244,14 @@ def test_theme_dir_environment_variable(thm, mocker, tmp_path):
 def test_theme_dir_no_environment_variable(thm, mocker):
     # ensure no THEME_DIR environment variable exists
     mocker.patch.dict(os.environ, {}, clear=True)
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         _ = thm.theme_dir
 
 
 def test_theme_dir_invalid_directory(thm, mocker, tmp_path):
     invalid = tmp_path / "doesntexist"
     mocker.patch.dict(os.environ, {"THEME_DIR": str(invalid)})
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         _ = thm.theme_dir
 
 
@@ -265,7 +265,7 @@ def test_load_from_args_no_theme(thm, mocker):
     args = argparse.Namespace()
     args.file = None
     args.theme = None
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         thm.load_from_args(args)
 
 
@@ -380,7 +380,7 @@ def test_load_from_args_theme_file_invalid(thm, mocker, tmp_path):
     args.file = None
     args.theme = "notfound.toml"
 
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         thm.load_from_args(args)
 
 

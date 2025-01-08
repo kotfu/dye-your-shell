@@ -27,9 +27,9 @@ import os
 import pytest
 import rich.style
 
-from shell_themer import ThemeError
-from shell_themer.interpolator import Interpolator
-from shell_themer.parsers import StyleParser
+from dye import DyeError
+from dye.interpolator import Interpolator
+from dye.parsers import StyleParser
 
 INTERPOLATIONS = [
     ("{style:dark_orange:fghex}", "#ff6c1c"),
@@ -136,7 +136,7 @@ def test_interpolate_unknown_style(text):
     # create a variable, so we can check that it doesn't get interpolated
     variables = {"exists": "yup"}
     interp = Interpolator(styles, variables, prog="theprog", scope="thescope")
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         interp.interpolate_styles(text)
 
 
@@ -183,7 +183,7 @@ def test_interpolate_variables(text, resolved):
 
 def test_interpolate_unknown_variable():
     interp = Interpolator(None, None, prog="theprog", scope="thescope")
-    with pytest.raises(ThemeError):
+    with pytest.raises(DyeError):
         interp.interpolate_variables("{var:one}")
 
 

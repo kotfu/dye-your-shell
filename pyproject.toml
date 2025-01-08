@@ -9,8 +9,8 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "shell-themer"
-description = "Use consistent color themes for a variety of command line tools."
+name = "dye-your-shell"
+description = "Apply color themes to a variety of shell command line tools."
 readme = "README.md"
 authors = [
     {name = "Jared Crapo", email = "jared@kotfu.net"},
@@ -65,16 +65,15 @@ where = ["src"]
 
 
 [project.scripts]
-shell-themer = "shell_themer.themer:Themer.main"
-
+dye = "dye.dye:Dye.main"
 
 [project.urls]
-homepage = "https://github.com/kotfu/shell-themer"
-repository = "https://github.com/kotfu/shell-themer"
+homepage = "https://github.com/kotfu/dye-your-shell"
+repository = "https://github.com/kotfu/dye-your-shell"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov-report=term-missing --cov=src/shell_themer"
+addopts = "--cov-report=term-missing --cov=src/dye"
 
 
 [tool.pylint."MESSAGES CONTROL"]

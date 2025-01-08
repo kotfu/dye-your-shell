@@ -24,7 +24,7 @@
 
 import pytest
 
-from shell_themer import Theme, Themer
+from dye import Theme, Themer
 
 
 @pytest.fixture

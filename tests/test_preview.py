@@ -22,7 +22,7 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
-from shell_themer import Themer
+from dye import Themer
 
 
 #

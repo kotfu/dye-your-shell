@@ -21,7 +21,7 @@
 #
 """utility classes"""
 
-from .exceptions import ThemeError
+from .exceptions import DyeError
 
 
 class AssertBool:
@@ -56,4 +56,4 @@ class AssertBool:
                     f"{msgdata['prog']}: scope '{msgdata['scope']}'"
                     f" requires '{msgdata['key']}' to be true or false"
                 )
-            raise ThemeError(errmsg)
+            raise DyeError(errmsg)

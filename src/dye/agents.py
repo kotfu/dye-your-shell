@@ -26,7 +26,7 @@ import re
 
 import rich.color
 
-from .exceptions import ThemeError
+from .exceptions import DyeError
 from .interpolator import Interpolator
 from .parsers import StyleParser
 from .utils import AssertBool
@@ -125,7 +125,7 @@ class LsColorsFromStyle:
             else:
                 # they used a style for a file attribute that isn't in the map
                 # which is not allowed
-                raise ThemeError(
+                raise DyeError(
                     f"{msgdata['prog']}: unknown style '{name}' while processing"
                     f" scope '{msgdata['scope']}'"
                 ) from exc
@@ -747,7 +747,7 @@ class Iterm(AgentBase):
                 cmd += r'\a"'
                 output.append(cmd)
             else:
-                raise ThemeError(
+                raise DyeError(
                     f"{self.prog}: unknown cursor '{cursor}'"
                     f" while processing scope '{self.scope}'"
                 )
