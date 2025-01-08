@@ -393,7 +393,7 @@ class Themer(AssertBool):
             box=rich.box.SIMPLE_HEAD, show_edge=False, pad_edge=False
         )
         scopes_table.add_column("Scope", ratio=0.4)
-        scopes_table.add_column("Generator", ratio=0.6)
+        scopes_table.add_column("Agent", ratio=0.6)
         try:
             for name, scopedef in self.theme.definition["scope"].items():
                 try:
