@@ -1,0 +1,133 @@
+#
+# dracula theme
+
+name = "dracula"
+type = "dark"
+
+[palette]
+# these names and colors typically come from whoever designed
+# the color palette
+#
+# https://draculatheme.com/contribute#color-palette
+background = '#282a36'
+current_line = '#44475a'
+foreground = '#f8f8f2'
+comment = '#6272a4'
+cyan = '#8be9fd'
+green = '#50fa7b'
+orange = '#ffb86c'
+pink = '#ff79c6'
+purple = '#bd93f9'
+red = '#ff5555'
+yellow = '#f1fa8c'
+
+[map]
+# map the colors above into the shell-themer standard elements
+# everything on the lefthand side here should have a value assigned
+
+# standard foreground color
+foreground = 'foreground'
+# high, medium, and low contrast with background
+#
+# for a dark theme high should be the closest
+# to white, and low should be the closest to black
+#
+# for a light theme high should be the closest
+# to black, and low should be the closest to white
+#
+# if you don't wanna mess with this, just make them all
+# be the same as foreground
+foreground_high = 'foreground'
+foreground_medium = 'foreground'
+foreground_low = 'foreground'
+
+# standard background color
+background = 'background'
+# high, medium, and low contrast with foreground
+#
+# for a dark theme high should be the closest
+# to black, and low should be the closest to white
+#
+# for a light theme high should be the closest
+# to white, and low should be the closest to black
+#
+# if you don't wanna mess with this, just make them all
+# be the same as background
+background_high = 'background'
+background_medium = 'background'
+background_low = 'background'
+
+# these are the 12 colors in an RGB color wheel
+# primary colors: red, yellow, blue
+# secondary colors: cyan, magenta, yellow
+# tertiary colors: orange, chartreuse_green, spring_green,
+#                  azure, violet, rose
+#
+# there is not universal alignment with the names of these colors
+# we use the names from https://en.wikipedia.org/wiki/Color_wheel
+# if your palette has a color in the general range of these
+# segments of the color wheel, put it in here
+#
+# these are useful for having directories displayed in green
+# no matter what shade of green is in the palette
+red = "red"
+orange = "orange"
+yellow = "yellow"
+chartreuse_green = ""
+green = "green"
+spring_green = ""
+cyan = "cyan"
+azure = ""
+blue = ""
+violet = "purple"
+magenta = "pink"
+rose = ""
+
+# if you don't specify tints and shades, they will be automatically
+# calculated for you by shell_themer.
+#
+# shade and tint are rationalized in terms of light or dark themes
+# shade moves towards 'foreground'
+# tint moves towards 'background'
+# tone moves towards the midpoint between 'foreground' and 'background'
+red_tint1 = ""
+red_tint2 = ""
+red_tint3 = ""
+red_tint4 = ""
+red_tint5 = ""
+red_shade1 = ""
+red_shade2 = ""
+red_shade3 = ""
+red_shade4 = ""
+red_shade5 = ""
+red_tone1 = ""
+red_tone2 = ""
+red_tone3 = ""
+red_tone4 = ""
+red_tone5 = ""
+
+# here is where you assign colors in your palette based on their
+# importance or prominance.
+
+color1 = ""
+color2 = ""
+color3 = ""
+color4 = ""
+color5 = ""
+color6 = ""
+
+
+#
+# user interface elements
+
+# text is always the standard foreground color on the
+# standard background color
+text = 'foreground on background'
+text_dim = 'foreground_medium on background'
+
+# think of it the same as the current line in many coding
+# themes. You probably want to use this in fzf
+highlighted_line = 'foreground on background_medium'
+
+#
+selected_line = ''
