@@ -86,6 +86,9 @@
     write it out to the filesystem somewhere. Use this to get your theme info into other config
     files like starship.toml. So you would create starship.toml.template and 'shell-themer' would
     process it and insert your theme colors/variables/etc and output a starship.toml for you
+[ ] if you use ansi color numbers or names (instead of hex codes) in a style, it won't interpolate properly
+    because the interpolator assumes that the color has a .triplet. See rich.color.get_truecolor() which
+    we can use to fix this
 
 
 ## Recipe ideas
