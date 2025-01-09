@@ -22,7 +22,8 @@
 """command line tool for maintaining and switching color schemes"""
 
 from .dye import Dye
-from .exceptions import DyeError
+from .exceptions import DyeError, DyeSyntaxError
+from .pattern import Pattern
 from .theme import Theme
 
-__all__ = ["Dye", "Theme", "DyeError"]
+__all__ = ["Dye", "Theme", "Pattern", "DyeError", "DyeSyntaxError"]

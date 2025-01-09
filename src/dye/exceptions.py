@@ -24,3 +24,7 @@
 
 class DyeError(Exception):
     """Exception for dye processing errors"""
+
+
+class DyeSyntaxError(DyeError):
+    """Syntax errors in theme or pattern files"""
