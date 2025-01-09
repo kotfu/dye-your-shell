@@ -91,13 +91,18 @@ class Dye(AssertBool):
 
         # colors
         cgroup = parser.add_mutually_exclusive_group()
-        nocolor_help = "disable color in help output"
+        nocolor_help = "disable color in help output, overrides $DYE_COLORS"
         cgroup.add_argument(
             "--no-color", dest="nocolor", action="store_true", help=nocolor_help
         )
-        color_help = "provide a color specification"
+        color_help = "provide a color specification for help output"
         cgroup.add_argument("--color", metavar="<colorspec>", help=color_help)
 
+        forcecolor_help = (
+            "force color output even if standard output is not a terminal"
+            " (i.e. if it's a file or a pipe to less)"
+        )
+        parser.add_argument("--force-color", action="store_true", help=forcecolor_help)
         # how to specify a theme
         #        tgroup = parser.add_mutually_exclusive_group()
         #        theme_help = "specify a theme by name from $DYE_DIR/themes"
@@ -187,13 +192,13 @@ class Dye(AssertBool):
             return exc.code
 
         # create an instance of ourselves
-        thm = cls()
+        thm = cls(force_color=args.force_color)
         return thm.dispatch(parser.prog, args)
 
     #
     # initialization and properties
     #
-    def __init__(self):
+    def __init__(self, force_color=False):
         """Construct a new Themer object
 
         console
@@ -204,6 +209,7 @@ class Dye(AssertBool):
             markup=False,
             emoji=False,
             highlight=False,
+            force_terminal=force_color,
         )
         self.error_console = rich.console.Console(
             stderr=True,
@@ -211,6 +217,7 @@ class Dye(AssertBool):
             markup=False,
             emoji=False,
             highlight=False,
+            force_terminal=force_color,
         )
 
     @property
@@ -268,18 +275,18 @@ class Dye(AssertBool):
         return exit_code
 
     def set_output_colors(self, args):
-        """set the colors for generated output
+        """set the colors for help output
 
         if args has a --colors argument, use that
-        if not, use the contents of SHELL_THEMER_COLORS env variable
+        if not, use the contents of DYE_COLORS env variable
 
-        SHELL_THEMER_COLORS=args=red bold on black:groups=white on red:
+        DYE_COLORS=args=red bold on black:groups=white on red:
 
         or --colors='args=red bold on black:groups=white on red'
         """
         colors = {}
         try:
-            env_colors = os.environ["SHELL_THEMER_COLORS"]
+            env_colors = os.environ["DYE_COLORS"]
             if not env_colors:
                 # if it's set to an empty string that means we shouldn't
                 # show any colors
@@ -291,7 +298,7 @@ class Dye(AssertBool):
         # https://no-color.org/
         try:
             _ = os.environ["NO_COLOR"]
-            # overrides SHELL_THEMER_COLORS, making it easy
+            # overrides DYE_COLORS, making it easy
             # to turn off colors for a bunch of tools
             args.nocolor = True
         except KeyError:
