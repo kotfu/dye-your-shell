@@ -105,7 +105,6 @@ class Dye(AssertBool):
         #        file_help = "specify a file containing a theme"
         #        tgroup.add_argument("-f", "--file", metavar="<path>", help=file_help)
 
-        # the sub-commands
         subparsers = parser.add_subparsers(
             dest="command",
             title="arguments",
@@ -114,7 +113,7 @@ class Dye(AssertBool):
             help="command to perform, which must be one of the following:",
         )
 
-        #
+        # activate command
         activate_help = "activate a theme"
         activate_parser = subparsers.add_parser(
             "activate",
@@ -127,7 +126,7 @@ class Dye(AssertBool):
             "-c", "--comment", action="store_true", help=comment_help
         )
 
-        # preview sub-command
+        # preview command
         preview_help = "show a preview of the styles in a theme"
         preview_parser = subparsers.add_parser(
             "preview",
@@ -145,7 +144,7 @@ class Dye(AssertBool):
             "-n", "--themename", metavar="<name>", help=themename_help
         )
 
-        # agents sub-command
+        # agents command
         agents_help = "list all known agents"
         subparsers.add_parser(
             "agents",
@@ -154,7 +153,7 @@ class Dye(AssertBool):
             help=agents_help,
         )
 
-        # themes sub-command
+        # themes command
         themes_help = "list available themes"
         subparsers.add_parser(
             "themes",
@@ -163,7 +162,7 @@ class Dye(AssertBool):
             help=themes_help,
         )
 
-        # help sub-command
+        # help command
         help_help = "display this usage message"
         subparsers.add_parser(
             "help",
@@ -437,11 +436,13 @@ class Dye(AssertBool):
         theme = self.load_theme_from_args(args)
 
         outer_table = rich.table.Table(
-            box=rich.box.SIMPLE_HEAD, expand=True, show_header=False
+            box=None, expand=True, show_header=False, padding=0
         )
 
         # output some basic information about the theme
-        summary_table = rich.table.Table(box=None, expand=False, show_header=False)
+        summary_table = rich.table.Table(
+            box=None, expand=False, show_header=False, padding=(0, 0, 0, 1)
+        )
         summary_table.add_row("Theme file:", str(theme.filename))
         try:
             description = theme.definition["description"]
@@ -459,31 +460,42 @@ class Dye(AssertBool):
             version = ""
         summary_table.add_row("Version:", version)
         outer_table.add_row(summary_table)
-        outer_table.add_row(" ")
+        outer_table.add_row("")
 
         # show all the colors in the palette
-        palette_table = rich.table.Table(
-            box=rich.box.SIMPLE_HEAD, show_edge=False, pad_edge=False
-        )
+        palette_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
         palette_table.add_column("[palette]")
-        for color, value in theme.palette.items():
-            palette_table.add_row(f'{color} = "{value}"')
+        for color in theme.palette:
+            value = theme.definition["palette"][color]
+            col1 = rich.text.Text.assemble(("██", value), f" {color}")
+            col2 = rich.text.Text(f' = "{value}"')
+            palette_table.add_row(col1, col2)
+        outer_table.add_row(palette_table)
+        outer_table.add_row("")
+        outer_table.add_row("")
 
         # show all the elements of the style
-        elements_table = rich.table.Table(
-            box=rich.box.SIMPLE_HEAD, expand=True, show_edge=False, pad_edge=False
-        )
+        elements_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
         elements_table.add_column("[elements]")
-        for name, style in theme.elements.items():
-            elements_table.add_row(name, style=style)
+        for element, style in theme.elements.items():
+            value = theme.definition["elements"][element]
+            col1 = rich.text.Text(element, style)
+            col2 = rich.text.Text(f' = "{value}"')
+            elements_table.add_row(col1, col2)
+        outer_table.add_row(elements_table)
 
-        lower_table = rich.table.Table(box=None, expand=True, show_header=False)
-        lower_table.add_column(ratio=0.45)
-        lower_table.add_column(ratio=0.1)
-        lower_table.add_column(ratio=0.45)
-        lower_table.add_row(palette_table, None, elements_table)
+        # lower_table = rich.table.Table(
+        #     box=None,
+        #     expand=True,
+        #     show_header=False,
+        #     padding=(0, 4, 0, 0),
+        #     pad_edge=False,
+        # )
+        # lower_table.add_column(ratio=0.67)
+        # lower_table.add_column(ratio=0.33)
+        # lower_table.add_row(palette_table, elements_table)
 
-        outer_table.add_row(lower_table)
+        # outer_table.add_row(lower_table)
 
         # the text style here makes the whole panel print with the foreground
         # and background colors from the style
