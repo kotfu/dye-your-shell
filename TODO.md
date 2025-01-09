@@ -36,7 +36,7 @@
     do you have a description and type, etc.
 [ ] should jinja environment have undefined=jinja2.StrictUndefined, ie should we generate
     errors on unknown references or keep silently replacing them with empty strings
-
+[ ] make 'dye themes' show some basic info about each theme, type, description, etc.
 
 - documentation and website
   - show how to set BAT_THEME
