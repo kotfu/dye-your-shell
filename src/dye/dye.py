@@ -491,19 +491,6 @@ class Dye(AssertBool):
             styles_table.add_row(col1, col2)
         outer_table.add_row(styles_table)
 
-        # lower_table = rich.table.Table(
-        #     box=None,
-        #     expand=True,
-        #     show_header=False,
-        #     padding=(0, 4, 0, 0),
-        #     pad_edge=False,
-        # )
-        # lower_table.add_column(ratio=0.67)
-        # lower_table.add_column(ratio=0.33)
-        # lower_table.add_row(colors_table, elements_table)
-
-        # outer_table.add_row(lower_table)
-
         # the text style here makes the whole panel print with the foreground
         # and background colors from the style
         self.console.print(rich.panel.Panel(outer_table, style=theme.styles["text"]))
