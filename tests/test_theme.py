@@ -27,9 +27,6 @@ import rich
 
 from dye import Theme
 
-#
-# test style and variable processing on initialization
-#
 STATIC_THEME = """
     [colors]
     background =  "#282a36"
@@ -56,10 +53,12 @@ STATIC_THEME = """
 
 @pytest.fixture
 def static_theme():
-    """A pytest fixture which loads STATIC_THEME"""
     return Theme.loads(STATIC_THEME)
 
 
+#
+# test load() and loads()
+#
 def test_load(tmp_path):
     # def test_load_from_args_theme_name(dye, mocker, tmp_path):
     # give a theme name, but the full name including the .toml
@@ -72,8 +71,15 @@ def test_load(tmp_path):
     # Theme.load() uses the same code as Theme.loads(), so we don't
     # have to retest everything. If loads() works and load() can
     # open and read the file, load() will work too
+    assert isinstance(theme.definition, dict)
+    assert len(theme.definition) == 2
     assert len(theme.colors) == 10
     assert len(theme.styles) == 7
+
+
+def test_loads(static_theme):
+    assert isinstance(static_theme.definition, dict)
+    assert len(static_theme.definition) == 2
 
 
 def test_loads_colors(static_theme):
@@ -83,13 +89,12 @@ def test_loads_colors(static_theme):
     assert len(static_theme.colors) == 10
 
 
-def test_loads_styles():
-    theme = Theme.loads(STATIC_THEME)
-    assert isinstance(theme.styles, dict)
-    assert isinstance(theme.styles["text"], rich.style.Style)
-    assert isinstance(theme.styles["text_high"], rich.style.Style)
-    assert isinstance(theme.styles["color1"], rich.style.Style)
-    assert len(theme.styles) == 7
+def test_loads_styles(static_theme):
+    assert isinstance(static_theme.styles, dict)
+    assert isinstance(static_theme.styles["text"], rich.style.Style)
+    assert isinstance(static_theme.styles["text_high"], rich.style.Style)
+    assert isinstance(static_theme.styles["color1"], rich.style.Style)
+    assert len(static_theme.styles) == 7
 
 
 def test_loads_empty():
@@ -99,6 +104,9 @@ def test_loads_empty():
     assert theme.styles == {}
 
 
+#
+# test processing of theme elements
+#
 def test_colors_reference(static_theme):
     assert static_theme.colors["background_high"] == static_theme.colors["background"]
 
