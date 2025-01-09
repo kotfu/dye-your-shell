@@ -38,6 +38,10 @@
     errors on unknown references or keep silently replacing them with empty strings
 [ ] make 'dye themes' show some basic info about each theme, type, description, etc.
 [ ] switch to uv
+[ ] add a command like apply that validates a pattern
+    - description exists
+    - prevent_themes is boolean if present
+    - requires_theme refers to a file that exists
 
 
 - documentation and website
