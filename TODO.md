@@ -32,6 +32,10 @@
 [ ] make enabled_if and enabled generate more detailed comments
 [ ] how can/should we interpolate values from a style that has bold, or both
     foreground and background definitions?
+[ ] add a command like preview to validate a theme, ie did you define a 'text' style,
+    do you have a description and type, etc.
+[ ] should jinja environment have undefined=jinja2.StrictUndefined, ie should we generate
+    errors on unknown references or keep silently replacing them with empty strings
 
 
 - documentation and website
