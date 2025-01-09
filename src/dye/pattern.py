@@ -26,49 +26,80 @@ import subprocess
 
 import tomlkit
 
-from .exceptions import DyeError
+from .exceptions import DyeError, DyeSyntaxError
 from .interpolator import Interpolator
 from .parsers import StyleParser
-from .utils import AssertBool
 
 
-class Pattern(AssertBool):
+class Pattern:
     """load and parse a pattern file into a theme object"""
+
+    @classmethod
+    def loads(cls, tomlstring=""):
+        """Load a pattern from a given string, and return a new pattern object
+
+        doesn't do any processing or applying of the pattern
+        """
+        pattern = cls()
+        pattern.definition = tomlkit.loads(tomlstring)
+        return pattern
+
+    @classmethod
+    def load(cls, fobj):
+        """Load a pattern a file object
+
+        doesn't do any processing or applying of the pattern
+        """
+        pattern = cls()
+        pattern.definition = tomlkit.load(fobj)
+        return pattern
 
     #
     # initialization and properties
     #
     def __init__(self):
-        """Construct a new Theme object"""
+        """Construct a new Pattern object"""
 
         # the raw toml definition of the theme
         self.definition = {}
+
+        self.colors = {}
         self.styles = {}
         self.variables = {}
 
-        # a place to stash the file that the theme was loaded from
-        # it's up to the caller/user to make sure this is set properly
-        # defaults to None
-        self.theme_file = None
+    @property
+    def description(self):
+        """get the description from self.definition
 
-        self.loads()
+        returns None if the element is not present in the toml
+        """
+        try:
+            return self.definition["description"]
+        except KeyError:
+            return None
 
-    def loads(self, tomlstring=None):
-        """Load a theme from a given string"""
-        if tomlstring:  # noqa: SIM108
-            toparse = tomlstring
-        else:
-            # tomlkit can't parse None, so if we got it as the default
-            # or if the caller pased None intentionally...
-            toparse = ""
-        self.definition = tomlkit.loads(toparse)
-        self._process_definition()
+    @property
+    def prevent_themes(self):
+        """returns true if this pattern won't let you apply external themes"""
+        out = False
+        with contextlib.suppress(KeyError):
+            val = self.definition["prevent_themes"]
+            if isinstance(val, bool):
+                out = val
+            else:
+                raise DyeSyntaxError("'prevent_themes' must be true or false")
+        return out
 
-    def load(self, fobj):
-        """Load a theme from a file object"""
-        self.definition = tomlkit.load(fobj)
-        # self.theme_file = fname
-        self._process_definition()
+    @property
+    def requires_theme(self):
+        """get the requires_theme setting from the definition
+
+        returns None if the element is not present in the toml
+        """
+        try:
+            return self.definition["requires_theme"]
+        except KeyError:
+            return None
 
     def _process_definition(self):
         """process a newly loaded definition, including variables and styles
