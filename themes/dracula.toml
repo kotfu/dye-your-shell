@@ -69,7 +69,7 @@ text_dim = "{{ palette.foreground_medium }} on {{ palette.background }}"
 
 # think of it the same as the current line in many coding
 # themes. You probably want to use this in fzf
-highlighted_line = "{{ foreground }} on {{ background_medium }}"
+highlighted_line = "{{ palette.foreground }} on {{ palette.background_medium }}"
 
 #
 selected_line = ""

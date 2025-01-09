@@ -111,7 +111,7 @@ class Dye(AssertBool):
             title="arguments",
             metavar="<command>",
             required=False,
-            help="action to perform, which must be one of the following:",
+            help="command to perform, which must be one of the following:",
         )
 
         #
@@ -127,20 +127,50 @@ class Dye(AssertBool):
             "-c", "--comment", action="store_true", help=comment_help
         )
 
+        # preview sub-command
         preview_help = "show a preview of the styles in a theme"
-        subparsers.add_parser("preview", help=preview_help)
+        preview_parser = subparsers.add_parser(
+            "preview",
+            description=preview_help,
+            formatter_class=RichHelpFormatter,
+            help=preview_help,
+        )
+        theme_group = preview_parser.add_mutually_exclusive_group()
+        themefile_help = "specify a file containing a theme"
+        theme_group.add_argument(
+            "-t", "--themefile", metavar="<path>", help=themefile_help
+        )
+        themename_help = "specify a theme by name from $DYE_DIR/themes"
+        theme_group.add_argument(
+            "-n", "--themename", metavar="<name>", help=themename_help
+        )
 
         # agents sub-command
         agents_help = "list all known agents"
-        subparsers.add_parser("agents", help=agents_help)
+        subparsers.add_parser(
+            "agents",
+            description=agents_help,
+            formatter_class=RichHelpFormatter,
+            help=agents_help,
+        )
 
         # themes sub-command
         themes_help = "list available themes"
-        subparsers.add_parser("themes", help=themes_help)
+        subparsers.add_parser(
+            "themes",
+            description=themes_help,
+            formatter_class=RichHelpFormatter,
+            help=themes_help,
+        )
 
         # help sub-command
         help_help = "display this usage message"
-        subparsers.add_parser("help", help=help_help)
+        subparsers.add_parser(
+            "help",
+            description=help_help,
+            formatter_class=RichHelpFormatter,
+            help=help_help,
+        )
 
         return parser
 
@@ -158,19 +188,18 @@ class Dye(AssertBool):
             return exc.code
 
         # create an instance of ourselves
-        thm = cls(parser.prog)
-        return thm.dispatch(args)
+        thm = cls()
+        return thm.dispatch(parser.prog, args)
 
     #
     # initialization and properties
     #
-    def __init__(self, prog):
+    def __init__(self):
         """Construct a new Themer object
 
         console
         """
 
-        self.prog = prog
         self.console = rich.console.Console(
             soft_wrap=True,
             markup=False,
@@ -185,17 +214,15 @@ class Dye(AssertBool):
             highlight=False,
         )
 
-        self.theme = Theme(self.prog)
-
     @property
     def dye_dir(self):
         """Get the dye configuration directory from the shell environment"""
         try:
             ddir = pathlib.Path(os.environ["DYE_DIR"])
         except KeyError as exc:
-            raise DyeError(f"{self.prog}: $DYE_DIR not set") from exc
+            raise DyeError("environment variable DYE_DIR not set") from exc
         if not ddir.is_dir():
-            raise DyeError(f"{self.prog}: {ddir}: no such directory")
+            raise DyeError(f"{ddir}: no such directory")
         return ddir
 
     @property
@@ -204,14 +231,14 @@ class Dye(AssertBool):
         # TODO write unit tests for this
         tdir = self.dye_dir / "themes"
         if not tdir.is_dir():
-            raise DyeError(f"{self.prog}: {tdir}: no such directory")
+            raise DyeError(f"{tdir}: no such directory")
         return tdir
 
     #
     # methods to process command line arguments and dispatch them
     # to the appropriate methods for execution
     #
-    def dispatch(self, args):
+    def dispatch(self, prog, args):
         """process and execute all the arguments and options"""
         # set the color output options
         self.set_output_colors(args)
@@ -221,22 +248,22 @@ class Dye(AssertBool):
             if args.command == "activate":
                 exit_code = self.dispatch_activate(args)
             elif args.command == "preview":
-                exit_code = self.dispatch_preview(args)
+                exit_code = self.command_preview(args)
             elif args.command == "agents":
-                exit_code = self.subcommand_agents(args)
+                exit_code = self.command_agents(args)
             elif args.command == "themes":
-                exit_code = self.subcommand_themes(args)
+                exit_code = self.command_themes(args)
+            elif args.version:
+                print(f"{prog} {version_string()}")
+                exit_code = self.EXIT_SUCCESS
             elif args.help or args.command == "help" or not args.command:
                 self.argparser().print_help()
                 exit_code = self.EXIT_SUCCESS
-            elif args.version:
-                print(f"{self.prog} {version_string()}")
-                exit_code = self.EXIT_SUCCESS
             else:
-                print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
+                print(f"{prog}: {args.command}: unknown command", file=sys.stderr)
                 exit_code = self.EXIT_USAGE
         except DyeError as err:
-            self.error_console.print(err)
+            self.error_console.print(f"{prog}: {err}")
             exit_code = self.EXIT_ERROR
 
         return exit_code
@@ -310,42 +337,41 @@ class Dye(AssertBool):
     #
     # loading a theme
     #
-    def load_from_args(self, args):
+    def load_theme_from_args(self, args):
         """Load a theme from the command line args
 
         Resolution order:
-        1. --file from the command line
-        2. --theme from the command line
-        3. $THEME_FILE environment variable
+        1. --themefile, -t from the command line
+        2. --themename, -n from the command line
+        3. $DYE_THEME_FILE environment variable
 
-        This either loads the theme or raises an exception.
-        It doesn't return anything
+        This returns a theme object
 
         :raises: an exception if we can't find a theme file
 
         """
         fname = None
-        if args.file:
-            fname = args.file
-        elif args.theme:
-            fname = self.dye_dir / args.theme
+
+        if args.themefile:
+            fname = args.themefile
+        elif args.themename:
+            fname = self.dye_theme_dir / args.themename
             if not fname.is_file():
-                fname = self.dye_dir / f"{args.theme}.toml"
+                fname = self.dye_theme_dir / f"{args.themename}.toml"
                 if not fname.is_file():
-                    raise DyeError(f"{self.prog}: {args.theme}: theme not found")
+                    raise DyeError(f"{args.themename}: theme not found")
         else:
             with contextlib.suppress(KeyError):
-                fname = pathlib.Path(os.environ["THEME_FILE"])
+                fname = pathlib.Path(os.environ["DYE_THEME_FILE"])
         if not fname:
-            raise DyeError(f"{self.prog}: no theme or theme file specified")
+            raise DyeError("no theme specified")
 
-        self.theme = Theme(prog=self.prog)
         with open(fname, "rb") as file:
-            self.theme.load(file)
-            self.theme.theme_file = fname
+            theme = Theme.load(file, filename=fname)
+        return theme
 
     #
-    # dispatchers
+    # functions for the various commands called by dispatch()
     #
     def dispatch_activate(self, args):
         """render the output for given scope(s), or all scopes if none specified
@@ -353,7 +379,7 @@ class Dye(AssertBool):
         output is suitable for bash eval $()
         """
         # pylint: disable=too-many-branches
-        self.load_from_args(args)
+        self.load_theme_from_args(args)
 
         if args.scope:
             to_activate = args.scope.split(",")
@@ -406,76 +432,65 @@ class Dye(AssertBool):
                 raise DyeError(f"{self.prog}: {scope}: no such scope")
         return self.EXIT_SUCCESS
 
-    def dispatch_preview(self, args):
+    def command_preview(self, args):
         """Display a preview of the styles in a theme"""
-        self.load_from_args(args)
-
-        mystyles = self.theme.styles.copy()
-        try:
-            text_style = mystyles["text"]
-        except KeyError:
-            # if they didn't specify a text style, tell Rich to just use
-            # whatever the default is for the terminal
-            text_style = "default"
-        with contextlib.suppress(KeyError):
-            del mystyles["background"]
+        theme = self.load_theme_from_args(args)
 
         outer_table = rich.table.Table(
             box=rich.box.SIMPLE_HEAD, expand=True, show_header=False
         )
 
-        summary_table = rich.table.Table(box=None, expand=True, show_header=False)
-        summary_table.add_row("Theme file:", str(self.theme.theme_file))
+        # output some basic information about the theme
+        summary_table = rich.table.Table(box=None, expand=False, show_header=False)
+        summary_table.add_row("Theme file:", str(theme.filename))
         try:
-            name = self.theme.definition["name"]
+            description = theme.definition["description"]
         except KeyError:
-            name = ""
-        summary_table.add_row("Name:", name)
+            description = ""
+        summary_table.add_row("Description:", description)
         try:
-            version = self.theme.definition["version"]
+            version = theme.definition["type"]
+        except KeyError:
+            version = ""
+        summary_table.add_row("Type:", version)
+        try:
+            version = theme.definition["version"]
         except KeyError:
             version = ""
         summary_table.add_row("Version:", version)
         outer_table.add_row(summary_table)
         outer_table.add_row(" ")
 
-        styles_table = rich.table.Table(
-            box=rich.box.SIMPLE_HEAD, expand=True, show_edge=False, pad_edge=False
-        )
-        styles_table.add_column("Styles")
-        for name, style in mystyles.items():
-            styles_table.add_row(name, style=style)
-
-        scopes_table = rich.table.Table(
+        # show all the colors in the palette
+        palette_table = rich.table.Table(
             box=rich.box.SIMPLE_HEAD, show_edge=False, pad_edge=False
         )
-        scopes_table.add_column("Scope", ratio=0.4)
-        scopes_table.add_column("Agent", ratio=0.6)
-        try:
-            for name, scopedef in self.theme.definition["scope"].items():
-                try:
-                    agent = scopedef["agent"]
-                except KeyError:
-                    agent = ""
-                scopes_table.add_row(name, agent)
-        except KeyError:  # pragma: nocover
-            # no scopes defined in the theme
-            pass
+        palette_table.add_column("[palette]")
+        for color, value in theme.palette.items():
+            palette_table.add_row(f'{color} = "{value}"')
+
+        # show all the elements of the style
+        elements_table = rich.table.Table(
+            box=rich.box.SIMPLE_HEAD, expand=True, show_edge=False, pad_edge=False
+        )
+        elements_table.add_column("[elements]")
+        for name, style in theme.elements.items():
+            elements_table.add_row(name, style=style)
 
         lower_table = rich.table.Table(box=None, expand=True, show_header=False)
         lower_table.add_column(ratio=0.45)
         lower_table.add_column(ratio=0.1)
         lower_table.add_column(ratio=0.45)
-        lower_table.add_row(styles_table, None, scopes_table)
+        lower_table.add_row(palette_table, None, elements_table)
 
         outer_table.add_row(lower_table)
 
         # the text style here makes the whole panel print with the foreground
         # and background colors from the style
-        self.console.print(rich.panel.Panel(outer_table, style=text_style))
+        self.console.print(rich.panel.Panel(outer_table, style=theme.elements["text"]))
         return self.EXIT_SUCCESS
 
-    def subcommand_agents(self, _):
+    def command_agents(self, _):
         """list all available agents and a short description of each"""
         # ignore all other args
         agents = {}
@@ -497,7 +512,7 @@ class Dye(AssertBool):
 
         return self.EXIT_SUCCESS
 
-    def subcommand_themes(self, _):
+    def command_themes(self, _):
         """Print a list of all themes"""
         # ignore all other args
         themeglob = self.dye_theme_dir.glob("*.toml")
