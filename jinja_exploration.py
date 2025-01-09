@@ -75,3 +75,6 @@ print(template.render())
 
 template = env.from_string("{{style.blue|ansi_on}}Hello there.{{style.blue|ansi_off}}")
 print(template.render())
+
+template = env.from_string(">{{bogus}}<")
+print(template.render())
