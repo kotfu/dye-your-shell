@@ -99,13 +99,13 @@ class Dye(AssertBool):
         cgroup.add_argument("--color", metavar="<colorspec>", help=color_help)
 
         # how to specify a theme
-        tgroup = parser.add_mutually_exclusive_group()
-        theme_help = "specify a theme by name from $THEME_DIR"
-        tgroup.add_argument("-t", "--theme", metavar="<name>", help=theme_help)
-        file_help = "specify a file containing a theme"
-        tgroup.add_argument("-f", "--file", metavar="<path>", help=file_help)
+        #        tgroup = parser.add_mutually_exclusive_group()
+        #        theme_help = "specify a theme by name from $DYE_DIR/themes"
+        #        tgroup.add_argument("-t", "--theme", metavar="<name>", help=theme_help)
+        #        file_help = "specify a file containing a theme"
+        #        tgroup.add_argument("-f", "--file", metavar="<path>", help=file_help)
 
-        # the commands
+        # the sub-commands
         subparsers = parser.add_subparsers(
             dest="command",
             title="arguments",
@@ -114,6 +114,7 @@ class Dye(AssertBool):
             help="action to perform, which must be one of the following:",
         )
 
+        #
         activate_help = "activate a theme"
         activate_parser = subparsers.add_parser(
             "activate",
@@ -126,15 +127,18 @@ class Dye(AssertBool):
             "-c", "--comment", action="store_true", help=comment_help
         )
 
-        agents_help = "list all known agentss"
-        subparsers.add_parser("agents", help=agents_help)
-
-        list_help = "list all themes in $THEMES_DIR"
-        subparsers.add_parser("list", help=list_help)
-
         preview_help = "show a preview of the styles in a theme"
         subparsers.add_parser("preview", help=preview_help)
 
+        # agents sub-command
+        agents_help = "list all known agents"
+        subparsers.add_parser("agents", help=agents_help)
+
+        # themes sub-command
+        themes_help = "list available themes"
+        subparsers.add_parser("themes", help=themes_help)
+
+        # help sub-command
         help_help = "display this usage message"
         subparsers.add_parser("help", help=help_help)
 
@@ -184,12 +188,21 @@ class Dye(AssertBool):
         self.theme = Theme(self.prog)
 
     @property
-    def theme_dir(self):
-        """Get the theme directory from the shell environment"""
+    def dye_dir(self):
+        """Get the dye configuration directory from the shell environment"""
         try:
-            tdir = pathlib.Path(os.environ["THEME_DIR"])
+            ddir = pathlib.Path(os.environ["DYE_DIR"])
         except KeyError as exc:
-            raise DyeError(f"{self.prog}: $THEME_DIR not set") from exc
+            raise DyeError(f"{self.prog}: $DYE_DIR not set") from exc
+        if not ddir.is_dir():
+            raise DyeError(f"{self.prog}: {ddir}: no such directory")
+        return ddir
+
+    @property
+    def dye_theme_dir(self):
+        """Get the dye themes directory"""
+        # TODO write unit tests for this
+        tdir = self.dye_dir / "themes"
         if not tdir.is_dir():
             raise DyeError(f"{self.prog}: {tdir}: no such directory")
         return tdir
@@ -205,23 +218,20 @@ class Dye(AssertBool):
 
         # now go process everything
         try:
-            if args.help or args.command == "help":
+            if args.command == "activate":
+                exit_code = self.dispatch_activate(args)
+            elif args.command == "preview":
+                exit_code = self.dispatch_preview(args)
+            elif args.command == "agents":
+                exit_code = self.subcommand_agents(args)
+            elif args.command == "themes":
+                exit_code = self.subcommand_themes(args)
+            elif args.help or args.command == "help" or not args.command:
                 self.argparser().print_help()
                 exit_code = self.EXIT_SUCCESS
             elif args.version:
                 print(f"{self.prog} {version_string()}")
                 exit_code = self.EXIT_SUCCESS
-            elif not args.command:
-                self.argparser().print_help(sys.stderr)
-                exit_code = self.EXIT_USAGE
-            elif args.command == "list":
-                exit_code = self.dispatch_list(args)
-            elif args.command == "preview":
-                exit_code = self.dispatch_preview(args)
-            elif args.command == "activate":
-                exit_code = self.dispatch_activate(args)
-            elif args.command == "agents":
-                exit_code = self.dispatch_agents(args)
             else:
                 print(f"{self.prog}: {args.command}: unknown command", file=sys.stderr)
                 exit_code = self.EXIT_USAGE
@@ -318,9 +328,9 @@ class Dye(AssertBool):
         if args.file:
             fname = args.file
         elif args.theme:
-            fname = self.theme_dir / args.theme
+            fname = self.dye_dir / args.theme
             if not fname.is_file():
-                fname = self.theme_dir / f"{args.theme}.toml"
+                fname = self.dye_dir / f"{args.theme}.toml"
                 if not fname.is_file():
                     raise DyeError(f"{self.prog}: {args.theme}: theme not found")
         else:
@@ -337,16 +347,63 @@ class Dye(AssertBool):
     #
     # dispatchers
     #
-    def dispatch_list(self, _):
-        """Print a list of all themes"""
-        # ignore all other args
-        themeglob = self.theme_dir.glob("*.toml")
-        themes = []
-        for theme in themeglob:
-            themes.append(theme.stem)
-        themes.sort()
-        for theme in themes:
-            print(theme)
+    def dispatch_activate(self, args):
+        """render the output for given scope(s), or all scopes if none specified
+
+        output is suitable for bash eval $()
+        """
+        # pylint: disable=too-many-branches
+        self.load_from_args(args)
+
+        if args.scope:
+            to_activate = args.scope.split(",")
+        else:
+            to_activate = []
+            try:
+                for scope in self.theme.definition["scope"]:
+                    to_activate.append(scope)
+            except KeyError:
+                pass
+
+        for scope in to_activate:
+            # checking here in case they supplied a scope on the command line that
+            # doesn't exist
+            if self.theme.has_scope(scope):
+                scopedef = self.theme.scopedef_for(scope)
+                # find the agent for this scope
+                try:
+                    agent = scopedef["agent"]
+                except KeyError as exc:
+                    errmsg = f"{self.prog}: scope '{scope}' does not have an agent."
+                    raise DyeError(errmsg) from exc
+                # check if the scope is disabled
+                if not self.theme.is_enabled(scope):
+                    if args.comment:
+                        print(f"# [scope.{scope}] skipped because it is not enabled")
+                    continue
+                # scope is enabled, so print the comment
+                if args.comment:
+                    print(f"# [scope.{scope}]")
+
+                try:
+                    # go get the apropriate class for the agent
+                    gcls = AgentBase.classmap[agent]
+                    # initialize the class with the scope and scope definition
+                    ginst = gcls(
+                        scopedef,
+                        self.theme.styles,
+                        self.theme.variables,
+                        prog=self.prog,
+                        scope=scope,
+                    )
+                    # run the agent, printing any shell commands it returns
+                    output = ginst.run()
+                    if output:
+                        print(output)
+                except KeyError as exc:
+                    raise DyeError(f"{self.prog}: {agent}: unknown agent") from exc
+            else:
+                raise DyeError(f"{self.prog}: {scope}: no such scope")
         return self.EXIT_SUCCESS
 
     def dispatch_preview(self, args):
@@ -418,66 +475,7 @@ class Dye(AssertBool):
         self.console.print(rich.panel.Panel(outer_table, style=text_style))
         return self.EXIT_SUCCESS
 
-    def dispatch_activate(self, args):
-        """render the output for given scope(s), or all scopes if none specified
-
-        output is suitable for bash eval $()
-        """
-        # pylint: disable=too-many-branches
-        self.load_from_args(args)
-
-        if args.scope:
-            to_activate = args.scope.split(",")
-        else:
-            to_activate = []
-            try:
-                for scope in self.theme.definition["scope"]:
-                    to_activate.append(scope)
-            except KeyError:
-                pass
-
-        for scope in to_activate:
-            # checking here in case they supplied a scope on the command line that
-            # doesn't exist
-            if self.theme.has_scope(scope):
-                scopedef = self.theme.scopedef_for(scope)
-                # find the agent for this scope
-                try:
-                    agent = scopedef["agent"]
-                except KeyError as exc:
-                    errmsg = f"{self.prog}: scope '{scope}' does not have an agent."
-                    raise DyeError(errmsg) from exc
-                # check if the scope is disabled
-                if not self.theme.is_enabled(scope):
-                    if args.comment:
-                        print(f"# [scope.{scope}] skipped because it is not enabled")
-                    continue
-                # scope is enabled, so print the comment
-                if args.comment:
-                    print(f"# [scope.{scope}]")
-
-                try:
-                    # go get the apropriate class for the agent
-                    gcls = AgentBase.classmap[agent]
-                    # initialize the class with the scope and scope definition
-                    ginst = gcls(
-                        scopedef,
-                        self.theme.styles,
-                        self.theme.variables,
-                        prog=self.prog,
-                        scope=scope,
-                    )
-                    # run the agent, printing any shell commands it returns
-                    output = ginst.run()
-                    if output:
-                        print(output)
-                except KeyError as exc:
-                    raise DyeError(f"{self.prog}: {agent}: unknown agent") from exc
-            else:
-                raise DyeError(f"{self.prog}: {scope}: no such scope")
-        return self.EXIT_SUCCESS
-
-    def dispatch_agents(self, _):
+    def subcommand_agents(self, _):
         """list all available agents and a short description of each"""
         # ignore all other args
         agents = {}
@@ -497,4 +495,16 @@ class Dye(AssertBool):
             table.add_row(agent, agents[agent])
         self.console.print(table)
 
+        return self.EXIT_SUCCESS
+
+    def subcommand_themes(self, _):
+        """Print a list of all themes"""
+        # ignore all other args
+        themeglob = self.dye_theme_dir.glob("*.toml")
+        themes = []
+        for theme in themeglob:
+            themes.append(theme.stem)
+        themes.sort()
+        for theme in themes:
+            print(theme)
         return self.EXIT_SUCCESS

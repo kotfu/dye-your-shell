@@ -27,14 +27,14 @@ import os
 import pytest
 from rich_argparse import RichHelpFormatter
 
-from dye import Themer
+from dye import Dye
 from dye import __main__ as mainmodule
 
 
 #
 # test output color logic
 #
-def test_output_color_cmdline(thm_cmdline, mocker):
+def test_output_color_cmdline(dye_cmdline, mocker):
     # command line color arguments should override
     # all environment variables
     RichHelpFormatter.styles["argparse.text"] = "#000000"
@@ -45,93 +45,93 @@ def test_output_color_cmdline(thm_cmdline, mocker):
         "--help",
         "--color=text=#ffff00:args=#bd93f9:metavar=#f8f8f2 on #44475a bold",
     ]
-    thm_cmdline(argv)
+    dye_cmdline(argv)
     assert RichHelpFormatter.styles["argparse.text"] == "#ffff00"
     assert RichHelpFormatter.styles["argparse.args"] == "#bd93f9"
     assert RichHelpFormatter.styles["argparse.metavar"] == "#f8f8f2 on #44475a bold"
 
 
-def test_output_color_no_color(thm_cmdline, mocker):
+def test_output_color_no_color(dye_cmdline, mocker):
     mocker.patch.dict(os.environ, {}, clear=True)
     RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"})
-    thm_cmdline("--help")
-    for element in Themer.HELP_ELEMENTS:
+    dye_cmdline("--help")
+    for element in Dye.HELP_ELEMENTS:
         assert RichHelpFormatter.styles[f"argparse.{element}"] == "default"
 
 
-def test_output_color_envs_only(thm_cmdline, mocker):
+def test_output_color_envs_only(dye_cmdline, mocker):
     # NO_COLOR should override SHELL_THEMER_COLORS
     RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"SHELL_THEMER_COLORS": "text=#f0f0f0"})
     mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"})
-    thm_cmdline("--help")
-    for element in Themer.HELP_ELEMENTS:
+    dye_cmdline("--help")
+    for element in Dye.HELP_ELEMENTS:
         assert RichHelpFormatter.styles[f"argparse.{element}"] == "default"
 
 
-def test_output_color_env_color(thm_cmdline, mocker):
+def test_output_color_env_color(dye_cmdline, mocker):
     # SHELL_THEMER_COLORS should override default colors
     RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"SHELL_THEMER_COLORS": "text=#f0f0f0"})
-    thm_cmdline("--help")
+    dye_cmdline("--help")
     assert RichHelpFormatter.styles["argparse.text"] == "#f0f0f0"
 
 
-def test_output_color_env_empty(thm_cmdline, mocker):
+def test_output_color_env_empty(dye_cmdline, mocker):
     # SHELL_THEMER_COLORS should override default colors
     RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
     mocker.patch.dict(os.environ, {}, clear=True)
     mocker.patch.dict(os.environ, {"SHELL_THEMER_COLORS": ""})
-    thm_cmdline("--help")
+    dye_cmdline("--help")
     assert RichHelpFormatter.styles["argparse.text"] == "default"
 
 
 #
 # test unknown commands, no commands, help, and version
 #
-def test_help_option(thm_cmdline, capsys):
-    exit_code = thm_cmdline("--help")
-    assert exit_code == Themer.EXIT_SUCCESS
+def test_help_option(dye_cmdline, capsys):
+    exit_code = dye_cmdline("--help")
+    assert exit_code == Dye.EXIT_SUCCESS
     out, err = capsys.readouterr()
     assert not err
     assert "preview" in out
     assert "--no-color" in out
 
 
-def test_h_option(thm_cmdline, capsys):
-    exit_code = thm_cmdline("-h")
-    assert exit_code == Themer.EXIT_SUCCESS
+def test_h_option(dye_cmdline, capsys):
+    exit_code = dye_cmdline("-h")
+    assert exit_code == Dye.EXIT_SUCCESS
     out, err = capsys.readouterr()
     assert not err
     assert "preview" in out
     assert "--no-color" in out
 
 
-def test_version_option(thm_cmdline, capsys):
-    exit_code = thm_cmdline("--version")
-    assert exit_code == Themer.EXIT_SUCCESS
+def test_version_option(dye_cmdline, capsys):
+    exit_code = dye_cmdline("--version")
+    assert exit_code == Dye.EXIT_SUCCESS
     out, err = capsys.readouterr()
     assert not err
-    assert "shell-themer" in out
+    assert "dye" in out
 
 
-def test_v_option(thm_cmdline, capsys):
-    exit_code = thm_cmdline("-v")
-    assert exit_code == Themer.EXIT_SUCCESS
+def test_v_option(dye_cmdline, capsys):
+    exit_code = dye_cmdline("-v")
+    assert exit_code == Dye.EXIT_SUCCESS
     out, err = capsys.readouterr()
     assert not err
-    assert "shell-themer" in out
+    assert "dye" in out
 
 
-def test_no_command(thm_cmdline, capsys):
+def test_no_command(dye_cmdline, capsys):
     # this should show the usage message
-    exit_code = thm_cmdline(None)
+    exit_code = dye_cmdline(None)
     out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_USAGE
+    assert exit_code == Dye.EXIT_USAGE
     assert not out
     # check a few things in the usage message
     assert "activate" in err
@@ -139,11 +139,11 @@ def test_no_command(thm_cmdline, capsys):
     assert "--theme" in err
 
 
-def test_help_command(thm_cmdline, capsys):
+def test_help_command(dye_cmdline, capsys):
     # this should show the usage message
-    exit_code = thm_cmdline("help")
+    exit_code = dye_cmdline("help")
     out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
+    assert exit_code == Dye.EXIT_SUCCESS
     assert not err
     # check a few things in the usage message
     assert "activate" in out
@@ -151,47 +151,47 @@ def test_help_command(thm_cmdline, capsys):
     assert "--theme" in out
 
 
-def test_unknown_command(thm_cmdline, capsys):
+def test_unknown_command(dye_cmdline, capsys):
     # these errors are all raised and generated by argparse
-    exit_code = thm_cmdline("unknowncommand")
+    exit_code = dye_cmdline("unknowncommand")
     out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_USAGE
+    assert exit_code == Dye.EXIT_USAGE
     assert not out
     assert "error" in err
     assert "invalid choice" in err
 
 
-def test_dispatch_unknown_command(thm, capsys):
+def test_dispatch_unknown_command(dye, capsys):
     # but by calling dispatch() directly, we can get our own errors
     # first we have to parse valid args
-    parser = thm.argparser()
+    parser = dye.argparser()
     args = parser.parse_args(["list"])
     # and then substitute a fake command
     args.command = "fredflintstone"
-    exit_code = thm.dispatch(args)
+    exit_code = dye.dispatch(args)
     out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_USAGE
+    assert exit_code == Dye.EXIT_USAGE
     assert not out
     assert "unknown command" in err
 
 
 #
-# test Themer.main(), the entry point for the command line script
+# test Dye.main(), the entry point for the command line script
 #
 def test_themer_main(mocker):
     # we are just testing main() here, as long as it dispatches, we don't
     # care what the dispatch_list() function returns in this test
-    dmock = mocker.patch("shell_themer.Themer.dispatch_list")
-    dmock.return_value = Themer.EXIT_SUCCESS
-    assert Themer.main(["list"]) == Themer.EXIT_SUCCESS
+    dmock = mocker.patch("dye.Dye.dispatch_list")
+    dmock.return_value = Dye.EXIT_SUCCESS
+    assert Dye.main(["list"]) == Dye.EXIT_SUCCESS
 
 
 def test_themer_main_unknown_command():
-    assert Themer.main(["unknowncommand"]) == Themer.EXIT_USAGE
+    assert Dye.main(["unknowncommand"]) == Dye.EXIT_USAGE
 
 
 def test___main__(mocker):
-    mocker.patch("shell_themer.Themer.main", return_value=42)
+    mocker.patch("dye.Dye.main", return_value=42)
     mocker.patch.object(mainmodule, "__name__", "__main__")
     with pytest.raises(SystemExit) as excinfo:
         mainmodule.doit()

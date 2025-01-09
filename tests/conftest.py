@@ -24,23 +24,23 @@
 
 import pytest
 
-from dye import Theme, Themer
+from dye import Dye, Theme
 
 
 @pytest.fixture
-def thm():
-    thm = Themer(prog="shell-themer")
+def dye():
+    thm = Dye(prog="dye")
     return thm
 
 
 @pytest.fixture
 def theme():
-    theme = Theme(prog="shell-themer")
+    theme = Theme(prog="dye")
     return theme
 
 
 @pytest.fixture
-def thm_cmdline(thm, mocker):
+def dye_cmdline(dye, mocker):
     # defining a fixture that returns a function
     # allows us to call the fixture and pass parameters to it
     # ie:
@@ -64,13 +64,13 @@ def thm_cmdline(thm, mocker):
         else:
             argv = []
         try:
-            args = thm.argparser().parse_args(argv)
+            args = dye.argparser().parse_args(argv)
         except SystemExit as err:
             return err.code
         if toml:
-            thm.theme.loads(toml)
+            dye.theme.loads(toml)
         # monkeypatch load_from_args() because that won't work so well
-        mocker.patch("shell_themer.Themer.load_from_args", autospec=True)
-        return thm.dispatch(args)
+        mocker.patch("dye.Dye.load_from_args", autospec=True)
+        return dye.dispatch(args)
 
     return _executor

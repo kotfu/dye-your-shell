@@ -22,13 +22,13 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
-from dye import Themer
+from dye import Dye
 
 
 #
 # test the preview command
 #
-def test_preview(thm_cmdline, capsys):
+def test_preview(dye_cmdline, capsys):
     tomlstr = """
         [styles]
         # we intentionally don't define a "text" style, or a
@@ -50,9 +50,9 @@ def test_preview(thm_cmdline, capsys):
         [scope.someprog]
         environment.unset = "SOMEPROG"
     """
-    exit_code = thm_cmdline("preview", tomlstr)
+    exit_code = dye_cmdline("preview", tomlstr)
     out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
+    assert exit_code == Dye.EXIT_SUCCESS
     assert out
     assert not err
     # here's a list of strings that should be in the output

@@ -22,17 +22,17 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
-from dye import Themer
+from dye import Dye
 
 
 #
 # test the agents command (which shows the list of available agents)
 #
-def test_agents(thm_cmdline, capsys):
+def test_agents(dye_cmdline, capsys):
     # now go run the command, which should list the themes
-    exit_code = thm_cmdline("agents")
+    exit_code = dye_cmdline("agents")
     out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
+    assert exit_code == Dye.EXIT_SUCCESS
     assert not err
     agents = [
         "environment_variables",

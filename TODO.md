@@ -1,4 +1,4 @@
-# TODO list for shell-themer
+# TODO list for dye
 
 [ ] noctis theme ideas: https://github.com/liviuschera/noctis/pull/11
 [ ] figure out how to set emacs theme
@@ -49,7 +49,7 @@
 - recipe for changing starship config when you change a theme by changing the environment
   variable containing the starship config file
 
-## shell-themer subcommands
+## dye subcommands
 
 [x] themes = -f and -t are ignored, shows a list of all available themes from $THEME_DIR
 [x] preview = show the theme name, version, and file, and all active styles from the specified theme or from $THEME_DIR

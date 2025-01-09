@@ -24,28 +24,34 @@
 
 from unittest import mock
 
-from dye import Themer
+from dye import Dye
 
 
 #
 # test the list command
 #
-def test_list(thm_cmdline, capsys, mocker, tmp_path):
-    # gotta patch the theme dir, we don't want it throwing errors if not set
+def test_list(dye_cmdline, capsys, mocker, tmp_path):
+    # gotta patch dye_dir, which reads the environment variable
+    # DYE_DIR. We don't want this test throwing errors if it's not
+    # set
     dirmock = mocker.patch(
-        "shell_themer.Themer.theme_dir", create=True, new_callable=mock.PropertyMock
+        "dye.Dye.dye_dir", create=True, new_callable=mock.PropertyMock
     )
     dirmock.return_value = tmp_path
+    # make sure the themes subdirectory exists
+    theme_dir = tmp_path / "themes"
+    theme_dir.mkdir()
+
     # write some empty toml files into the directory
     bases = ["one", "two", "three"]
     for base in bases:
-        path = tmp_path / f"{base}.toml"
+        path = theme_dir / f"{base}.toml"
         with open(path, "w", encoding="utf8") as fvar:
             fvar.write(f"# a toml file for theme {base}")
     # now go run the command, which should list the themes
-    exit_code = thm_cmdline("list")
+    exit_code = dye_cmdline("themes")
     out, err = capsys.readouterr()
-    assert exit_code == Themer.EXIT_SUCCESS
+    assert exit_code == Dye.EXIT_SUCCESS
     assert not err
     for base in bases:
         assert base in out

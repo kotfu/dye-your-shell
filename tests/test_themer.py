@@ -233,32 +233,32 @@ def test_has_scope(theme):
 
 
 #
-# test theme_dir() property
+# test dye_dir() property
 #
-def test_theme_dir_environment_variable(thm, mocker, tmp_path):
-    mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)})
-    # theme_dir should be a Path object
-    assert thm.theme_dir == tmp_path
+def test_dye_dir_environment_variable(dye, mocker, tmp_path):
+    mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)})
+    # dye_dir should be a Path object
+    assert dye.dye_dir == tmp_path
 
 
-def test_theme_dir_no_environment_variable(thm, mocker):
-    # ensure no THEME_DIR environment variable exists
+def test_dye_dir_no_environment_variable(dye, mocker):
+    # ensure no DYE_DIR environment variable exists
     mocker.patch.dict(os.environ, {}, clear=True)
     with pytest.raises(DyeError):
-        _ = thm.theme_dir
+        _ = dye.dye_dir
 
 
-def test_theme_dir_invalid_directory(thm, mocker, tmp_path):
+def test_dye_dir_invalid_directory(dye, mocker, tmp_path):
     invalid = tmp_path / "doesntexist"
-    mocker.patch.dict(os.environ, {"THEME_DIR": str(invalid)})
+    mocker.patch.dict(os.environ, {"DYE_DIR": str(invalid)})
     with pytest.raises(DyeError):
-        _ = thm.theme_dir
+        _ = dye.dye_dir
 
 
 #
 # test all the variations of load_from_args()
 #
-def test_load_from_args_no_theme(thm, mocker):
+def test_load_from_args_no_theme(dye, mocker):
     # we need empty args, and empty environment, and with
     # all of this empty, we should get an exception
     mocker.patch.dict(os.environ, {}, clear=True)
@@ -266,10 +266,10 @@ def test_load_from_args_no_theme(thm, mocker):
     args.file = None
     args.theme = None
     with pytest.raises(DyeError):
-        thm.load_from_args(args)
+        dye.load_from_args(args)
 
 
-def test_load_from_args_filename(thm, mocker, tmp_path):
+def test_load_from_args_filename(dye, mocker, tmp_path):
     # give a bogus theme file in the environment, which should be
     # ignored because the filename in the arguments should take
     # precendence
@@ -288,12 +288,12 @@ def test_load_from_args_filename(thm, mocker, tmp_path):
     args.file = str(themefile)
     args.theme = None
 
-    thm.load_from_args(args)
-    assert thm.theme.definition
-    assert thm.theme.styles
+    dye.load_from_args(args)
+    assert dye.theme.definition
+    assert dye.theme.styles
 
 
-def test_load_from_args_invalid_filename(thm, mocker, tmp_path):
+def test_load_from_args_invalid_filename(dye, mocker, tmp_path):
     # give a real theme file in the environment, which should be
     # ignored because the filename in the arguments should take
     # precendence, this should generate an error because we
@@ -311,10 +311,10 @@ def test_load_from_args_invalid_filename(thm, mocker, tmp_path):
     args.theme = None
 
     with pytest.raises(FileNotFoundError):
-        thm.load_from_args(args)
+        dye.load_from_args(args)
 
 
-def test_load_from_args_env(thm, mocker, tmp_path):
+def test_load_from_args_env(dye, mocker, tmp_path):
     # go write a theme file that we can actually open
     themefile = tmp_path / "sometheme.toml"
     tomlstr = """
@@ -330,12 +330,12 @@ def test_load_from_args_env(thm, mocker, tmp_path):
     args.file = None
     args.theme = None
 
-    thm.load_from_args(args)
-    assert thm.theme.definition
-    assert thm.theme.styles
+    dye.load_from_args(args)
+    assert dye.theme.definition
+    assert dye.theme.styles
 
 
-def test_load_from_args_env_invalid(thm, mocker, tmp_path):
+def test_load_from_args_env_invalid(dye, mocker, tmp_path):
     # a theme file in the environment variable which doesn't exist
     # should raise an exception
     themefile = tmp_path / "doesntexist.toml"
@@ -346,10 +346,10 @@ def test_load_from_args_env_invalid(thm, mocker, tmp_path):
     args.theme = None
 
     with pytest.raises(FileNotFoundError):
-        thm.load_from_args(args)
+        dye.load_from_args(args)
 
 
-def test_load_from_args_theme_file(thm, mocker, tmp_path):
+def test_load_from_args_theme_file(dye, mocker, tmp_path):
     # give a theme name, but the full name including the .toml
     themefile = tmp_path / "themefile.toml"
     tomlstr = """
@@ -359,32 +359,32 @@ def test_load_from_args_theme_file(thm, mocker, tmp_path):
     with open(themefile, "w", encoding="utf8") as fvar:
         fvar.write(tomlstr)
 
-    mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)}, clear=True)
+    mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
 
     args = argparse.Namespace()
     args.file = None
     args.theme = "themefile.toml"
 
-    thm.load_from_args(args)
-    assert thm.theme.definition
-    assert thm.theme.styles
+    dye.load_from_args(args)
+    assert dye.theme.definition
+    assert dye.theme.styles
 
 
-def test_load_from_args_theme_file_invalid(thm, mocker, tmp_path):
+def test_load_from_args_theme_file_invalid(dye, mocker, tmp_path):
     # we have a valid theme dir, but we are going to give
     # a filename with extension as the theme arguemtn
     # but that filename won't exist
-    mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)}, clear=True)
+    mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
 
     args = argparse.Namespace()
     args.file = None
     args.theme = "notfound.toml"
 
     with pytest.raises(DyeError):
-        thm.load_from_args(args)
+        dye.load_from_args(args)
 
 
-def test_load_from_args_theme_name(thm, mocker, tmp_path):
+def test_load_from_args_theme_name(dye, mocker, tmp_path):
     # give a theme name, but the full name including the .toml
     themefile = tmp_path / "themefile.toml"
     tomlstr = """
@@ -394,15 +394,15 @@ def test_load_from_args_theme_name(thm, mocker, tmp_path):
     with open(themefile, "w", encoding="utf8") as fvar:
         fvar.write(tomlstr)
 
-    mocker.patch.dict(os.environ, {"THEME_DIR": str(tmp_path)}, clear=True)
+    mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
 
     args = argparse.Namespace()
     args.file = None
     args.theme = "themefile"
 
-    thm.load_from_args(args)
-    assert thm.theme.definition
-    assert thm.theme.styles
+    dye.load_from_args(args)
+    assert dye.theme.definition
+    assert dye.theme.styles
 
 
 #
