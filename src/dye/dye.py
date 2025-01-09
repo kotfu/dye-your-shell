@@ -284,7 +284,7 @@ class Dye(AssertBool):
 
         or --colors='args=red bold on black:groups=white on red'
         """
-        colors = {}
+        help_styles = {}
         try:
             env_colors = os.environ["DYE_COLORS"]
             if not env_colors:
@@ -307,20 +307,20 @@ class Dye(AssertBool):
 
         if args.color:
             # overrides environment variables
-            colors = self._parse_colorspec(args.color)
+            help_styles = self._parse_colorspec(args.color)
         elif args.nocolor:
             # disable the default color output
-            colors = self._parse_colorspec("")
+            help_styles = self._parse_colorspec("")
         elif env_colors:
             # was set, and was set to a non-empty string
-            colors = self._parse_colorspec(env_colors)
+            help_styles = self._parse_colorspec(env_colors)
 
         # now map this all into rich.styles
-        for key, value in colors.items():
+        for key, value in help_styles.items():
             RichHelpFormatter.styles[f"argparse.{key}"] = value
 
     def _parse_colorspec(self, colorspec):
-        "parse colorspec into a dictionary"
+        "parse colorspec into a dictionary of styles"
         colors = {}
         # set everything to default, ie smash all the default colors
         for element in self.HELP_ELEMENTS:
