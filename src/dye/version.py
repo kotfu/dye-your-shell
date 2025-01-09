@@ -27,7 +27,8 @@ from importlib import metadata
 def version_string():
     """return a version string suitable for display to a user"""
     try:
-        ver = metadata.version("shell_themer")
+        # this is the distribution name, not the package name
+        ver = metadata.version("dye-your-shell")
     except metadata.PackageNotFoundError:  # pragma: nocover
         ver = "unknown"
     return ver
