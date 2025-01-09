@@ -29,7 +29,7 @@ from dye import Dye, Theme
 
 @pytest.fixture
 def dye():
-    thm = Dye(prog="dye")
+    thm = Dye()
     return thm
 
 
@@ -64,7 +64,7 @@ def dye_cmdline(dye, mocker):
         if toml:
             dye.theme.loads(toml)
         # monkeypatch load_from_args() because that won't work so well
-        mocker.patch("dye.Dye.load_from_args", autospec=True)
-        return dye.dispatch(args)
+        mocker.patch("dye.Dye.load_theme_from_args", autospec=True)
+        return dye.dispatch("dye", args)
 
     return _executor

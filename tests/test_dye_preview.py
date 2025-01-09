@@ -36,19 +36,6 @@ def test_preview(dye_cmdline, capsys):
         # to make sure the preview works without it
         current_line =  "#f8f8f2 on #44475a"
         comment =  "#6272a4"
-
-        [scope.iterm]
-        agent = "iterm"
-        style.foreground = "foreground"
-        style.background = "background"
-
-        [scope.fzf]
-        agent = "fzf"
-        environment_variable = "FZF_DEFAULT_OPTS"
-        style.text = "foreground"
-
-        [scope.someprog]
-        environment.unset = "SOMEPROG"
     """
     exit_code = dye_cmdline("preview", tomlstr)
     out, err = capsys.readouterr()
@@ -56,6 +43,6 @@ def test_preview(dye_cmdline, capsys):
     assert out
     assert not err
     # here's a list of strings that should be in the output
-    tests = ["current_line", "comment", "iterm", "fzf", "someprog"]
+    tests = ["current_line", "comment"]
     for test in tests:
         assert test in out
