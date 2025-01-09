@@ -3,6 +3,7 @@
 
 description = "dracula"
 type = "dark"
+version = "2.0.0"
 
 [palette]
 # these names and colors typically come from whoever designed
@@ -27,6 +28,12 @@ yellow = '#f1fa8c'
 [elements]
 # map the colors above into the dye standard elements
 # everything on the lefthand side here should have a value assigned
+
+# things on the right are a style definition
+# use the palette in your style definition by
+# {{ comment }}
+#
+# text = "{{foreground}} on {{background}}"
 
 # standard foreground color
 foreground = 'foreground'
