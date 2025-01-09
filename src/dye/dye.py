@@ -469,27 +469,27 @@ class Dye(AssertBool):
         outer_table.add_row(summary_table)
         outer_table.add_row("")
 
-        # show all the colors in the palette
-        palette_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
-        palette_table.add_column("[palette]")
-        for color in theme.palette:
-            value = theme.definition["palette"][color]
+        # show all the colors
+        colors_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
+        colors_table.add_column("[colors]")
+        for color in theme.colors:
+            value = theme.definition["colors"][color]
             col1 = rich.text.Text.assemble(("██", value), f" {color}")
             col2 = rich.text.Text(f' = "{value}"')
-            palette_table.add_row(col1, col2)
-        outer_table.add_row(palette_table)
+            colors_table.add_row(col1, col2)
+        outer_table.add_row(colors_table)
         outer_table.add_row("")
         outer_table.add_row("")
 
-        # show all the elements of the style
-        elements_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
-        elements_table.add_column("[elements]")
-        for element, style in theme.elements.items():
-            value = theme.definition["elements"][element]
-            col1 = rich.text.Text(element, style)
+        # show all the styles
+        styles_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
+        styles_table.add_column("[styles]")
+        for name, style in theme.styles.items():
+            value = theme.definition["styles"][name]
+            col1 = rich.text.Text(name, style)
             col2 = rich.text.Text(f' = "{value}"')
-            elements_table.add_row(col1, col2)
-        outer_table.add_row(elements_table)
+            styles_table.add_row(col1, col2)
+        outer_table.add_row(styles_table)
 
         # lower_table = rich.table.Table(
         #     box=None,
@@ -500,13 +500,13 @@ class Dye(AssertBool):
         # )
         # lower_table.add_column(ratio=0.67)
         # lower_table.add_column(ratio=0.33)
-        # lower_table.add_row(palette_table, elements_table)
+        # lower_table.add_row(colors_table, elements_table)
 
         # outer_table.add_row(lower_table)
 
         # the text style here makes the whole panel print with the foreground
         # and background colors from the style
-        self.console.print(rich.panel.Panel(outer_table, style=theme.elements["text"]))
+        self.console.print(rich.panel.Panel(outer_table, style=theme.styles["text"]))
         return self.EXIT_SUCCESS
 
     def command_agents(self, _):

@@ -66,11 +66,11 @@ class Theme:
         # the raw toml definition of the theme
         self.definition = {}
 
-        # the processed palette
-        self.palette = {}
+        # the processed colors, it's a dict of strings
+        self.colors = {}
 
-        # the processed elements
-        self.elements = {}
+        # the processed elements, it's a dict of rich.style.Style()
+        self.styles = {}
 
         # a place to stash the file that the theme was loaded from
         # it's up to the caller/user to make sure this is set properly
@@ -83,25 +83,25 @@ class Theme:
         this sets self.palette and self.elements
         """
         env = jinja2.Environment()
-        # get the palette, which is just a dict of variables
+        # get the colors, a dict of variables
         # which can be used later
         try:
-            raw_palette = self.definition["palette"]
+            raw_colors = self.definition["colors"]
         except KeyError:
-            raw_palette = {}
-        self.palette = {}
-        for key, value in raw_palette.items():
+            raw_colors = {}
+        self.colors = {}
+        for key, value in raw_colors.items():
             template = env.from_string(value)
-            self.palette[key] = template.render(palette=self.palette)
+            self.colors[key] = template.render(colors=self.colors)
 
-        # process the elements, using the palette as variables
+        # process the elements, using the colors as variables
         # each element in should be a rich.Style() object
         try:
-            raw_elements = self.definition["elements"]
+            raw_styles = self.definition["styles"]
         except KeyError:
-            raw_elements = {}
-        self.elements = {}
-        for key, value in raw_elements.items():
+            raw_styles = {}
+        self.styles = {}
+        for key, value in raw_styles.items():
             template = env.from_string(value)
-            rendered = template.render(palette=self.palette, elements=self.elements)
-            self.elements[key] = rich.style.Style.parse(rendered)
+            rendered = template.render(colors=self.colors, styles=self.styles)
+            self.styles[key] = rich.style.Style.parse(rendered)
