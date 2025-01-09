@@ -27,7 +27,7 @@ import tomlkit
 
 
 class Theme:
-    """load and parse a theme file into a theme object"""
+    """load and parse a toml file into a theme object"""
 
     # class methods to create a new theme
     @classmethod
