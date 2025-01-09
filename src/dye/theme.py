@@ -82,23 +82,26 @@ class Theme:
 
         this sets self.palette and self.elements
         """
+        env = jinja2.Environment()
         # get the palette, which is just a dict of variables
         # which can be used later
         try:
-            self.palette = self.definition["palette"]
+            raw_palette = self.definition["palette"]
         except KeyError:
-            self.palette = {}
+            raw_palette = {}
+        self.palette = {}
+        for key, value in raw_palette.items():
+            template = env.from_string(value)
+            self.palette[key] = template.render(palette=self.palette)
 
         # process the elements, using the palette as variables
         # each element in should be a rich.Style() object
-        env = jinja2.Environment()
-        env.globals = self.palette
         try:
             raw_elements = self.definition["elements"]
         except KeyError:
             raw_elements = {}
-        elements = {}
+        self.elements = {}
         for key, value in raw_elements.items():
             template = env.from_string(value)
-            elements[key] = rich.style.Style.parse(template.render())
-        self.elements = elements
+            rendered = template.render(palette=self.palette, elements=self.elements)
+            self.elements[key] = rich.style.Style.parse(rendered)

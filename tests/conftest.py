@@ -34,12 +34,6 @@ def dye():
 
 
 @pytest.fixture
-def theme():
-    theme = Theme(prog="dye")
-    return theme
-
-
-@pytest.fixture
 def dye_cmdline(dye, mocker):
     # defining a fixture that returns a function
     # allows us to call the fixture and pass parameters to it

@@ -22,6 +22,7 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
+import pytest
 import rich
 
 from dye import Theme
@@ -29,41 +30,65 @@ from dye import Theme
 #
 # test style and variable processing on initialization
 #
-THEME_STRING = """# comment at the top
-[palette]
-background =  "#282a36"
-foreground =  "#f8f8f2"
-comment =  "#6272a4"
-cyan =  "#8be9fd"
-green =  "#50fa7b"
-orange =  "#ffb86c"
-pink =  "#ff79c6"
-purple =  "#bd93f9"
-yellow =  "#f1fa8c"
+STATIC_THEME = """
+    [palette]
+    background =  "#282a36"
+    foreground =  "#f8f8f2"
+    notyet =  "{{ palette.yellow }}"
+    green =  "#50fa7b"
+    orange =  "#ffb86c"
+    pink =  "#ff79c6"
+    purple =  "#bd93f9"
+    yellow =  "#f1fa8c"
+    background_high = "{{ palette.background }}"
+    foreground_low = "{{ palette.unknown }}"
 
-[elements]
-foreground = "{{foreground}}"
-text = "{{foreground}} on {{background}}"
-color1 = "#ff79c6"
-color2 = "{{ unknown }}"
-color3 = ""
+    [elements]
+    notyet = "{{ elements.foreground }}"
+    foreground = "{{ palette.foreground }}"
+    text = "bold {{ palette.foreground }} on {{ palette.background }}"
+    text_high = "{{ elements.text }}"
+    color1 = "#ff79c6"
+    color2 = "{{ palette.unknown }}"
+    color3 = ""
 """
 
 
-def test_loads_palette():
-    theme = Theme.loads(THEME_STRING)
-    assert isinstance(theme.palette, dict)
-    assert isinstance(theme.palette["green"], str)
-    assert theme.palette["orange"] == "#ffb86c"
-    assert len(theme.palette) == 9
+@pytest.fixture
+def static_theme():
+    return Theme.loads(STATIC_THEME)
+
+
+def test_load(tmp_path):
+    # def test_load_from_args_theme_name(dye, mocker, tmp_path):
+    # give a theme name, but the full name including the .toml
+    themefile = tmp_path / "oxygen.toml"
+    with open(themefile, "w", encoding="utf8") as fvar:
+        fvar.write(STATIC_THEME)
+
+    with open(themefile, encoding="utf8") as fvar:
+        theme = Theme.load(fvar, filename=themefile)
+    # Theme.load() uses the same code as Theme.loads(), so we don't
+    # have to retest everything. If loads() works and load() can
+    # open and read the file, load() will work too
+    assert len(theme.palette) == 10
+    assert len(theme.elements) == 7
+
+
+def test_loads_palette(static_theme):
+    assert isinstance(static_theme.palette, dict)
+    assert isinstance(static_theme.palette["orange"], str)
+    assert static_theme.palette["orange"] == "#ffb86c"
+    assert len(static_theme.palette) == 10
 
 
 def test_loads_elements():
-    theme = Theme.loads(THEME_STRING)
+    theme = Theme.loads(STATIC_THEME)
     assert isinstance(theme.elements, dict)
     assert isinstance(theme.elements["text"], rich.style.Style)
+    assert isinstance(theme.elements["text_high"], rich.style.Style)
     assert isinstance(theme.elements["color1"], rich.style.Style)
-    assert len(theme.elements) == 5
+    assert len(theme.elements) == 7
 
 
 def test_loads_empty():
@@ -73,45 +98,44 @@ def test_loads_empty():
     assert theme.elements == {}
 
 
-def test_load(tmp_path):
-    # def test_load_from_args_theme_name(dye, mocker, tmp_path):
-    # give a theme name, but the full name including the .toml
-    themefile = tmp_path / "oxygen.toml"
-    with open(themefile, "w", encoding="utf8") as fvar:
-        fvar.write(THEME_STRING)
-
-    with open(themefile, encoding="utf8") as fvar:
-        theme = Theme.load(fvar, filename=themefile)
-    # Theme.load() uses the same code as Theme.loads(), so we don't
-    # have to retest everything. If loads() works and load() can
-    # open and read the file, load() will work too
-    assert len(theme.elements) == 5
-    assert len(theme.palette) == 9
+def test_palette_reference(static_theme):
+    assert static_theme.palette["background_high"] == static_theme.palette["background"]
 
 
-def test_element_no_palette():
-    theme = Theme.loads(THEME_STRING)
-    assert theme.elements["color1"].color.name == "#ff79c6"
-    assert theme.elements["color1"].color.triplet.hex == "#ff79c6"
+def test_palette_unknown_reference(static_theme):
+    assert static_theme.palette["foreground_low"] == ""
 
 
-def test_element_complex():
-    theme = Theme.loads(THEME_STRING)
-    assert theme.elements["text"].color.name == "#f8f8f2"
-    assert theme.elements["text"].color.triplet.hex == "#f8f8f2"
-    assert theme.elements["text"].bgcolor.name == "#282a36"
-    assert theme.elements["text"].bgcolor.triplet.hex == "#282a36"
+def test_palette_load_order(static_theme):
+    assert static_theme.palette["notyet"] == ""
 
 
-def test_element_unknown_palette_reference():
-    theme = Theme.loads(THEME_STRING)
-    # this should be an empty rich.style.Style() object
-    assert not theme.elements["color2"]
-    assert isinstance(theme.elements["color2"], rich.style.Style)
+def test_element_no_palette(static_theme):
+    assert static_theme.elements["color1"].color.name == "#ff79c6"
+    assert static_theme.elements["color1"].color.triplet.hex == "#ff79c6"
 
 
-def test_element_empty():
-    theme = Theme.loads(THEME_STRING)
-    # this should be an empty rich.style.Style() object
-    assert not theme.elements["color3"]
-    assert isinstance(theme.elements["color3"], rich.style.Style)
+def test_element_complex(static_theme):
+    assert static_theme.elements["text"].color.name == "#f8f8f2"
+    assert static_theme.elements["text"].color.triplet.hex == "#f8f8f2"
+    assert static_theme.elements["text"].bgcolor.name == "#282a36"
+    assert static_theme.elements["text"].bgcolor.triplet.hex == "#282a36"
+    assert static_theme.elements["text_high"].color.name == "#f8f8f2"
+    assert static_theme.elements["text_high"].color.triplet.hex == "#f8f8f2"
+    assert static_theme.elements["text_high"].bgcolor.name == "#282a36"
+    assert static_theme.elements["text_high"].bgcolor.triplet.hex == "#282a36"
+
+
+def test_elements_load_order(static_theme):
+    assert not static_theme.elements["notyet"]
+    assert isinstance(static_theme.elements["notyet"], rich.style.Style)
+
+
+def test_element_unknown_reference(static_theme):
+    assert not static_theme.elements["color2"]
+    assert isinstance(static_theme.elements["color2"], rich.style.Style)
+
+
+def test_element_empty(static_theme):
+    assert not static_theme.elements["color3"]
+    assert isinstance(static_theme.elements["color3"], rich.style.Style)
