@@ -41,7 +41,9 @@ pattern_purple =  "#bd93f8"
 pattern_yellow =  "#f1fa8b"
 
 [styles]
-pattern_text = '#000000 on #ffffff'
+pattern_text = '#cccccc on #ffffff'
+pattern_text_high = '#000000 on #ffffff'
+pattern_text_low = '#999999 on #ffffff'
 
 [variables]
 capture.somevar = "printf '%s' {var:replace}"
@@ -64,7 +66,9 @@ export.NO_COLOR = "true"
 
 @pytest.fixture
 def static_pat():
-    return Pattern.loads(STATIC_PATTERN)
+    pattern = Pattern.loads(STATIC_PATTERN)
+    pattern.process()
+    return pattern
 
 
 #
@@ -95,6 +99,20 @@ def test_loads_empty():
     assert pat.definition == {}
     # assert pat.colors == {}
     # assert theme.styles == {}
+
+
+def test_loads_colors(static_pat):
+    assert isinstance(static_pat.colors, dict)
+    assert isinstance(static_pat.colors["pattern_purple"], str)
+    assert static_pat.colors["pattern_purple"] == "#bd93f8"
+    assert len(static_pat.colors) == 2
+
+
+def test_loads_styles(static_pat):
+    assert isinstance(static_pat.styles, dict)
+    assert isinstance(static_pat.styles["pattern_text"], rich.style.Style)
+    assert isinstance(static_pat.styles["pattern_text_high"], rich.style.Style)
+    assert len(static_pat.styles) == 3
 
 
 #
@@ -137,21 +155,6 @@ def test_requires_theme_not_present():
     tomlstr = """description = 'hi'"""
     pat = Pattern.loads(tomlstr)
     assert pat.requires_theme is None
-
-
-def test_loads_colors(pat):
-    assert isinstance(pat.colors, dict)
-    assert isinstance(pat.colors["orange"], str)
-    assert pat.colors["orange"] == "#ffb86c"
-    assert len(pat.colors) == 10
-
-
-def test_loads_styles(pat):
-    assert isinstance(pat.styles, dict)
-    assert isinstance(pat.styles["text"], rich.style.Style)
-    assert isinstance(pat.styles["text_high"], rich.style.Style)
-    assert isinstance(pat.styles["color1"], rich.style.Style)
-    assert len(pat.styles) == 7
 
 
 ##################
