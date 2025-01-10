@@ -43,7 +43,8 @@
     - prevent_themes is boolean if present
     - requires_theme refers to a file that exists
 [ ] make a 'dye patterns' command that lists out the patterns, need it for theme-activate() bash func
-
+[ ] update README.md
+[x] delete jinja_exploration.py
 
 - documentation and website
   - show how to set BAT_THEME
