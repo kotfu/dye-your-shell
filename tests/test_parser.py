@@ -51,21 +51,42 @@ def test_parse_text_invalid():
         _ = sp.parse_text("not a valid style")
 
 
-def test_style_parse_dict():
+def test_style_parse_text_with_lookups():
     variables = {"qyellow": "#ffff00"}
     # parse up some base styles
-    raw_theme = {
+    lookups = {
         "background": "#282a36",
         "foreground": "#f8f8f2",
         "current_line": "#f8f8f2 on #44475a",
         "warning": "{var:qyellow}",
     }
     bp = StyleParser(None, variables)
-    theme = bp.parse_dict(raw_theme)
+    elements = bp.parse_dict(lookups)
 
-    sp = StyleParser(theme, variables)
+    sp = StyleParser(elements, variables)
     styleobj = sp.parse_text("current_line")
     assert styleobj.color.name == "#f8f8f2"
     assert styleobj.bgcolor.name == "#44475a"
     styleobj = sp.parse_text("warning")
     assert styleobj.color.name == "#ffff00"
+
+
+def test_style_parse_dict_with_lookups():
+    variables = {"qyellow": "#ffff00"}
+    # parse up some base styles
+    raw_palette = {
+        "background": "#282a36",
+        "foreground": "#f8f8f2",
+        "warning": "{var:qyellow}",
+    }
+    bp = StyleParser(None, variables)
+    palette = bp.parse_dict(raw_palette)
+
+    sp = StyleParser(palette, variables)
+    raw_elements = {
+        "foreground": "foreground",
+        "text": "foreground on background",
+        "current_line": "#f8f8f2 on #44475a",
+    }
+    elements = sp.parse_dict(raw_elements)
+    assert elements["foreground"].color.name == "#f8f8f2"

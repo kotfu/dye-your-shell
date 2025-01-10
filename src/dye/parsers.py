@@ -37,8 +37,8 @@ class StyleParser:
     If you pass a dict of variables, those will be interpolated with the styles
     """
 
-    def __init__(self, styles=None, variables=None):
-        self.styles = styles
+    def __init__(self, lookups=None, variables=None):
+        self.lookups = lookups
         self.variables = variables
 
     def parse_text(self, text: str) -> rich.style.Style:
@@ -47,19 +47,13 @@ class StyleParser:
         # interpolate variables into the text
         interp = Interpolator(None, self.variables)
         resolved = interp.interpolate_variables(text)
-        if self.styles:
-            # we have styles, so do a lookup to see if 'text' refers
-            # to a style we already have
-            # If we get a KeyError, then style is already none
+        if self.lookups:
+            # we have lookups, so check to see if the resolved value
+            # references one of the lookups, if so, use the lookup
             with contextlib.suppress(KeyError):
-                style = self.styles[resolved]
-            # try:
-            #     style = self.styles[resolved]
-            # except KeyError:
-            #     # style is already none
-            #     pass
-        # if not there parse the input as a style after interpolating variables
+                style = self.lookups[resolved]
         if not style:
+            # no lookup found, so let's parse the style
             style = rich.style.Style.parse(resolved)
         return style
 

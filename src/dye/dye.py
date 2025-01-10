@@ -38,6 +38,7 @@ from rich_argparse import RichHelpFormatter
 
 from .agents import AgentBase
 from .exceptions import DyeError
+from .pattern import Pattern
 from .theme import Theme
 from .utils import AssertBool
 from .version import version_string
@@ -103,13 +104,8 @@ class Dye(AssertBool):
             " (i.e. if it's a file or a pipe to less)"
         )
         parser.add_argument("--force-color", action="store_true", help=forcecolor_help)
-        # how to specify a theme
-        #        tgroup = parser.add_mutually_exclusive_group()
-        #        theme_help = "specify a theme by name from $DYE_DIR/themes"
-        #        tgroup.add_argument("-t", "--theme", metavar="<name>", help=theme_help)
-        #        file_help = "specify a file containing a theme"
-        #        tgroup.add_argument("-f", "--file", metavar="<path>", help=file_help)
 
+        # set up for the sub commands
         subparsers = parser.add_subparsers(
             dest="command",
             title="arguments",
@@ -118,16 +114,37 @@ class Dye(AssertBool):
             help="command to perform, which must be one of the following:",
         )
 
-        # activate command
-        activate_help = "activate a theme"
-        activate_parser = subparsers.add_parser(
-            "activate",
-            help=activate_help,
+        # apply command
+        apply_help = "apply a theme"
+        apply_parser = subparsers.add_parser(
+            "apply",
+            description=apply_help,
+            formatter_class=RichHelpFormatter,
+            help=apply_help,
         )
-        scope_help = "only activate the given scope"
-        activate_parser.add_argument("-s", "--scope", help=scope_help)
+        pattern_group = apply_parser.add_mutually_exclusive_group()
+        pattern_file_help = "specify a file containing a pattern"
+        pattern_group.add_argument(
+            "-f", "--patternfile", metavar="<path>", help=pattern_file_help
+        )
+        pattern_name_help = "specify a pattern by name from $DYE_DIR"
+        pattern_group.add_argument(
+            "-p", "--patternname", metavar="<name>", help=pattern_name_help
+        )
+        theme_group = apply_parser.add_mutually_exclusive_group()
+        theme_file_help = "specify a file containing a theme"
+        theme_group.add_argument(
+            "-t", "--themefile", metavar="<path>", help=theme_file_help
+        )
+        theme_name_help = "specify a theme by name from $DYE_DIR/themes"
+        theme_group.add_argument(
+            "-n", "--themename", metavar="<name>", help=theme_name_help
+        )
+
+        scope_help = "only apply the given scope"
+        apply_parser.add_argument("-s", "--scope", help=scope_help)
         comment_help = "add comments to the generated shell output"
-        activate_parser.add_argument(
+        apply_parser.add_argument(
             "-c", "--comment", action="store_true", help=comment_help
         )
 
@@ -140,13 +157,13 @@ class Dye(AssertBool):
             help=preview_help,
         )
         theme_group = preview_parser.add_mutually_exclusive_group()
-        themefile_help = "specify a file containing a theme"
+        theme_file_help = "specify a file containing a theme"
         theme_group.add_argument(
-            "-t", "--themefile", metavar="<path>", help=themefile_help
+            "-t", "--themefile", metavar="<path>", help=theme_file_help
         )
-        themename_help = "specify a theme by name from $DYE_DIR/themes"
+        theme_name_help = "specify a theme by name from $DYE_DIR/themes"
         theme_group.add_argument(
-            "-n", "--themename", metavar="<name>", help=themename_help
+            "-n", "--themename", metavar="<name>", help=theme_name_help
         )
 
         # agents command
@@ -247,12 +264,12 @@ class Dye(AssertBool):
     def dispatch(self, prog, args):
         """process and execute all the arguments and options"""
         # set the color output options
-        self.set_output_colors(args)
+        self.set_help_colors(args)
 
         # now go process everything
         try:
-            if args.command == "activate":
-                exit_code = self.dispatch_activate(args)
+            if args.command == "apply":
+                exit_code = self.command_apply(args)
             elif args.command == "preview":
                 exit_code = self.command_preview(args)
             elif args.command == "agents":
@@ -274,7 +291,7 @@ class Dye(AssertBool):
 
         return exit_code
 
-    def set_output_colors(self, args):
+    def set_help_colors(self, args):
         """set the colors for help output
 
         if args has a --colors argument, use that
@@ -341,58 +358,29 @@ class Dye(AssertBool):
         return colors
 
     #
-    # loading a theme
-    #
-    def load_theme_from_args(self, args):
-        """Load a theme from the command line args
-
-        Resolution order:
-        1. --themefile, -t from the command line
-        2. --themename, -n from the command line
-        3. $DYE_THEME_FILE environment variable
-
-        This returns a theme object
-
-        :raises: an exception if we can't find a theme file
-
-        """
-        fname = None
-
-        if args.themefile:
-            fname = args.themefile
-        elif args.themename:
-            fname = self.dye_theme_dir / args.themename
-            if not fname.is_file():
-                fname = self.dye_theme_dir / f"{args.themename}.toml"
-                if not fname.is_file():
-                    raise DyeError(f"{args.themename}: theme not found")
-        else:
-            with contextlib.suppress(KeyError):
-                fname = pathlib.Path(os.environ["DYE_THEME_FILE"])
-        if not fname:
-            raise DyeError("no theme specified")
-
-        with open(fname, "rb") as file:
-            theme = Theme.load(file, filename=fname)
-        return theme
-
-    #
     # functions for the various commands called by dispatch()
     #
-    def dispatch_activate(self, args):
-        """render the output for given scope(s), or all scopes if none specified
+    def command_apply(self, args):
+        """apply a pattern
 
-        output is suitable for bash eval $()
+        many agents just output to standard output, which we rely on a shell
+        wrapper to execute for us. agents can also write/move files,
+        replace files or whatever else they are gonna do
+
+        output is suitable for `source < $(dye apply)`
         """
         # pylint: disable=too-many-branches
-        self.load_theme_from_args(args)
+        theme = self.load_theme_from_args(args, required=False)
+        pattern = self.load_pattern_from_args(args)
+        pattern.process(theme)
+        # pattern now has everything in it we need
 
         if args.scope:
             to_activate = args.scope.split(",")
         else:
             to_activate = []
             try:
-                for scope in self.theme.definition["scope"]:
+                for scope in pattern.definition["scopes"]:
                     to_activate.append(scope)
             except KeyError:
                 pass
@@ -400,42 +388,36 @@ class Dye(AssertBool):
         for scope in to_activate:
             # checking here in case they supplied a scope on the command line that
             # doesn't exist
-            if self.theme.has_scope(scope):
-                scopedef = self.theme.scopedef_for(scope)
+            if pattern.has_scope(scope):
+                scopedef = pattern.scopedef_for(scope)
                 # find the agent for this scope
                 try:
-                    agent = scopedef["agent"]
+                    agent_name = scopedef["agent"]
                 except KeyError as exc:
-                    errmsg = f"{self.prog}: scope '{scope}' does not have an agent."
+                    errmsg = f"scope '{scope}' does not have an agent."
                     raise DyeError(errmsg) from exc
                 # check if the scope is disabled
-                if not self.theme.is_enabled(scope):
+                if not pattern.is_enabled(scope):
                     if args.comment:
-                        print(f"# [scope.{scope}] skipped because it is not enabled")
+                        print(f"# scope '{scope}' skipped because it is not enabled")
                     continue
                 # scope is enabled, so print the comment
                 if args.comment:
-                    print(f"# [scope.{scope}]")
+                    print(f"# scope '{scope}'")
 
                 try:
                     # go get the apropriate class for the agent
-                    gcls = AgentBase.classmap[agent]
+                    agent_cls = AgentBase.classmap[agent_name]
                     # initialize the class with the scope and scope definition
-                    ginst = gcls(
-                        scopedef,
-                        self.theme.styles,
-                        self.theme.variables,
-                        prog=self.prog,
-                        scope=scope,
-                    )
+                    agent = agent_cls(scope, scopedef, pattern)
                     # run the agent, printing any shell commands it returns
-                    output = ginst.run()
+                    output = agent.run()
                     if output:
                         print(output)
                 except KeyError as exc:
-                    raise DyeError(f"{self.prog}: {agent}: unknown agent") from exc
+                    raise DyeError(f"{agent_name}: unknown agent") from exc
             else:
-                raise DyeError(f"{self.prog}: {scope}: no such scope")
+                raise DyeError(f"{scope}: no such scope")
         return self.EXIT_SUCCESS
 
     def command_preview(self, args):
@@ -529,3 +511,82 @@ class Dye(AssertBool):
         for theme in themes:
             print(theme)
         return self.EXIT_SUCCESS
+
+    #
+    # supporting methods
+    #
+    def load_theme_from_args(self, args, required=True):
+        """Load a theme from the command line args
+
+        required - whether we have to have a theme file or not
+                if required=False an empty theme can be returned
+
+        Will raise an exception if args specify a file and it
+        doesn't exist or can't be opened
+
+        Resolution order:
+        1. --themefile, -t from the command line
+        2. --themename, -n from the command line
+        3. $DYE_THEME_FILE environment variable
+
+        This returns a theme object
+
+        :raises: an exception if we can't find a theme file
+
+        """
+        fname = None
+
+        if args.themefile:
+            fname = args.themefile
+        elif args.themename:
+            fname = self.dye_theme_dir / args.themename
+            if not fname.is_file():
+                fname = self.dye_theme_dir / f"{args.themename}.toml"
+                if not fname.is_file():
+                    raise DyeError(f"{args.themename}: theme not found")
+        else:
+            with contextlib.suppress(KeyError):
+                fname = pathlib.Path(os.environ["DYE_THEME_FILE"])
+
+        if fname:
+            with open(fname, "rb") as file:
+                theme = Theme.load(file, filename=fname)
+            return theme
+
+        if required:
+            raise DyeError("no theme specified")
+
+        return Theme()
+
+    def load_pattern_from_args(self, args):
+        """load, but don't process/execute the pattern
+
+        Resolution order:
+        1. --patternfile -f from the command line
+        2. --patternname, -p from the command line
+        3. $DYE_PATTERN_FILE environment variable
+
+        This returns a pattern object
+
+        :raises: an exception if we can't find a pattern file
+
+        """
+        fname = None
+
+        if args.patternfile:
+            fname = args.patternfile
+        elif args.patternname:
+            fname = self.dye_theme_dir / args.patternname
+            if not fname.is_file():
+                fname = self.dye_theme_dir / f"{args.patternname}.toml"
+                if not fname.is_file():
+                    raise DyeError(f"{args.patternname}: pattern not found")
+        else:
+            with contextlib.suppress(KeyError):
+                fname = pathlib.Path(os.environ["DYE_PATTERN_FILE"])
+        if not fname:
+            raise DyeError("no pattern specified")
+
+        with open(fname, "rb") as fobj:
+            pattern = Pattern.load(fobj)
+        return pattern

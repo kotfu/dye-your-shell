@@ -22,12 +22,13 @@
 """agent implementations and their base class"""
 
 import abc
+import contextlib
 import re
 
+import jinja2
 import rich.color
 
-from .exceptions import DyeError
-from .interpolator import Interpolator
+from .exceptions import DyeError, DyeSyntaxError
 from .parsers import StyleParser
 from .utils import AssertBool
 
@@ -55,25 +56,43 @@ class AgentBase(abc.ABC, AssertBool):
         # make a registry of subclasses as they are defined
         cls.classmap[cls._name_of(cls.__name__)] = cls
 
-    def __init__(self, scopedef, styles, variables, prog=None, scope=None):
+    def __init__(self, scope, scopedef, pattern):
         super().__init__()
         self.agent = self._name_of(self.__class__.__name__)
-        self.scopedef = scopedef
-        self.styles = styles
-        self.variables = variables
-        self.prog = prog
         self.scope = scope
+        self.scopedef = scopedef
+        self.pattern = pattern
+
+        # set up environment for rendering
+        glbls = {}
+        glbls["styles"] = pattern.styles
+        glbls["variables"] = pattern.variables
+        self.jinja_env = jinja2.Environment()
+        self.jinja_env.globals = glbls
+
+        self.scope_styles = self._process_scope_styles()
+
+    def _process_scope_styles(self):
         # create scope_styles, the styles parsed from scopedef
         try:
-            raw_styles = scopedef["style"]
+            raw_styles = self.scopedef["styles"]
         except (KeyError, TypeError):
             raw_styles = {}
-        parser = StyleParser(styles, variables)
-        self.scope_styles = parser.parse_dict(raw_styles)
-        # create an interpolator
-        self.interp = Interpolator(
-            self.styles, self.variables, prog=self.prog, scope=self.scope
-        )
+
+        processed_styles = {}
+        for name, styledef in raw_styles.items():
+            style = None
+            # render template
+            rendered = self.jinja_env.from_string(styledef).render()
+            # do lookup in self.styles
+            with contextlib.suppress(KeyError):
+                style = self.pattern.styles[rendered]
+            # rich parse
+            if not style:
+                style = rich.style.Style.parse(rendered)
+            processed_styles[name] = style
+
+        return processed_styles
 
     @classmethod
     def _name_of(cls, name: str) -> str:
@@ -126,7 +145,7 @@ class LsColorsFromStyle:
                 # they used a style for a file attribute that isn't in the map
                 # which is not allowed
                 raise DyeError(
-                    f"{msgdata['prog']}: unknown style '{name}' while processing"
+                    f"unknown style '{name}' while processing"
                     f" scope '{msgdata['scope']}'"
                 ) from exc
 
@@ -160,7 +179,8 @@ class EnvironmentVariables(AgentBase):
                 # each letter in the string
                 unsets = [unsets]
             for unset in unsets:
-                output.append(f"unset {self.interp.interpolate(unset)}")
+                unset_rendered = self.jinja_env.from_string(unset).render()
+                output.append(f"unset {unset_rendered}")
         except KeyError:
             # no unsets
             pass
@@ -168,8 +188,8 @@ class EnvironmentVariables(AgentBase):
         try:
             exports = self.scopedef["export"]
             for var, value in exports.items():
-                new_var = self.interp.interpolate(var)
-                new_value = self.interp.interpolate(value)
+                new_var = self.jinja_env.from_string(var).render()
+                new_value = self.jinja_env.from_string(value).render()
                 output.append(f'export {new_var}="{new_value}"')
         except KeyError:
             # no exports
@@ -185,13 +205,13 @@ class Fzf(AgentBase):
         optstr = ""
         # process all the command line options
         try:
-            opts = self.scopedef["opt"]
+            opts = self.scopedef["opts"]
         except KeyError:
             opts = {}
 
         for key, value in opts.items():
             if isinstance(value, str):
-                interp_value = self.interp.interpolate(value)
+                interp_value = self.jinja_env.from_string(value).render()
                 optstr += f" {key}='{interp_value}'"
             elif isinstance(value, bool) and value:
                 optstr += f" {key}"
@@ -214,9 +234,9 @@ class Fzf(AgentBase):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
+            varname = self.jinja_env.from_string(varname).render()
         except KeyError:
             varname = "FZF_DEFAULT_OPTS"
-        varname = self.interp.interpolate(varname)
         print(f'export {varname}="{optstr}{colorstr}"')
 
     def _fzf_from_style(self, name, style):
@@ -321,13 +341,10 @@ class LsColors(AgentBase, LsColorsFromStyle):
         # figure out if we are clearing builtin styles
         try:
             clear_builtin = self.scopedef["clear_builtin"]
-            self.assert_bool(
-                clear_builtin,
-                key="clear_builtin",
-                agent=self.agent,
-                prog=self.prog,
-                scope=self.scope,
-            )
+            if not isinstance(clear_builtin, bool):
+                raise DyeSyntaxError(
+                    f"scope '{self.scope}' requires 'clear_builtin' to be true or false"
+                )
         except KeyError:
             clear_builtin = False
 
@@ -339,7 +356,6 @@ class LsColors(AgentBase, LsColorsFromStyle):
                     style,
                     self.LS_COLORS_MAP,
                     allow_unknown=False,
-                    prog=self.prog,
                     scope=self.scope,
                 )
                 havecodes.append(mapcode)
@@ -357,7 +373,6 @@ class LsColors(AgentBase, LsColorsFromStyle):
                         style,
                         self.LS_COLORS_MAP,
                         allow_unknown=False,
-                        prog=self.prog,
                         scope=self.scope,
                     )
                     outlist.append(render)
@@ -367,7 +382,7 @@ class LsColors(AgentBase, LsColorsFromStyle):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = self.interp.interpolate(varname)
+            varname = self.jinja_env.from_string(varname).render()
         except KeyError:
             varname = "LS_COLORS"
 
@@ -607,21 +622,15 @@ class Eza(AgentBase, LsColorsFromStyle):
         "Render a EZA_COLORS variable suitable for eza"
         outlist = []
         # figure out if we are clearing builtin styles
-        try:
+        with contextlib.suppress(KeyError):
             clear_builtin = self.scopedef["clear_builtin"]
-            self.assert_bool(
-                clear_builtin,
-                key="clear_builtin",
-                agent=self.agent,
-                prog=self.prog,
-                scope=self.scope,
-            )
-        except KeyError:
-            clear_builtin = False
-
-        if clear_builtin:
-            # this tells exa to not use any built-in/hardcoded colors
-            outlist.append("reset")
+            if not isinstance(clear_builtin, bool):
+                raise DyeSyntaxError(
+                    f"scope '{self.scope}' requires 'clear_builtin' to be true or false"
+                )
+            if clear_builtin:
+                # this tells exa to not use any built-in/hardcoded colors
+                outlist.append("reset")
 
         # iterate over the styles given in our configuration
         for name, style in self.scope_styles.items():
@@ -631,7 +640,6 @@ class Eza(AgentBase, LsColorsFromStyle):
                     style,
                     self.EZA_COLORS_MAP,
                     allow_unknown=True,
-                    prog=self.prog,
                     scope=self.scope,
                 )
                 outlist.append(render)
@@ -641,7 +649,7 @@ class Eza(AgentBase, LsColorsFromStyle):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = self.interp.interpolate(varname)
+            varname = self.jinja_env.from_string(varname).render()
         except KeyError:
             varname = "EZA_COLORS"
 
@@ -747,8 +755,8 @@ class Iterm(AgentBase):
                 cmd += r'\a"'
                 output.append(cmd)
             else:
-                raise DyeError(
-                    f"{self.prog}: unknown cursor '{cursor}'"
+                raise DyeSyntaxError(
+                    f"unknown cursor '{cursor}'"
                     f" while processing scope '{self.scope}'"
                 )
         # render the cursor color

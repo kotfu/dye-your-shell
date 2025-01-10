@@ -42,6 +42,7 @@
     - description exists
     - prevent_themes is boolean if present
     - requires_theme refers to a file that exists
+[ ] make a 'dye patterns' command that lists out the patterns, need it for theme-activate() bash func
 
 
 - documentation and website

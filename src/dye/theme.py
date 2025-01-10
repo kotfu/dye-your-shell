@@ -41,7 +41,7 @@ class Theme:
             toparse = ""
         theme = cls()
         theme.definition = tomlkit.loads(toparse)
-        theme._process_definition()
+        theme._process()
         return theme
 
     @classmethod
@@ -54,7 +54,7 @@ class Theme:
         theme = cls()
         theme.definition = tomlkit.load(fobj)
         theme.filename = filename
-        theme._process_definition()
+        theme._process()
         return theme
 
     #
@@ -77,7 +77,7 @@ class Theme:
         # defaults to None
         self.filename = None
 
-    def _process_definition(self):
+    def _process(self):
         """process a newly loaded definition, including variables and styles
 
         this sets self.palette and self.elements
