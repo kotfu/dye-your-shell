@@ -101,6 +101,13 @@ def test_loads_empty():
     # assert theme.styles == {}
 
 
+def test_loads_none():
+    pat = Pattern.loads(None)
+    assert pat.definition == {}
+    # assert pat.colors == {}
+    # assert theme.styles == {}
+
+
 def test_loads_colors(static_pat):
     assert isinstance(static_pat.colors, dict)
     assert isinstance(static_pat.colors["pattern_purple"], str)

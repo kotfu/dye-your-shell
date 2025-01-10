@@ -35,13 +35,19 @@ class Pattern:
     """load and parse a pattern file into a theme object"""
 
     @classmethod
-    def loads(cls, tomlstring=""):
+    def loads(cls, tomlstring=None):
         """Load a pattern from a given string, and return a new pattern object
 
         doesn't do any processing or applying of the pattern
         """
+        if tomlstring:  # noqa: SIM108
+            toparse = tomlstring
+        else:
+            # tomlkit can't parse None, so if we got it as the default
+            # or if the caller pased None intentionally...
+            toparse = ""
         pattern = cls()
-        pattern.definition = tomlkit.loads(tomlstring)
+        pattern.definition = tomlkit.loads(toparse)
         return pattern
 
     @classmethod

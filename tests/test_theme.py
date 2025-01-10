@@ -104,6 +104,13 @@ def test_loads_empty():
     assert theme.styles == {}
 
 
+def test_loads_none():
+    theme = Theme.loads(None)
+    assert theme.definition == {}
+    assert theme.colors == {}
+    assert theme.styles == {}
+
+
 #
 # test processing of theme elements
 #

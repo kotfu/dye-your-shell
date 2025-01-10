@@ -29,20 +29,19 @@ from dye import Dye
 # test the preview command
 #
 def test_preview(dye_cmdline, capsys):
-    tomlstr = """
+    theme_toml = """
         [styles]
-        # we intentionally don't define a "text" style, or a
-        # "foreground" or a "background" style just
-        # to make sure the preview works without it
+        # have to define a 'text' style or preview doesn't work
+        text = "#f6f6f0 on #222531"
         current_line =  "#f8f8f2 on #44475a"
         comment =  "#6272a4"
     """
-    exit_code = dye_cmdline("preview", tomlstr)
+    exit_code = dye_cmdline("preview", theme_toml)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert out
     assert not err
     # here's a list of strings that should be in the output
-    tests = ["current_line", "comment"]
+    tests = ["current_line", "comment", "text"]
     for test in tests:
         assert test in out

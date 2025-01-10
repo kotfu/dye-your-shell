@@ -24,33 +24,44 @@
 
 import pytest
 
-from dye import Dye, Theme
+from dye import Dye, Theme, Pattern
 
 
 @pytest.fixture
 def dye():
-    thm = Dye()
-    return thm
+    return Dye()
 
 
 @pytest.fixture
 def dye_cmdline(dye, mocker):
-    # defining a fixture that returns a function
-    # allows us to call the fixture and pass parameters to it
-    # ie:
-    #
-    # def test_activate_environment_unset_list(thm_cmdline, capsys):
-    #     tomlstr = """
-    #     [scope.ls]
-    #     agent = "environment_variables"
-    #     # set some environment variables
-    #     unset = ["SOMEVAR", "ANOTHERVAR"]
-    #     export.LS_COLORS = "ace ventura"
-    #     """
-    #     exit_code = thm_cmdline("activate", tomlstr)
-    #     ...
+    '''a fixture that runs dye
 
-    def _executor(cmdline, toml=None):
+    this fixture returns a function, which allows us to call
+    the fixture and pass parameters to it
+
+    def test_activate_environment_unset_list(dye_cmdline, capsys):
+        theme = """
+        [styles]
+        text = "#dddddd on #222222
+        """
+        pattern = """
+        [scope.ls]
+        agent = "environment_variables"
+        # set some environment variables
+        unset = ["SOMEVAR", "ANOTHERVAR"]
+        export.LS_COLORS = "ace ventura"
+        """
+        exit_code = dye_cmdline("apply -c", styles, pattern)
+        ...
+
+    This fixture allows us to pass a theme and a pattern in as strings,
+    and also pass in any 'dye' command line we want. The fixture then
+    patches the styles and pattern into 'dye' and runs the command line.
+
+    Very convenient.
+    '''
+
+    def _executor(cmdline, theme_toml=None, pattern_toml=None):
         if isinstance(cmdline, str):
             argv = cmdline.split(" ")
         elif isinstance(cmdline, list):
@@ -61,10 +72,18 @@ def dye_cmdline(dye, mocker):
             args = dye.argparser().parse_args(argv)
         except SystemExit as err:
             return err.code
-        if toml:
-            dye.theme.loads(toml)
-        # monkeypatch load_from_args() because that won't work so well
-        mocker.patch("dye.Dye.load_theme_from_args", autospec=True)
+
+        # create theme and pattern objects from the toml we were given
+        theme = Theme.loads(theme_toml)
+        pattern = Pattern.loads(pattern_toml)
+
+        # patch Dye methods to return our objects
+        theme_patch = mocker.patch("dye.Dye.load_theme_from_args", autospec=True)
+        theme_patch.return_value = theme
+        pattern_patch = mocker.patch("dye.Dye.load_pattern_from_args", autospec=True)
+        pattern_patch.return_value = pattern
+
+        # now go run the command
         return dye.dispatch("dye", args)
 
     return _executor
