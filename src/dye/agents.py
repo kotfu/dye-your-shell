@@ -29,6 +29,7 @@ import jinja2
 import rich.color
 
 from .exceptions import DyeError, DyeSyntaxError
+from .filters import jinja_filters
 from .utils import AssertBool
 
 
@@ -68,6 +69,7 @@ class AgentBase(abc.ABC, AssertBool):
         glbls["variables"] = pattern.variables
         self.jinja_env = jinja2.Environment()
         self.jinja_env.globals = glbls
+        self.jinja_env.filters = jinja_filters()
 
         self.scope_styles = self._process_scope_styles()
 
@@ -187,9 +189,8 @@ class EnvironmentVariables(AgentBase):
         try:
             exports = self.scopedef["export"]
             for var, value in exports.items():
-                new_var = self.jinja_env.from_string(var).render()
                 new_value = self.jinja_env.from_string(value).render()
-                output.append(f'export {new_var}="{new_value}"')
+                output.append(f'export {var}="{new_value}"')
         except KeyError:
             # no exports
             pass
@@ -783,11 +784,11 @@ class Shell(AgentBase):
     "Execute arbitary shell commands"
 
     def run(self):
-        out = []
+        output = []
         try:
             cmds = self.scopedef["command"]
             for _, cmd in cmds.items():
-                out.append(self.interp.interpolate(cmd))
+                output.append(self.jinja_env.from_string(cmd).render())
         except KeyError:
             pass
-        return "\n".join(out)
+        return "\n".join(output)

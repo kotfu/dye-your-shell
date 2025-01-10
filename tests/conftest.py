@@ -76,6 +76,7 @@ def dye_cmdline(dye, mocker):
         # create theme and pattern objects from the toml we were given
         theme = Theme.loads(theme_toml)
         pattern = Pattern.loads(pattern_toml)
+        pattern.process()
 
         # patch Dye methods to return our objects
         theme_patch = mocker.patch("dye.Dye.load_theme_from_args", autospec=True)

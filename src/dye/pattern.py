@@ -29,6 +29,7 @@ import rich
 import tomlkit
 
 from .exceptions import DyeError, DyeSyntaxError
+from .filters import jinja_filters
 
 
 class Pattern:
@@ -116,6 +117,7 @@ class Pattern:
             .scopes
         """
         jinja_env = jinja2.Environment()
+        jinja_env.filters = jinja_filters()
 
         self._process_colors(jinja_env, theme)
         self._process_styles(jinja_env, theme)
