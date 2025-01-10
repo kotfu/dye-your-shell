@@ -36,7 +36,7 @@ TEMPLATES = [
 
 
 @pytest.mark.parametrize("template, rendered", TEMPLATES)
-def test_export(dye_cmdline, capsys, template, rendered):
+def test_shell(dye_cmdline, capsys, template, rendered):
     """
     pattern_str has two kinds of embedded processing
 
@@ -63,45 +63,13 @@ def test_export(dye_cmdline, capsys, template, rendered):
         """
         f"""
             [scopes.gum]
-            agent = "environment_variables"
-            export.GUM_OPTS = " --cursor-foreground={template}"
-            export.FRED = "{template}"
+            agent = "shell"
+            command.one = "echo {template}"
+            command.two = "printf {template}"
         """
     )
     exit_code = dye_cmdline("apply", None, pattern_str)
     out, _ = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
-    assert f'export GUM_OPTS=" --cursor-foreground={rendered}"\n' in out
-    assert f'export FRED="{rendered}"\n' in out
-
-
-def test_unset_list(dye_cmdline, capsys):
-    pattern_str = """
-        [variables]
-        thevar = "ANOTHERVAR"
-
-        [scopes.ls]
-        agent = "environment_variables"
-        unset = ["SOMEVAR", "{{ variables.thevar }}"]
-        export.LS_COLORS = "ace ventura"
-    """
-    exit_code = dye_cmdline("apply", None, pattern_str)
-    out, err = capsys.readouterr()
-    assert exit_code == Dye.EXIT_SUCCESS
-    assert not err
-    assert "unset SOMEVAR" in out
-    assert "unset ANOTHERVAR" in out
-    assert 'export LS_COLORS="ace ventura"' in out
-
-
-def test_unset_string(dye_cmdline, capsys):
-    pattern_str = """
-        [scopes.unset]
-        agent = "environment_variables"
-        unset = "NOLISTVAR"
-    """
-    exit_code = dye_cmdline("apply", None, pattern_str)
-    out, err = capsys.readouterr()
-    assert exit_code == Dye.EXIT_SUCCESS
-    assert not err
-    assert "unset NOLISTVAR" in out
+    assert f"echo {rendered}" in out
+    assert f"printf {rendered}" in out
