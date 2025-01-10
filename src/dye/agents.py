@@ -29,7 +29,6 @@ import jinja2
 import rich.color
 
 from .exceptions import DyeError, DyeSyntaxError
-from .parsers import StyleParser
 from .utils import AssertBool
 
 
@@ -362,8 +361,7 @@ class LsColors(AgentBase, LsColorsFromStyle):
                 outlist.append(render)
 
         if clear_builtin:
-            style_parser = StyleParser(None, None)
-            style = style_parser.parse_text("default")
+            style = rich.style.Style.parse("default")
             # go through all the color codes, and render them with the
             # 'default' style and add them to the output
             for name, code in self.LS_COLORS_BASE_MAP.items():
