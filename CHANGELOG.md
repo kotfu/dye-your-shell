@@ -1,18 +1,23 @@
 # Changelog
 
-All notable changes to [shell-themer](https://github.com/kotfu/shell-themer)
+All notable changes to [dye-your-shell](https://github.com/kotfu/dye-your-shell)
 are documented in this file.
 
-This project uses [Semantic Versioning](http://semver.org/spec/v2.0.0.html) and the
-format of this file follows recommendations from
+This project uses [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
+and the format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
-
-### Added
+## [0.8.0] - 2025-01-09
 
 ### Changed
+
+- renamed distribution from shell_themer to dye-your-shell
+- rename package from shell_themer to dye (command line tool is now dye)
+- themes have been split into themes (colors and styles), and patterns
+  (scopes and agents)
+- this release is still pretty rough, if you care if it works well,
+  maybe wait for the next one
 
 
 ## [0.7.0] - 2025-01-07
