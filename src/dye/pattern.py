@@ -102,12 +102,12 @@ class Pattern:
     def process(self, theme=None):
         """Process the loaded pattern definition, merging in a theme if given
 
-        populates stuff in the current object:
+        returns nothing, populates stuff in the current object:
 
-        .colors
-        .styles
-        .variables
-        .scopes
+            .colors
+            .styles
+            .variables
+            .scopes
         """
         jinja_env = jinja2.Environment()
 
