@@ -21,6 +21,7 @@ and the format of this file follows recommendations from
 - removed `exa_colors` agent because exa is unmaintained. Use
   [eza](https://eza.rocks/) instead with the `eza` agent
 
+
 ## [0.8.0] - 2025-01-09
 
 ### Changed
