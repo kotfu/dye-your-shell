@@ -40,11 +40,10 @@ from .agents import AgentBase
 from .exceptions import DyeError
 from .pattern import Pattern
 from .theme import Theme
-from .utils import AssertBool
 from .version import version_string
 
 
-class Dye(AssertBool):
+class Dye:
     """parse and translate a theme file for various command line programs"""
 
     EXIT_SUCCESS = 0

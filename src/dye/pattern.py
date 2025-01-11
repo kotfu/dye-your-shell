@@ -67,12 +67,17 @@ class Pattern:
     def __init__(self):
         """Construct a new Pattern object"""
 
-        # the raw toml definition of the theme
+        # the raw toml definition of the pattern
         self.definition = {}
 
+        # these contain the core parts of the pattern,
+        # but they have all been processed through the template
+        # so they can be used by consumers of our class.
+        # these are all set by process()
         self.colors = {}
         self.styles = {}
         self.variables = {}
+        self.scopes = {}
 
     @property
     def description(self):
@@ -122,6 +127,7 @@ class Pattern:
         self._process_colors(jinja_env, theme)
         self._process_styles(jinja_env, theme)
         self._process_variables(jinja_env)
+        self._process_scopes(jinja_env)
 
     def _process_colors(self, jinja_env, theme=None):
         """merge the colors from this pattern and the given theme together
@@ -147,7 +153,10 @@ class Pattern:
         self.colors = merged_colors
 
     def _process_styles(self, jinja_env, theme=None):
-        """process the styles into self.styles"""
+        """merge the styles from this pattern and the given theme together
+
+        this sets self.styles
+        """
         merged_styles = theme.colors.copy() if theme else {}
 
         pattern_styles = {}
@@ -215,23 +224,59 @@ class Pattern:
 
         self.variables = processed_vars
 
+    def _process_scopes(self, jinja_env):
+        """process value in every scope as a template to resolve
+        colors, styles, and variables
+
+        sets self.scopes
+        """
+
+        def render_func(value):
+            template = jinja_env.from_string(value)
+            return template.render(
+                colors=self.colors,
+                styles=self.styles,
+                variables=self.variables,
+            )
+
+        self.scopes = self._process_nested_dict(self.definition["scopes"], render_func)
+
+    def _process_nested_dict(self, dataset, render_func):
+        """recursive function to crawl through a dictionary and
+        call render_func for every nested dict and list item
+
+        """
+        result = {}
+        for key, value in dataset.items():
+            if isinstance(value, dict):
+                result[key] = self._process_nested_dict(value, render_func)
+            elif isinstance(value, list):
+                result[key] = map(render_func, value)
+            else:
+                result[key] = render_func(value)
+        return result
+
     #
     # scope, parsing, and validation methods
     #
     def has_scope(self, scope):
         """Check if the given scope exists."""
-        try:
-            _ = self.definition["scopes"][scope]
-            return True
-        except KeyError:
-            return False
+        return scope in self.definition["scopes"]
+        # try:
+        #     _ = self.definition["scopes"][scope]
+        #     return True
+        # except KeyError:
+        #     return False
 
     def scopedef_for(self, scope):
-        "Extract all the data for a given scope, or an empty dict if there is none"
+        """Extract all the data for a given scope, or an empty dict if there is none
+
+        Templates will have already been rendered on the returned dict
+        """
         scopedef = {}
         # key error if scope doesn't exist, which is fine
         with contextlib.suppress(KeyError):
-            scopedef = self.definition["scopes"][scope]
+            scopedef = self.scopes[scope]
         return scopedef
 
     def is_enabled(self, scope):

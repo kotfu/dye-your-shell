@@ -30,10 +30,9 @@ import rich.color
 
 from .exceptions import DyeError, DyeSyntaxError
 from .filters import jinja_filters
-from .utils import AssertBool
 
 
-class AgentBase(abc.ABC, AssertBool):
+class AgentBase(abc.ABC):
     """Abstract Base Class for all agents
 
     Subclass and implement `run()`. The first line of the class docstring
@@ -179,9 +178,8 @@ class EnvironmentVariables(AgentBase):
                 # process it like a single item instead of trying to process
                 # each letter in the string
                 unsets = [unsets]
-            for unset in unsets:
-                unset_rendered = self.jinja_env.from_string(unset).render()
-                output.append(f"unset {unset_rendered}")
+            for var in unsets:
+                output.append(f"unset {var}")
         except KeyError:
             # no unsets
             pass
@@ -189,8 +187,7 @@ class EnvironmentVariables(AgentBase):
         try:
             exports = self.scopedef["export"]
             for var, value in exports.items():
-                new_value = self.jinja_env.from_string(value).render()
-                output.append(f'export {var}="{new_value}"')
+                output.append(f'export {var}="{value}"')
         except KeyError:
             # no exports
             pass
@@ -788,7 +785,7 @@ class Shell(AgentBase):
         try:
             cmds = self.scopedef["command"]
             for _, cmd in cmds.items():
-                output.append(self.jinja_env.from_string(cmd).render())
+                output.append(cmd)
         except KeyError:
             pass
         return "\n".join(output)
