@@ -36,11 +36,10 @@ def test_agents(dye_cmdline, capsys):
     assert not err
     agents = [
         "environment_variables",
-        "exa_colors",
         "eza",
         "fzf",
         "iterm",
-        "ls_colors",
+        "gnu_ls",
         "shell",
     ]
     for agent in agents:

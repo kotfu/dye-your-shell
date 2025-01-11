@@ -74,3 +74,109 @@ def test_shell(dye_cmdline, capsys, template, rendered):
     assert exit_code == Dye.EXIT_SUCCESS
     assert f"echo {rendered}" in out
     assert f"printf {rendered}" in out
+
+
+###
+###
+###
+#
+# test the shell agent
+#
+def test_shell(dye_cmdline, capsys):
+    tomlstr = """
+        [variables]
+        greeting = "hello there"
+
+        [styles]
+        purple = "#A020F0"
+
+        [scope.shortcut]
+        agent = "shell"
+        command.first = "echo {var:greeting}"
+        command.next = "echo general kenobi"
+        command.last = "echo {style:purple}"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    assert out == "echo hello there\necho general kenobi\necho #a020f0\n"
+
+
+def test_shell_ansi(dye_cmdline, capsys):
+    tomlstr = """
+        [variables]
+        greeting = "hello there"
+
+        [styles]
+        purple = "#A020F0"
+
+        [scope.shortcut]
+        agent = "shell"
+        command.first = "echo {style:purple:ansi_on}{var:greeting}{style:purple:ansi_off}"
+    """  # noqa: E501
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    assert out == "echo \x1b[38;2;160;32;240mhello there\x1b[0m\n"
+
+
+def test_shell_enabled_if(dye_cmdline, capsys):
+    # we have separate tests for enabled_if, but since it's super useful with the
+    # shell agent, i'm including another test here
+    tomlstr = """
+        [scope.shortcut]
+        agent = "shell"
+        enabled_if = "[[ 1 == 0 ]]"
+        command.first = "shortcuts run 'My Shortcut Name'"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    assert not out
+
+
+def test_shell_multiline(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.multiline]
+        agent = "shell"
+        command.long = '''
+echo hello there
+echo general kenobi
+if [[ 1 == 1 ]]; then
+  echo "yes sir"
+fi
+'''
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    # yes we have two line breaks at the end of what we expect
+    # because there are single line commands, we have to output
+    # a newline after the command
+    # but on multiline commands that might give an extra newline
+    # at the end of the day, that makes zero difference in
+    # functionality, but it matters for testing, hence this note
+    expected = """echo hello there
+echo general kenobi
+if [[ 1 == 1 ]]; then
+  echo "yes sir"
+fi
+
+"""
+    assert out == expected
+
+
+def test_shell_no_commands(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.shortcut]
+        agent = "shell"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    assert not out

@@ -150,3 +150,172 @@ def test_cursor_style(dye_cmdline, capsys):
     assert exit_code == Dye.EXIT_SUCCESS
     assert out.count("\n") == 1
     assert f"SetColors=curbg={pink}" in out
+
+
+################
+################
+#
+# test the iterm agent
+#
+def test_iterm_fg_bg(dye_cmdline, capsys):
+    tomlstr = """
+        [styles]
+        foreground = "#ffeebb"
+        background = "#221122"
+
+        [scope.iterm]
+        agent = "iterm"
+        style.foreground = "foreground"
+        style.background = "background"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 2
+    assert lines[0] == r'builtin echo -en "\e]1337;SetColors=fg=ffeebb\a"'
+    assert lines[1] == r'builtin echo -en "\e]1337;SetColors=bg=221122\a"'
+
+
+def test_iterm_bg(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        agent = "iterm"
+        style.background = "#b2cacd"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 1
+    assert lines[0] == r'builtin echo -en "\e]1337;SetColors=bg=b2cacd\a"'
+
+
+def test_iterm_profile(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        agent = "iterm"
+        cursor = "box"
+        style.cursor = "#b2cacd"
+        profile = "myprofilename"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    # we have multiple directives in this scope, but the profile directive
+    # should always come out first
+    assert len(lines) == 3
+    assert lines[0] == r'builtin echo -en "\e]1337;SetProfile=myprofilename\a"'
+
+
+def test_iterm_cursor(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        agent = "iterm"
+        cursor = "underline"
+        style.cursor = "#cab2cd"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 2
+    assert lines[0] == r'builtin echo -en "\e]1337;CursorShape=2\a"'
+    assert lines[1] == r'builtin echo -en "\e]1337;SetColors=curbg=cab2cd\a"'
+
+
+CURSOR_SHAPES = [
+    ("block", "0"),
+    ("box", "0"),
+    ("vertical_bar", "1"),
+    ("vertical", "1"),
+    ("bar", "1"),
+    ("pipe", "1"),
+    ("underline", "2"),
+]
+
+
+@pytest.mark.parametrize("name, code", CURSOR_SHAPES)
+def test_iterm_cursor_shape(dye_cmdline, capsys, name, code):
+    tomlstr = f"""
+        [scope.iterm]
+        agent = "iterm"
+        cursor = "{name}"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 1
+    # fr'...' lets us use f string interpolation, but the r disables
+    # escape processing, just what we need for this test
+    assert lines[0] == rf'builtin echo -en "\e]1337;CursorShape={code}\a"'
+
+
+def test_iterm_cursor_profile(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        agent = "iterm"
+        profile = "smoov"
+        cursor = "profile"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 2
+    # fr'...' lets us use f string interpolation, but the r disables
+    # escape processing, just what we need for this test
+    assert lines[1] == r'builtin echo -en "\e[0q"'
+
+
+def test_iterm_cursor_shape_invalid(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        agent = "iterm"
+        cursor = "ibeam"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_ERROR
+    assert not out
+    assert "unknown cursor" in err
+
+
+def test_item_tab_default(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        agent = "iterm"
+        style.tab = "default"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 1
+    assert lines[0] == r'builtin echo -en "\e]6;1;bg;*;default\a"'
+
+
+def test_iterm_tab_color(dye_cmdline, capsys):
+    tomlstr = """
+        [scope.iterm]
+        agent = "iterm"
+        style.tab = "#337799"
+    """
+    exit_code = dye_cmdline("activate", tomlstr)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 3
+    assert lines[0] == r'builtin echo -en "\e]6;1;bg;red;brightness;51\a"'
+    assert lines[1] == r'builtin echo -en "\e]6;1;bg;green;brightness;119\a"'
+    assert lines[2] == r'builtin echo -en "\e]6;1;bg;blue;brightness;153\a"'

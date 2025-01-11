@@ -12,8 +12,14 @@ and the format of this file follows recommendations from
 
 ### Changed
 
+- `ls_colors` agent renamed to `gnu_ls`
+
 ### Added
 
+### Removed
+
+- removed `exa_colors` agent because exa is unmaintained. Use
+  [eza](https://eza.rocks/) instead with the `eza` agent
 
 ## [0.8.0] - 2025-01-09
 
