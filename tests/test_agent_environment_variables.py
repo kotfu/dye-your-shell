@@ -69,10 +69,12 @@ def test_export(dye_cmdline, capsys, template, rendered):
         """
     )
     exit_code = dye_cmdline("apply", None, pattern_str)
-    out, _ = capsys.readouterr()
+    out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
-    assert f'export GUM_OPTS=" --cursor-foreground={rendered}"\n' in out
-    assert f'export FRED="{rendered}"\n' in out
+    assert not err
+    lines = out.splitlines()
+    assert lines[0] == f'export GUM_OPTS=" --cursor-foreground={rendered}"'
+    assert lines[1] == f'export FRED="{rendered}"'
 
 
 def test_unset_list(dye_cmdline, capsys):
@@ -89,9 +91,10 @@ def test_unset_list(dye_cmdline, capsys):
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
-    assert "unset SOMEVAR" in out
-    assert "unset ANOTHERVAR" in out
-    assert 'export LS_COLORS="ace ventura"' in out
+    lines = out.splitlines()
+    assert lines[0] == "unset SOMEVAR"
+    assert lines[1] == "unset ANOTHERVAR"
+    assert lines[2] == 'export LS_COLORS="ace ventura"'
 
 
 def test_unset_string(dye_cmdline, capsys):
@@ -104,4 +107,5 @@ def test_unset_string(dye_cmdline, capsys):
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
-    assert "unset NOLISTVAR" in out
+    lines = out.splitlines()
+    assert lines[0] == "unset NOLISTVAR"
