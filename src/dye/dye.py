@@ -284,7 +284,7 @@ class Dye:
             else:
                 print(f"{prog}: {args.command}: unknown command", file=sys.stderr)
                 exit_code = self.EXIT_USAGE
-        except DyeError as err:
+        except (DyeError, DyeSyntaxError) as err:
             self.error_console.print(f"{prog}: {err}")
             exit_code = self.EXIT_ERROR
 
