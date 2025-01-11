@@ -132,8 +132,6 @@ def test_loads_styles(static_pat):
 # these tests just ensure the data is extracted propertly
 # from the toml
 #
-
-
 def test_description(static_pat):
     assert static_pat.description == "Oxygen is a pattern with lots of space"
 
@@ -167,6 +165,23 @@ def test_requires_theme_not_present():
     tomlstr = """description = 'hi'"""
     pat = Pattern.loads(tomlstr)
     assert pat.requires_theme is None
+
+
+#
+# test scope related methods
+#
+def test_has_scope():
+    pattern_toml = """
+        [scopes.qqq]
+        agent = "iterm"
+        style.foreground = "blue"
+        style.background = "white"
+    """
+    pattern = Pattern.loads(pattern_toml)
+    pattern.process()
+
+    assert pattern.has_scope("qqq")
+    assert not pattern.has_scope("fred")
 
 
 ##################
@@ -326,52 +341,6 @@ def test_requires_theme_not_present():
 # #
 # # test variable related methods, including interpolation
 # #
-
-
-# #
-# # test scope, parsing, and validation methods
-# #
-# def test_scopedef(theme):
-#     tomlstr = """
-#         [scope.iterm]
-#         agent = "iterm"
-#         style.foreground = "blue"
-#         style.background = "white"
-#     """
-#     theme.loads(tomlstr)
-#     scopedef = theme.scopedef_for("iterm")
-#     assert isinstance(scopedef, dict)
-#     assert scopedef["agent"] == "iterm"
-#     assert len(scopedef) == 2
-#     # TODO this should be tested on the GeneratorBase, not here
-#     # styles = thm.styles_from(scopedef)
-#     # assert len(styles) == 2
-#     # assert isinstance(styles["foreground"], rich.style.Style)
-
-
-# def test_scopedef_notfound(theme):
-#     tomlstr = """
-#         [scope.iterm]
-#         agent = "iterm"
-#         style.foreground = "blue"
-#         style.background = "white"
-#     """
-#     theme.loads(tomlstr)
-#     scopedef = theme.scopedef_for("notfound")
-#     assert isinstance(scopedef, dict)
-#     assert scopedef == {}
-
-
-# def test_has_scope(theme):
-#     tomlstr = """
-#         [scope.qqq]
-#         agent = "iterm"
-#         style.foreground = "blue"
-#         style.background = "white"
-#     """
-#     theme.loads(tomlstr)
-#     assert theme.has_scope("qqq")
-#     assert not theme.has_scope("fred")
 
 
 # #

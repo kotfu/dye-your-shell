@@ -276,18 +276,7 @@ class Pattern:
         # except KeyError:
         #     return False
 
-    def scopedef_for(self, scope):
-        """Extract all the data for a given scope, or an empty dict if there is none
-
-        Templates will have already been rendered on the returned dict
-        """
-        scopedef = {}
-        # key error if scope doesn't exist, which is fine
-        with contextlib.suppress(KeyError):
-            scopedef = self.scopes[scope]
-        return scopedef
-
-    def is_enabled(self, scope):
+    def is_scope_enabled(self, scope):
         """Determine if the scope is enabled
         The default is that the scope is enabled
 
@@ -299,8 +288,10 @@ class Pattern:
             enabled_if = "{shell cmd}" returns a non-zero exit code
 
         if 'enabled = false' is present, then enabled_if is not checked
+
+        Throws KeyError if scope does not exist
         """
-        scopedef = self.scopedef_for(scope)
+        scopedef = self.scopes[scope]
         with contextlib.suppress(KeyError):
             enabled = scopedef["enabled"]
             if not isinstance(enabled, bool):

@@ -388,7 +388,7 @@ class Dye:
             # checking here in case they supplied a scope on the command line that
             # doesn't exist
             if pattern.has_scope(scope):
-                scopedef = pattern.scopedef_for(scope)
+                scopedef = pattern.scopes[scope]
                 # find the agent for this scope
                 try:
                     agent_name = scopedef["agent"]
@@ -396,7 +396,7 @@ class Dye:
                     errmsg = f"scope '{scope}' does not have an agent."
                     raise DyeError(errmsg) from exc
                 # check if the scope is disabled
-                if not pattern.is_enabled(scope):
+                if not pattern.is_scope_enabled(scope):
                     if args.comment:
                         print(f"# scope '{scope}' skipped because it is not enabled")
                     continue
