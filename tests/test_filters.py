@@ -28,8 +28,9 @@ has everything in it
 """
 
 import pytest
+import rich
 
-from dye import Dye, Pattern
+from dye import Dye
 from dye.filters import jinja_filters
 
 #
@@ -142,9 +143,6 @@ def test_filters(dye_cmdline, capsys, template, rendered):
     exit_code = dye_cmdline("apply", None, pattern_str)
     out, _ = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
-    # pattern = Pattern.loads(pattern_str)
-    # pattern.process()
-    # expected = pattern.definition
     assert out == f"echo {rendered}\n"
 
 
@@ -158,28 +156,30 @@ def test_ansi_on_off(dye_cmdline, capsys):
     Second, jinja is going to process the whole string and pick up the
     {{ colors.background }} thing
     """
-    pattern_str = (
-        """
-            [colors]
-            background = "#222222"
+    pattern_str = """
+        [colors]
+        background = "#222222"
 
-            [styles]
-            dark_orange = "#ff6c1c on {{ colors.background }}"
-            pink = "bold #df769b"
-            cyan = "#09ecff on default"
-            default = "default"
-            nothing = ""
+        [styles]
+        dark_orange = "#ff6c1c on {{ colors.background }}"
+        pink = "bold #df769b"
+        cyan = "#09ecff on default"
+        default = "default"
+        nothing = ""
 
-            [variables]
-            something = "Hello There."
-        """
-        f"""
-            [scopes.gum]
-            agent = "environment_variables"
-            export.GUM_OPTS = " --cursor-foreground="
-        """
-    )
-    exit_code = dye_cmdline("apply", None, pattern_str)
+        [variables]
+        something = "Hello There."
+
+        [scopes.opts]
+        agent = "environment_variables"
+        export.OPTS = "--prompt={{dark_orange|ansi_on}}>>{{dark_orange|ansi_off}}"
+    """
+    exit_code = dye_cmdline("--force-color apply", None, pattern_str)
     out, _ = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
-    assert out == f'export GUM_OPTS=" --cursor-foreground={rendered}"\n'
+    # we aren't going to validate what the ansi codes are,
+    # we'll just compare the plain string to whatever
+    # is returned and make sure the returned thing is longer
+    expected_plaintext = 'export OPTS="--prompt=>>"\n'
+    assert len(out) > len(expected_plaintext)
+    assert out == expected_plaintext

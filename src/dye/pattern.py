@@ -239,7 +239,12 @@ class Pattern:
                 variables=self.variables,
             )
 
-        self.scopes = self._process_nested_dict(self.definition["scopes"], render_func)
+        try:
+            scopes = self.definition["scopes"]
+            self.scopes = self._process_nested_dict(scopes, render_func)
+        except KeyError:
+            # no [scopes] present
+            self.scopes = {}
 
     def _process_nested_dict(self, dataset, render_func):
         """recursive function to crawl through a dictionary and
@@ -252,8 +257,11 @@ class Pattern:
                 result[key] = self._process_nested_dict(value, render_func)
             elif isinstance(value, list):
                 result[key] = map(render_func, value)
-            else:
+            elif isinstance(value, str):
                 result[key] = render_func(value)
+            else:
+                # don't try and render non-string values
+                result[key] = value
         return result
 
     #

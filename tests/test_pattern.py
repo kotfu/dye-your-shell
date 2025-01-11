@@ -61,6 +61,11 @@ cursor = "block"
 [scopes.nocolor]
 agent = "environment_variables"
 export.NO_COLOR = "true"
+
+[scopes.shell]
+agent = "shell"
+is_enabled = false
+command.dontrun = "echo qqq"
 """
 
 
