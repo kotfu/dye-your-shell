@@ -90,7 +90,7 @@ class AgentBase(abc.ABC):
 class LsColorsFromStyle:
     """Generator mixin to create ls_colors type styles"""
 
-    def ls_colors_from_style(self, name, style, mapp, allow_unknown=False, **msgdata):
+    def ls_colors_from_style(self, name, style, mapp, scope, allow_unknown=False):
         """create an entry suitable for LS_COLORS from a style
 
         name should be a valid LS_COLORS entry, could be a code representing
@@ -125,8 +125,7 @@ class LsColorsFromStyle:
                 # they used a style for a file attribute that isn't in the map
                 # which is not allowed
                 raise DyeError(
-                    f"unknown style '{name}' while processing"
-                    f" scope '{msgdata['scope']}'"
+                    f"unknown style '{name}' while processing" f" scope '{scope}'"
                 ) from exc
 
         if style.color.type == rich.color.ColorType.DEFAULT:
@@ -482,8 +481,8 @@ class GnuLs(AgentBase, LsColorsFromStyle):
                     name,
                     style,
                     self.LS_COLORS_MAP,
+                    self.scope,
                     allow_unknown=False,
-                    scope=self.scope,
                 )
                 havecodes.append(mapcode)
                 outlist.append(render)
@@ -508,7 +507,6 @@ class GnuLs(AgentBase, LsColorsFromStyle):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = self.jinja_env.from_string(varname).render()
         except KeyError:
             varname = "LS_COLORS"
 

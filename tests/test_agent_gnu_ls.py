@@ -23,12 +23,15 @@
 # pylint: disable=missing-module-docstring, unused-variable
 
 import pytest
+import rich
 
-from dye import Dye
+import dye
+from dye import Dye, Pattern
 
 #
 # test the gnu_ls agent
 #
+
 # we only reallly have to test that the style name maps to the right code in ls_colors
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
 # so we don't really need to test much of that
@@ -59,25 +62,33 @@ STYLE_TO_LSCOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_LSCOLORS)
 def test_ls_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = dye.agents.LsColors(None, None, None, None, None)
-    code, render = genny.ls_colors_from_style(
+    # we have to have a pattern in order for the agent to initialize
+    # so lets make a fake one
+    pattern_str = """
+    [scopes.myscope]
+    agent = "gnu_ls"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    agent = dye.agents.GnuLs("myscope", pattern)
+    # now we can go test the render
+    code, render = agent.ls_colors_from_style(
         name,
         style,
-        genny.LS_COLORS_MAP,
+        agent.LS_COLORS_MAP,
+        "myscope",
         allow_unknown=False,
-        prog="prog",
-        scope="scope",
     )
     assert render == expected
     assert code == expected[0:2]
 
 
 def test_ls_colors_no_styles(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.lsc]
-        agent = "ls_colors"
+    pattern_str = """
+        [scopes.lsc]
+        agent = "gnu_ls"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
@@ -85,12 +96,12 @@ def test_ls_colors_no_styles(dye_cmdline, capsys):
 
 
 def test_ls_colors_unknown_style(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.lsc]
-        agent = "ls_colors"
-        style.bundleid = "default"
+    pattern_str = """
+        [scopes.lsc]
+        agent = "gnu_ls"
+        styles.bundleid = "default"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_ERROR
     assert "unknown style" in err
@@ -98,13 +109,13 @@ def test_ls_colors_unknown_style(dye_cmdline, capsys):
 
 
 def test_ls_colors_environment_variable(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.lsc]
-        agent = "ls_colors"
+    pattern_str = """
+        [scopes.lsc]
+        agent = "gnu_ls"
         environment_variable = "OTHER_LS_COLOR"
-        style.file = "default"
+        styles.file = "default"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
@@ -112,19 +123,19 @@ def test_ls_colors_environment_variable(dye_cmdline, capsys):
 
 
 def test_ls_colors_styles_variables(dye_cmdline, capsys):
-    tomlstr = """
+    pattern_str = """
         [variables]
         pinkvar = "magenta3"
 
         [styles]
         warning = "yellow on red"
 
-        [scope.lsc]
-        agent = "ls_colors"
-        style.file = "warning"
-        style.directory = "{var:pinkvar}"
+        [scopes.lsc]
+        agent = "gnu_ls"
+        styles.file = "{{styles.warning}}"
+        styles.directory = "{{variables.pinkvar}}"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
@@ -132,13 +143,13 @@ def test_ls_colors_styles_variables(dye_cmdline, capsys):
 
 
 def test_ls_colors_clear_builtin(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.lsc]
-        agent = "ls_colors"
+    pattern_str = """
+        [scopes.lsc]
+        agent = "gnu_ls"
         clear_builtin = true
-        style.directory = "bright_blue"
+        styles.directory = "bright_blue"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
@@ -151,13 +162,13 @@ def test_ls_colors_clear_builtin(dye_cmdline, capsys):
 
 
 def test_ls_colors_clear_builtin_not_boolean(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.lsc]
-        agent = "ls_colors"
+    pattern_str = """
+        [scopes.lsc]
+        agent = "gnu_ls"
         clear_builtin = "error"
         style.directory = "bright_blue"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_ERROR
     assert not out
