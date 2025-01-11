@@ -337,8 +337,7 @@ class Fzf(AgentBase):
 
         for key, value in opts.items():
             if isinstance(value, str):
-                interp_value = self.jinja_env.from_string(value).render()
-                optstr += f" {key}='{interp_value}'"
+                optstr += f" {key}='{value}'"
             elif isinstance(value, bool) and value:
                 optstr += f" {key}"
 
@@ -360,7 +359,6 @@ class Fzf(AgentBase):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = self.jinja_env.from_string(varname).render()
         except KeyError:
             varname = "FZF_DEFAULT_OPTS"
         print(f'export {varname}="{optstr}{colorstr}"')

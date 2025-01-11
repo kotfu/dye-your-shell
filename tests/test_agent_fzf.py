@@ -23,8 +23,10 @@
 # pylint: disable=missing-module-docstring, unused-variable
 
 import pytest
+import rich
 
-from dye import Dye
+import dye
+from dye import Dye, Pattern
 
 #
 # test the fzf agent
@@ -45,8 +47,16 @@ ATTRIBS_TO_FZF = [
 @pytest.mark.parametrize("styledef, fzf", ATTRIBS_TO_FZF)
 def test_fzf_attribs_from_style(styledef, fzf):
     style = rich.style.Style.parse(styledef)
-    genny = dye.agents.Fzf(None, None, None, None, None)
-    assert fzf == genny._fzf_attribs_from_style(style)
+    # we have to have a pattern in order for the agent to initialize
+    # so lets make a fake one
+    pattern_str = """
+    [scopes.myscope]
+    agent = "fzf"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    agent = dye.agents.Fzf("myscope", pattern)
+    assert fzf == agent._fzf_attribs_from_style(style)
 
 
 STYLE_TO_FZF = [
@@ -76,27 +86,35 @@ STYLE_TO_FZF = [
 @pytest.mark.parametrize("name, styledef, fzf", STYLE_TO_FZF)
 def test_fzf_from_style(name, styledef, fzf):
     style = rich.style.Style.parse(styledef)
-    genny = dye.agents.Fzf(None, None, None, None, None)
-    assert fzf == genny._fzf_from_style(name, style)
+    # we have to have a pattern in order for the agent to initialize
+    # so lets make a fake one
+    pattern_str = """
+    [scopes.myscope]
+    agent = "fzf"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    agent = dye.agents.Fzf("myscope", pattern)
+    assert fzf == agent._fzf_from_style(name, style)
 
 
 def test_fzf(dye_cmdline, capsys):
-    tomlstr = """
+    pattern_str = """
         [styles]
         purple = "#7060eb"
 
         [variables]
         bstyle = "rounded"
 
-        [scope.fzf]
+        [scopes.fzf]
         agent = "fzf"
         environment_variable = "QQQ"
-        opt."+i" = true
-        opt.--border = "{var:bstyle}"
-        style.prompt = "magenta3"
-        style.info = "purple"
+        opts."+i" = true
+        opts.--border = "{{variables.bstyle}}"
+        styles.prompt = "magenta3"
+        styles.info = "{{styles.purple}}"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
@@ -108,29 +126,27 @@ def test_fzf(dye_cmdline, capsys):
 
 
 def test_fzf_no_opts(dye_cmdline, capsys):
-    tomlstr = """
-        [variables]
-        varname = "ZZ"
-
-        [scope.fzf]
+    pattern_str = """
+        [scopes.fzf]
         agent = "fzf"
-        environment_variable = "Q{var:varname}QQ"
+        environment_variable = "QQQ"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
-    assert out == """export QZZQQ=""\n"""
+    assert out == """export QQQ=""\n"""
 
 
 def test_fzf_no_varname(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.fzf]
+    pattern_str = """
+        [scopes.fzf]
         agent = "fzf"
-        opt."+i" = true
-        opt.--border = "rounded"
+        opts."+i" = true
+        opts.--border = "rounded"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
     assert "FZF_DEFAULT_OPTS" in out
