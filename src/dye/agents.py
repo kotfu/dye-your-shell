@@ -25,11 +25,9 @@ import abc
 import contextlib
 import re
 
-import jinja2
 import rich.color
 
 from .exceptions import DyeError, DyeSyntaxError
-from .filters import jinja_filters
 
 
 class AgentBase(abc.ABC):
@@ -55,21 +53,12 @@ class AgentBase(abc.ABC):
         # make a registry of subclasses as they are defined
         cls.classmap[cls._name_of(cls.__name__)] = cls
 
-    def __init__(self, scope, scopedef, pattern):
+    def __init__(self, scope, pattern):
         super().__init__()
         self.agent = self._name_of(self.__class__.__name__)
         self.scope = scope
-        self.scopedef = scopedef
+        self.scopedef = pattern.scopes[scope]
         self.pattern = pattern
-
-        # set up environment for rendering
-        glbls = {}
-        glbls["styles"] = pattern.styles
-        glbls["variables"] = pattern.variables
-        self.jinja_env = jinja2.Environment()
-        self.jinja_env.globals = glbls
-        self.jinja_env.filters = jinja_filters()
-
         self.scope_styles = self._process_scope_styles()
 
     def _process_scope_styles(self):
@@ -81,16 +70,7 @@ class AgentBase(abc.ABC):
 
         processed_styles = {}
         for name, styledef in raw_styles.items():
-            style = None
-            # render template
-            rendered = self.jinja_env.from_string(styledef).render()
-            # do lookup in self.styles
-            with contextlib.suppress(KeyError):
-                style = self.pattern.styles[rendered]
-            # rich parse
-            if not style:
-                style = rich.style.Style.parse(rendered)
-            processed_styles[name] = style
+            processed_styles[name] = rich.style.Style.parse(styledef)
 
         return processed_styles
 
@@ -485,7 +465,7 @@ class Iterm(AgentBase):
 
     def _iterm_tab(self, output):
         """add commands to output to change the tab or window title background color"""
-        try:
+        with contextlib.suppress(KeyError):
             style = self.scope_styles["tab"]
             if style.color.is_default:
                 # set the command to change the tab color back to the default,
@@ -497,6 +477,8 @@ class Iterm(AgentBase):
                 output.append(cmd)
             else:
                 clr = style.color.get_truecolor()
+                # in iterm you have to send different escape sequences
+                #
                 # gotta use raw strings here so the \e and \a don't get
                 # interpreted by python, they need to be passed through
                 # to the echo command
@@ -512,8 +494,6 @@ class Iterm(AgentBase):
                 cmd += f"{clr.blue}"
                 cmd += r'\a"'
                 output.append(cmd)
-        except KeyError:
-            pass
 
     CURSOR_MAP = {
         "block": "0",
@@ -554,7 +534,7 @@ class Iterm(AgentBase):
         self._iterm_render_style(output, "cursor", "curbg")
 
     def _iterm_render_style(self, output, style_name, iterm_key):
-        """print an iterm escape sequence to change the color palette"""
+        """append an iterm escape sequence to change the color palette to output"""
         try:
             style = self.scope_styles[style_name]
             clr = style.color.get_truecolor()

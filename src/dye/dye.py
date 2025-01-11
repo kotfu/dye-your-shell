@@ -408,7 +408,7 @@ class Dye:
                     # go get the apropriate class for the agent
                     agent_cls = AgentBase.classmap[agent_name]
                     # initialize the class with the scope and scope definition
-                    agent = agent_cls(scope, scopedef, pattern)
+                    agent = agent_cls(scope, pattern)
                     # run the agent, printing any shell commands it returns
                     output = agent.run()
                     if output:
