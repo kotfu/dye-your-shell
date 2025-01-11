@@ -194,318 +194,6 @@ class EnvironmentVariables(AgentBase):
         return "\n".join(output)
 
 
-class Fzf(AgentBase):
-    "Set fzf options and environment variables"
-
-    def run(self) -> str:
-        """render attribs into a shell statement to set an environment variable"""
-        optstr = ""
-        # process all the command line options
-        try:
-            opts = self.scopedef["opts"]
-        except KeyError:
-            opts = {}
-
-        for key, value in opts.items():
-            if isinstance(value, str):
-                interp_value = self.jinja_env.from_string(value).render()
-                optstr += f" {key}='{interp_value}'"
-            elif isinstance(value, bool) and value:
-                optstr += f" {key}"
-
-        # process all the styles
-        colors = []
-        # then add them back
-        for name, style in self.scope_styles.items():
-            colors.append(self._fzf_from_style(name, style))
-        # turn off all the colors, and add our color strings
-        try:
-            colorbase = f"{self.scopedef['colorbase']},"
-        except KeyError:
-            colorbase = ""
-        if colorbase or colors:
-            colorstr = f" --color='{colorbase}{','.join(colors)}'"
-        else:
-            colorstr = ""
-
-        # figure out which environment variable to put it in
-        try:
-            varname = self.scopedef["environment_variable"]
-            varname = self.jinja_env.from_string(varname).render()
-        except KeyError:
-            varname = "FZF_DEFAULT_OPTS"
-        print(f'export {varname}="{optstr}{colorstr}"')
-
-    def _fzf_from_style(self, name, style):
-        """turn a rich.style into a valid fzf color"""
-        # fzf has different color names for foreground and background items
-        # we combine them
-        name_map = {
-            "text": ("fg", "bg"),
-            "current-line": ("fg+", "bg+"),
-            "selected-line": ("selected-fg", "selected-bg"),
-            "preview": ("preview-fg", "preview-bg"),
-        }
-
-        fzf_colors = []
-        if name in name_map:
-            fgname, bgname = name_map[name]
-            if style.color:
-                fzfc = self._fzf_color_from_rich_color(style.color)
-                fzfa = self._fzf_attribs_from_style(style)
-                fzf_colors.append(f"{fgname}:{fzfc}:{fzfa}")
-            if style.bgcolor:
-                fzfc = self._fzf_color_from_rich_color(style.bgcolor)
-                fzf_colors.append(f"{bgname}:{fzfc}")
-        else:
-            # we only use the foreground color of the style, and ignore
-            # any background color specified by the style
-            if style.color:
-                fzfc = self._fzf_color_from_rich_color(style.color)
-                fzfa = self._fzf_attribs_from_style(style)
-                fzf_colors.append(f"{name}:{fzfc}:{fzfa}")
-
-        return ",".join(fzf_colors)
-
-    def _fzf_color_from_rich_color(self, color):
-        """turn a rich.color into it's fzf equivilent"""
-        fzf = ""
-
-        if color.type == rich.color.ColorType.DEFAULT:
-            fzf = "-1"
-        elif color.type == rich.color.ColorType.STANDARD:
-            # python rich uses underscores, fzf uses dashes
-            fzf = str(color.number)
-        elif color.type == rich.color.ColorType.EIGHT_BIT:
-            fzf = str(color.number)
-        elif color.type == rich.color.ColorType.TRUECOLOR:
-            fzf = color.triplet.hex
-        return fzf
-
-    def _fzf_attribs_from_style(self, style):
-        attribs = "regular"
-        if style.bold:
-            attribs += ":bold"
-        if style.underline:
-            attribs += ":underline"
-        if style.reverse:
-            attribs += ":reverse"
-        if style.dim:
-            attribs += ":dim"
-        if style.italic:
-            attribs += ":italic"
-        if style.strike:
-            attribs += ":strikethrough"
-        return attribs
-
-
-class LsColors(AgentBase, LsColorsFromStyle):
-    "Create LS_COLORS environment variable for use with GNU ls"
-
-    LS_COLORS_BASE_MAP = {
-        # map both a friendly name and the "real" name
-        "text": "no",
-        "file": "fi",
-        "directory": "di",
-        "symlink": "ln",
-        "multi_hard_link": "mh",
-        "pipe": "pi",
-        "socket": "so",
-        "door": "do",
-        "block_device": "bd",
-        "character_device": "cd",
-        "broken_symlink": "or",
-        "missing_symlink_target": "mi",
-        "setuid": "su",
-        "setgid": "sg",
-        "sticky": "st",
-        "other_writable": "ow",
-        "sticky_other_writable": "tw",
-        "executable_file": "ex",
-        "file_with_capability": "ca",
-    }
-    # this map allows you to either use the 'native' color code, or the
-    # 'friendly' name defined by shell-themer
-    LS_COLORS_MAP = {}
-    for friendly, actual in LS_COLORS_BASE_MAP.items():
-        LS_COLORS_MAP[friendly] = actual
-        LS_COLORS_MAP[actual] = actual
-
-    def run(self):
-        "Render a LS_COLORS variable suitable for GNU ls"
-        outlist = []
-        havecodes = []
-        # figure out if we are clearing builtin styles
-        try:
-            clear_builtin = self.scopedef["clear_builtin"]
-            if not isinstance(clear_builtin, bool):
-                raise DyeSyntaxError(
-                    f"scope '{self.scope}' requires 'clear_builtin' to be true or false"
-                )
-        except KeyError:
-            clear_builtin = False
-
-        # iterate over the styles given in our configuration
-        for name, style in self.scope_styles.items():
-            if style:
-                mapcode, render = self.ls_colors_from_style(
-                    name,
-                    style,
-                    self.LS_COLORS_MAP,
-                    allow_unknown=False,
-                    scope=self.scope,
-                )
-                havecodes.append(mapcode)
-                outlist.append(render)
-
-        if clear_builtin:
-            style = rich.style.Style.parse("default")
-            # go through all the color codes, and render them with the
-            # 'default' style and add them to the output
-            for name, code in self.LS_COLORS_BASE_MAP.items():
-                if code not in havecodes:
-                    _, render = self.ls_colors_from_style(
-                        name,
-                        style,
-                        self.LS_COLORS_MAP,
-                        allow_unknown=False,
-                        scope=self.scope,
-                    )
-                    outlist.append(render)
-
-        # process the filesets
-
-        # figure out which environment variable to put it in
-        try:
-            varname = self.scopedef["environment_variable"]
-            varname = self.jinja_env.from_string(varname).render()
-        except KeyError:
-            varname = "LS_COLORS"
-
-        # even if outlist is empty, we have to set the variable, because
-        # when we are switching a theme, there may be contents in the
-        # environment variable already, and we need to tromp over them
-        # we chose to set the variable to empty instead of unsetting it
-        return f'''export {varname}="{':'.join(outlist)}"'''
-
-
-class ExaColors(AgentBase, LsColorsFromStyle):
-    "Create EXA_COLORS environment variable for use with ls replacement exa"
-
-    EXA_COLORS_BASE_MAP = {
-        # map both a friendly name and the "real" name
-        "text": "no",
-        "file": "fi",
-        "directory": "di",
-        "symlink": "ln",
-        "multi_hard_link": "mh",
-        "pipe": "pi",
-        "socket": "so",
-        "door": "do",
-        "block_device": "bd",
-        "character_device": "cd",
-        "broken_symlink": "or",
-        "missing_symlink_target": "mi",
-        "setuid": "su",
-        "setgid": "sg",
-        "sticky": "st",
-        "other_writable": "ow",
-        "sticky_other_writable": "tw",
-        "executable_file": "ex",
-        "file_with_capability": "ca",
-        "perms_user_read": "ur",
-        "perms_user_write": "uw",
-        "perms_user_execute_files": "ux",
-        "perms_user_execute_directories": "ue",
-        "perms_group_read": "gr",
-        "perms_group_write": "gw",
-        "perms_group_execute": "gx",
-        "perms_other_read": "tr",
-        "perms_other_write": "tw",
-        "perms_other_execute": "tx",
-        "perms_suid_files": "su",
-        "perms_sticky_directories": "sf",
-        "perms_extended_attribute": "xa",
-        "size_number": "sn",
-        "size_unit": "sb",
-        "df": "df",
-        "ds": "ds",
-        "uu": "uu",
-        "un": "un",
-        "gu": "gu",
-        "gn": "gn",
-        "lc": "lc",
-        "lm": "lm",
-        "ga": "ga",
-        "gm": "gm",
-        "gd": "gd",
-        "gv": "gv",
-        "gt": "gt",
-        "punctuation": "xx",
-        "date_time": "da",
-        "in": "in",
-        "bl": "bl",
-        "column_headers": "hd",
-        "lp": "lp",
-        "cc": "cc",
-        "b0": "b0",
-    }
-    # this map allows you to either use the 'native' exa code, or the
-    # 'friendly' name defined by shell-themer
-    EXA_COLORS_MAP = {}
-    for friendly, actual in EXA_COLORS_BASE_MAP.items():
-        EXA_COLORS_MAP[friendly] = actual
-        EXA_COLORS_MAP[actual] = actual
-
-    def run(self):
-        "Render a EXA_COLORS variable suitable for exa"
-        outlist = []
-        # figure out if we are clearing builtin styles
-        try:
-            clear_builtin = self.scopedef["clear_builtin"]
-            self.assert_bool(
-                clear_builtin,
-                key="clear_builtin",
-                agent=self.agent,
-                prog=self.prog,
-                scope=self.scope,
-            )
-        except KeyError:
-            clear_builtin = False
-
-        if clear_builtin:
-            # this tells exa to not use any built-in/hardcoded colors
-            outlist.append("reset")
-
-        # iterate over the styles given in our configuration
-        for name, style in self.scope_styles.items():
-            if style:
-                _, render = self.ls_colors_from_style(
-                    name,
-                    style,
-                    self.EXA_COLORS_MAP,
-                    allow_unknown=False,
-                    prog=self.prog,
-                    scope=self.scope,
-                )
-                outlist.append(render)
-
-        # process the filesets
-
-        # figure out which environment variable to put it in
-        try:
-            varname = self.scopedef["environment_variable"]
-            varname = self.interp.interpolate(varname)
-        except KeyError:
-            varname = "EXA_COLORS"
-
-        # even if outlist is empty, we have to set the variable, because
-        # when we are switching a theme, there may be contents in the
-        # environment variable already, and we need to tromp over them
-        # we chose to set the variable to empty instead of unsetting it
-        print(f'''export {varname}="{':'.join(outlist)}"''')
-
-
 class Eza(AgentBase, LsColorsFromStyle):
     "Create EZA_COLORS environment variable for use with ls replacement eza"
 
@@ -656,6 +344,111 @@ class Eza(AgentBase, LsColorsFromStyle):
         print(f'''export {varname}="{':'.join(outlist)}"''')
 
 
+class Fzf(AgentBase):
+    "Set fzf options and environment variables"
+
+    def run(self) -> str:
+        """render attribs into a shell statement to set an environment variable"""
+        optstr = ""
+        # process all the command line options
+        try:
+            opts = self.scopedef["opts"]
+        except KeyError:
+            opts = {}
+
+        for key, value in opts.items():
+            if isinstance(value, str):
+                interp_value = self.jinja_env.from_string(value).render()
+                optstr += f" {key}='{interp_value}'"
+            elif isinstance(value, bool) and value:
+                optstr += f" {key}"
+
+        # process all the styles
+        colors = []
+        # then add them back
+        for name, style in self.scope_styles.items():
+            colors.append(self._fzf_from_style(name, style))
+        # turn off all the colors, and add our color strings
+        try:
+            colorbase = f"{self.scopedef['colorbase']},"
+        except KeyError:
+            colorbase = ""
+        if colorbase or colors:
+            colorstr = f" --color='{colorbase}{','.join(colors)}'"
+        else:
+            colorstr = ""
+
+        # figure out which environment variable to put it in
+        try:
+            varname = self.scopedef["environment_variable"]
+            varname = self.jinja_env.from_string(varname).render()
+        except KeyError:
+            varname = "FZF_DEFAULT_OPTS"
+        print(f'export {varname}="{optstr}{colorstr}"')
+
+    def _fzf_from_style(self, name, style):
+        """turn a rich.style into a valid fzf color"""
+        # fzf has different color names for foreground and background items
+        # we combine them
+        name_map = {
+            "text": ("fg", "bg"),
+            "current-line": ("fg+", "bg+"),
+            "selected-line": ("selected-fg", "selected-bg"),
+            "preview": ("preview-fg", "preview-bg"),
+        }
+
+        fzf_colors = []
+        if name in name_map:
+            fgname, bgname = name_map[name]
+            if style.color:
+                fzfc = self._fzf_color_from_rich_color(style.color)
+                fzfa = self._fzf_attribs_from_style(style)
+                fzf_colors.append(f"{fgname}:{fzfc}:{fzfa}")
+            if style.bgcolor:
+                fzfc = self._fzf_color_from_rich_color(style.bgcolor)
+                fzf_colors.append(f"{bgname}:{fzfc}")
+        else:
+            # we only use the foreground color of the style, and ignore
+            # any background color specified by the style
+            if style.color:
+                fzfc = self._fzf_color_from_rich_color(style.color)
+                fzfa = self._fzf_attribs_from_style(style)
+                fzf_colors.append(f"{name}:{fzfc}:{fzfa}")
+
+        return ",".join(fzf_colors)
+
+    def _fzf_color_from_rich_color(self, color):
+        """turn a rich.color into it's fzf equivilent"""
+        fzf = ""
+
+        if color.type == rich.color.ColorType.DEFAULT:
+            fzf = "-1"
+        elif color.type == rich.color.ColorType.STANDARD:
+            # python rich uses underscores, fzf uses dashes
+            fzf = str(color.number)
+        elif color.type == rich.color.ColorType.EIGHT_BIT:
+            fzf = str(color.number)
+        elif color.type == rich.color.ColorType.TRUECOLOR:
+            fzf = color.triplet.hex
+        return fzf
+
+    def _fzf_attribs_from_style(self, style):
+        attribs = "regular"
+        if style.bold:
+            attribs += ":bold"
+        if style.underline:
+            attribs += ":underline"
+        if style.reverse:
+            attribs += ":reverse"
+        if style.dim:
+            attribs += ":dim"
+        if style.italic:
+            attribs += ":italic"
+        if style.strike:
+            attribs += ":strikethrough"
+        return attribs
+
+
 class Iterm(AgentBase):
     "Send escape sequences to iTerm terminal emulator"
 
@@ -775,6 +568,96 @@ class Iterm(AgentBase):
         except KeyError:
             # the given style doesn't exist
             pass
+
+
+class LsColors(AgentBase, LsColorsFromStyle):
+    "Create LS_COLORS environment variable for use with GNU ls"
+
+    LS_COLORS_BASE_MAP = {
+        # map both a friendly name and the "real" name
+        "text": "no",
+        "file": "fi",
+        "directory": "di",
+        "symlink": "ln",
+        "multi_hard_link": "mh",
+        "pipe": "pi",
+        "socket": "so",
+        "door": "do",
+        "block_device": "bd",
+        "character_device": "cd",
+        "broken_symlink": "or",
+        "missing_symlink_target": "mi",
+        "setuid": "su",
+        "setgid": "sg",
+        "sticky": "st",
+        "other_writable": "ow",
+        "sticky_other_writable": "tw",
+        "executable_file": "ex",
+        "file_with_capability": "ca",
+    }
+    # this map allows you to either use the 'native' color code, or the
+    # 'friendly' name defined by shell-themer
+    LS_COLORS_MAP = {}
+    for friendly, actual in LS_COLORS_BASE_MAP.items():
+        LS_COLORS_MAP[friendly] = actual
+        LS_COLORS_MAP[actual] = actual
+
+    def run(self):
+        "Render a LS_COLORS variable suitable for GNU ls"
+        outlist = []
+        havecodes = []
+        # figure out if we are clearing builtin styles
+        try:
+            clear_builtin = self.scopedef["clear_builtin"]
+            if not isinstance(clear_builtin, bool):
+                raise DyeSyntaxError(
+                    f"scope '{self.scope}' requires 'clear_builtin' to be true or false"
+                )
+        except KeyError:
+            clear_builtin = False
+
+        # iterate over the styles given in our configuration
+        for name, style in self.scope_styles.items():
+            if style:
+                mapcode, render = self.ls_colors_from_style(
+                    name,
+                    style,
+                    self.LS_COLORS_MAP,
+                    allow_unknown=False,
+                    scope=self.scope,
+                )
+                havecodes.append(mapcode)
+                outlist.append(render)
+
+        if clear_builtin:
+            style = rich.style.Style.parse("default")
+            # go through all the color codes, and render them with the
+            # 'default' style and add them to the output
+            for name, code in self.LS_COLORS_BASE_MAP.items():
+                if code not in havecodes:
+                    _, render = self.ls_colors_from_style(
+                        name,
+                        style,
+                        self.LS_COLORS_MAP,
+                        allow_unknown=False,
+                        scope=self.scope,
+                    )
+                    outlist.append(render)
+
+        # process the filesets
+
+        # figure out which environment variable to put it in
+        try:
+            varname = self.scopedef["environment_variable"]
+            varname = self.jinja_env.from_string(varname).render()
+        except KeyError:
+            varname = "LS_COLORS"
+
+        # even if outlist is empty, we have to set the variable, because
+        # when we are switching a theme, there may be contents in the
+        # environment variable already, and we need to tromp over them
+        # we chose to set the variable to empty instead of unsetting it
+        return f'''export {varname}="{':'.join(outlist)}"'''
 
 
 class Shell(AgentBase):
