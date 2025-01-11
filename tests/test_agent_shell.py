@@ -30,8 +30,8 @@ from dye import Dye
 # test the environment_variables agent
 #
 TEMPLATES = [
-    ("{{variables.someopts}}", "--option=fred -v"),
     ("{{styles.dark_orange|fg_hex}}", "#ff6c1c"),
+    ("{{variables.greeting}}", "Hello There."),
 ]
 
 
@@ -59,7 +59,8 @@ def test_shell(dye_cmdline, capsys, template, rendered):
             dark_orange = "#ff6c1c on {{ colors.background }}"
 
             [variables]
-            someopts = "--option=fred -v"
+            greeting = "Hello There."
+            response = "General Kenobi."
         """
         f"""
             [scopes.gum]
