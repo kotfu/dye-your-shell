@@ -24,22 +24,17 @@
 
 import pytest
 
-from dye import Dye, Theme, Pattern
+from dye import Dye, Pattern, Theme
 
 
 @pytest.fixture
-def dye():
-    return Dye()
-
-
-@pytest.fixture
-def dye_cmdline(dye, mocker):
-    '''a fixture that runs dye
+def dye_cmdline(mocker):
+    '''a fixture that simulates runing dye from the command line
 
     this fixture returns a function, which allows us to call
     the fixture and pass parameters to it
 
-    def test_activate_environment_unset_list(dye_cmdline, capsys):
+    def test_unset_list(dye_cmdline, capsys):
         theme = """
         [styles]
         text = "#dddddd on #222222
@@ -60,6 +55,7 @@ def dye_cmdline(dye, mocker):
 
     Very convenient.
     '''
+    dye = Dye()
 
     def _executor(cmdline, theme_toml=None, pattern_toml=None):
         if isinstance(cmdline, str):
