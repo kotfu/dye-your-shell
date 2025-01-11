@@ -44,15 +44,16 @@ pattern_yellow =  "#f1fa8b"
 pattern_text = '#cccccc on #ffffff'
 pattern_text_high = '#000000 on #ffffff'
 pattern_text_low = '#999999 on #ffffff'
+pattern_yellow = "{{ colors.pattern_yellow }}"
 
 [variables]
-capture.somevar = "printf '%s' {var:replace}"
+capture.somevar = "printf '%s' jojo"
 secondhalf = "5555"
-replace = "{var:secondhalf}"
+replace = "{{variables.secondhalf}}"
 firsthalf = "fred"
-myred = "{var:firsthalf}{variable:secondhalf}"
-igreen = "{style:green:fghexnohash}"
-capture.anothervar = "printf '%s' myvalue"
+myred = "{{variables.firsthalf}}{{variables.secondhalf}}"
+v_yellow = "{{styles.pattern_yellow|fg_hex_no_hash}}"
+capture.anothervar = "printf '%s' {{colors.pattern_purple}}"
 
 [scopes.iterm]
 agent = "iterm"
@@ -124,7 +125,7 @@ def test_loads_styles(static_pat):
     assert isinstance(static_pat.styles, dict)
     assert isinstance(static_pat.styles["pattern_text"], rich.style.Style)
     assert isinstance(static_pat.styles["pattern_text_high"], rich.style.Style)
-    assert len(static_pat.styles) == 3
+    assert len(static_pat.styles) == 4
 
 
 #
@@ -167,9 +168,6 @@ def test_requires_theme_not_present():
     assert pat.requires_theme is None
 
 
-#
-# test scope related methods
-#
 def test_has_scope():
     pattern_toml = """
         [scopes.qqq]
@@ -182,6 +180,11 @@ def test_has_scope():
 
     assert pattern.has_scope("qqq")
     assert not pattern.has_scope("fred")
+
+
+#
+# test processing the pattern and theme
+#
 
 
 ##################

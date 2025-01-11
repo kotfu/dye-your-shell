@@ -265,16 +265,11 @@ class Pattern:
         return result
 
     #
-    # scope, parsing, and validation methods
+    # scope methods
     #
     def has_scope(self, scope):
         """Check if the given scope exists."""
         return scope in self.definition["scopes"]
-        # try:
-        #     _ = self.definition["scopes"][scope]
-        #     return True
-        # except KeyError:
-        #     return False
 
     def is_scope_enabled(self, scope):
         """Determine if the scope is enabled
