@@ -312,7 +312,6 @@ class Eza(AgentBase, LsColorsFromStyle):
         # figure out which environment variable to put it in
         try:
             varname = self.scopedef["environment_variable"]
-            varname = self.jinja_env.from_string(varname).render()
         except KeyError:
             varname = "EZA_COLORS"
 

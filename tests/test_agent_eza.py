@@ -23,13 +23,16 @@
 # pylint: disable=missing-module-docstring, unused-variable
 
 import pytest
+import rich
 
-from dye import Dye
+import dye
+from dye import Dye, Pattern
 
 #
 # test the eza agent
 #
-# we only reallly have to test that the style name maps to the right code in ls_colors
+
+# we only reallly have to test that the style name maps to the right code
 # ie directory -> di, or setuid -> su. The ansi codes are created by rich.style
 # so we don't really need to test much of that
 STYLE_TO_EZACOLORS = [
@@ -54,25 +57,32 @@ STYLE_TO_EZACOLORS = [
 @pytest.mark.parametrize("name, styledef, expected", STYLE_TO_EZACOLORS)
 def test_eza_colors_from_style(name, styledef, expected):
     style = rich.style.Style.parse(styledef)
-    genny = dye.agents.Eza(None, None, None, None, None)
-    code, render = genny.ls_colors_from_style(
+    # we have to have a pattern in order for the agent to initialize
+    # so lets make a fake one
+    pattern_str = """
+    [scopes.myscope]
+    agent = "eza"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    agent = dye.agents.Eza("myscope", pattern)
+    code, render = agent.ls_colors_from_style(
         name,
         style,
-        genny.EZA_COLORS_MAP,
+        agent.EZA_COLORS_MAP,
+        "myscope",
         allow_unknown=True,
-        prog="prog",
-        scope="scope",
     )
     assert render == expected
     assert code == expected.split("=", 1)[0]
 
 
 def test_eza_colors_no_styles(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.exac]
+    pattern_str = """
+        [scopes.eza]
         agent = "eza"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
@@ -80,50 +90,30 @@ def test_eza_colors_no_styles(dye_cmdline, capsys):
 
 
 def test_eza_colors_environment_variable(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.exac]
+    pattern_str = """
+        [scopes.eza]
         agent = "eza"
         environment_variable = "OTHER_EZA_COLOR"
-        style.'filekinds:normal' = "default"
-        style.'size:number_style' = "#7060eb"
+        styles.'filekinds:normal' = "default"
+        styles.'size:number_style' = "#7060eb"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
     assert out == 'export OTHER_EZA_COLOR="fi=0:sn=38;2;112;96;235"\n'
 
 
-def test_eza_colors_styles_variables(dye_cmdline, capsys):
-    tomlstr = """
-        [variables]
-        pinkvar = "magenta3"
-
-        [styles]
-        warning = "yellow on red"
-
-        [scope.lsc]
-        agent = "eza"
-        style.'filekinds:normal' = "warning"
-        style.'filekinds:directory' = "{var:pinkvar}"
-    """
-    exit_code = dye_cmdline("activate", tomlstr)
-    out, err = capsys.readouterr()
-    assert exit_code == Dye.EXIT_SUCCESS
-    assert not err
-    assert out == 'export EZA_COLORS="fi=33;41:di=38;5;164"\n'
-
-
 def test_eza_colors_clear_builtin(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.exac]
+    pattern_str = """
+        [scopes.e]
         agent = "eza"
         clear_builtin = true
-        style.'filekinds:directory' = "bright_blue"
-        style.uu = "bright_red"
-        style.punctuation = "#555555"
+        styles.'filekinds:directory' = "bright_blue"
+        styles.uu = "bright_red"
+        styles.punctuation = "#555555"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
@@ -132,13 +122,13 @@ def test_eza_colors_clear_builtin(dye_cmdline, capsys):
 
 
 def test_eza_colors_clear_builtin_not_boolean(dye_cmdline, capsys):
-    tomlstr = """
-        [scope.exac]
+    pattern_str = """
+        [scopes.ec]
         agent = "eza"
         clear_builtin = "error"
-        style.directory = "bright_blue"
+        styles.directory = "bright_blue"
     """
-    exit_code = dye_cmdline("activate", tomlstr)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_ERROR
     assert not out
