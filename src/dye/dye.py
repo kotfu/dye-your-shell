@@ -37,7 +37,7 @@ import rich.style
 from rich_argparse import RichHelpFormatter
 
 from .agents import AgentBase
-from .exceptions import DyeError
+from .exceptions import DyeError, DyeSyntaxError
 from .pattern import Pattern
 from .theme import Theme
 from .version import version_string
@@ -474,7 +474,11 @@ class Dye:
 
         # the text style here makes the whole panel print with the foreground
         # and background colors from the style
-        self.console.print(rich.panel.Panel(outer_table, style=theme.styles["text"]))
+        try:
+            text_style = theme.styles["text"]
+        except KeyError as exc:
+            raise DyeSyntaxError("theme must define a 'text' style") from exc
+        self.console.print(rich.panel.Panel(outer_table, style=text_style))
         return self.EXIT_SUCCESS
 
     def command_agents(self, _):
