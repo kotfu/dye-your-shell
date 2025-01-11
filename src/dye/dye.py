@@ -215,19 +215,32 @@ class Dye:
     # initialization and properties
     #
     def __init__(self, force_color=False):
-        """Construct a new Themer object
+        """Construct a new Dye object"""
 
-        console
+        self.console = self._create_console(force_color)
+        self.error_console = self._create_error_console(force_color)
+
+    def _create_console(self, force_color):
+        """create a rich console object to be used for output
+
+        we have this as a separate method so that it can be patched
+        in our test suite
         """
-
-        self.console = rich.console.Console(
+        return rich.console.Console(
             soft_wrap=True,
             markup=False,
             emoji=False,
             highlight=False,
             force_terminal=force_color,
         )
-        self.error_console = rich.console.Console(
+
+    def _create_error_console(self, force_color):
+        """create a rich console object to be used for std err
+
+        we have this as a separate method so that it can be patched
+        in our test suite
+        """
+        return rich.console.Console(
             stderr=True,
             soft_wrap=True,
             markup=False,

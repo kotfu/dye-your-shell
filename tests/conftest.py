@@ -23,8 +23,9 @@
 # pylint: disable=missing-module-docstring, unused-variable
 
 import pytest
+import rich
 
-from dye import Dye, Pattern, Theme
+from dye import Dye, DyeError, Pattern, Theme
 
 
 @pytest.fixture
@@ -55,6 +56,32 @@ def dye_cmdline(mocker):
 
     Very convenient.
     '''
+    # patch up the console objects so we get ansi output and don't wrap text
+    console_patch = mocker.patch("dye.Dye._create_console")
+    console_patch.return_value = rich.console.Console(
+        soft_wrap=True,
+        markup=False,
+        emoji=False,
+        highlight=False,
+        # force display to true color so we can look for ansi codes in output
+        color_system="truecolor",
+        # don't let it autodetect the width, we don't want any line wrapping
+        width=2048,
+    )
+
+    error_console_patch = mocker.patch("dye.Dye._create_error_console")
+    error_console_patch.return_value = rich.console.Console(
+        stderr=True,
+        soft_wrap=True,
+        markup=False,
+        emoji=False,
+        highlight=False,
+        # force display to true color so we can look for ansi codes in output
+        color_system="truecolor",
+        # don't let it autodetect the width, we don't want any line wrapping
+        width=2048,
+    )
+
     dye = Dye()
 
     def _executor(cmdline, theme_toml=None, pattern_toml=None):
@@ -75,9 +102,9 @@ def dye_cmdline(mocker):
         pattern.process()
 
         # patch Dye methods to return our objects
-        theme_patch = mocker.patch("dye.Dye.load_theme_from_args", autospec=True)
+        theme_patch = mocker.patch("dye.Dye.load_theme_from_args")
         theme_patch.return_value = theme
-        pattern_patch = mocker.patch("dye.Dye.load_pattern_from_args", autospec=True)
+        pattern_patch = mocker.patch("dye.Dye.load_pattern_from_args")
         pattern_patch.return_value = pattern
 
         # now go run the command

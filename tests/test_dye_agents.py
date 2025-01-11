@@ -29,12 +29,11 @@ from dye import Dye
 # test the agents command (which shows the list of available agents)
 #
 def test_agents(dye_cmdline, capsys):
-    # now go run the command, which should list the themes
     exit_code = dye_cmdline("agents")
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
-    agents = [
+    expected_agents = [
         "environment_variables",
         "eza",
         "fzf",
@@ -42,5 +41,12 @@ def test_agents(dye_cmdline, capsys):
         "gnu_ls",
         "shell",
     ]
-    for agent in agents:
+    for agent in expected_agents:
         assert agent in out
+    # the agents command outputs a rich table with a header row and a line
+    # under the header
+    lines = out.splitlines()
+    # this is the header row
+    assert "Agent" in lines[0]
+    # +2 for the header line and the horizontal bar under the header line
+    assert len(lines) == len(expected_agents) + 2

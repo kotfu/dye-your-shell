@@ -172,9 +172,9 @@ def test_ansi_on_off(dye_cmdline, capsys):
 
         [scopes.opts]
         agent = "environment_variables"
-        export.OPTS = "--prompt={{dark_orange|ansi_on}}>>{{dark_orange|ansi_off}}"
+        export.OPTS = "--prompt={{styles.dark_orange|ansi_on}}>>{{styles.dark_orange|ansi_off}}"
     """
-    exit_code = dye_cmdline("--force-color apply", None, pattern_str)
+    exit_code = dye_cmdline("apply", None, pattern_str)
     out, _ = capsys.readouterr()
     assert exit_code == Dye.EXIT_SUCCESS
     # we aren't going to validate what the ansi codes are,
@@ -182,4 +182,3 @@ def test_ansi_on_off(dye_cmdline, capsys):
     # is returned and make sure the returned thing is longer
     expected_plaintext = 'export OPTS="--prompt=>>"\n'
     assert len(out) > len(expected_plaintext)
-    assert out == expected_plaintext
