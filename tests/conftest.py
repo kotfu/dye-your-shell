@@ -25,7 +25,7 @@
 import pytest
 import rich
 
-from dye import Dye, DyeError, Pattern, Theme
+from dye import Dye, Pattern, Theme
 
 
 @pytest.fixture

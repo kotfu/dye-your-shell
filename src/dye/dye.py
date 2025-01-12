@@ -63,7 +63,9 @@ class Dye:
         RichHelpFormatter.group_name_formatter = str.lower
 
         parser = argparse.ArgumentParser(
-            description="activate a theme",
+            description=(
+                "activate color output in shell commands using themes and patterns"
+            ),
             formatter_class=RichHelpFormatter,
             add_help=False,
             epilog=(
@@ -278,9 +280,19 @@ class Dye:
         # set the color output options
         self.set_help_colors(args)
 
-        # now go process everything
+        # now go process everything (order matters)
         try:
-            if args.command == "apply":
+            if args.help or args.command == "help":
+                self.console.print(self.argparser().format_help())
+                exit_code = self.EXIT_SUCCESS
+            elif args.version:
+                print(f"{prog} {version_string()}")
+                exit_code = self.EXIT_SUCCESS
+            elif not args.command:
+                # this is a usage error, so it goes to stderr
+                self.error_console.print(self.argparser().format_help())
+                exit_code = self.EXIT_USAGE
+            elif args.command == "apply":
                 exit_code = self.command_apply(args)
             elif args.command == "preview":
                 exit_code = self.command_preview(args)
@@ -288,14 +300,8 @@ class Dye:
                 exit_code = self.command_agents(args)
             elif args.command == "themes":
                 exit_code = self.command_themes(args)
-            elif args.version:
-                print(f"{prog} {version_string()}")
-                exit_code = self.EXIT_SUCCESS
-            elif args.help or args.command == "help" or not args.command:
-                self.argparser().print_help()
-                exit_code = self.EXIT_SUCCESS
             else:
-                print(f"{prog}: {args.command}: unknown command", file=sys.stderr)
+                self.error_console.print(f"{prog}: {args.command}: unknown command")
                 exit_code = self.EXIT_USAGE
         except (DyeError, DyeSyntaxError) as err:
             self.error_console.print(f"{prog}: {err}")
