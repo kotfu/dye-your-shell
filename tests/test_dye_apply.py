@@ -23,12 +23,8 @@
 # pylint: disable=missing-module-docstring, unused-variable
 
 import pytest
-import rich.errors
-import rich.style
 
-import dye
-from dye import Dye, Pattern
-
+from dye import Dye
 
 #
 # test scope selection
