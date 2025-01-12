@@ -176,7 +176,7 @@ class Pattern:
 
         this sets self.styles
         """
-        merged_styles = theme.colors.copy() if theme else {}
+        merged_styles = theme.styles.copy() if theme else {}
 
         pattern_styles = {}
         with contextlib.suppress(KeyError):
@@ -190,9 +190,20 @@ class Pattern:
         # we also pass the colors and the growing list of merged_styles
         #     as context
         for key, value in pattern_styles.items():
-            template = jinja_env.from_string(value)
-            rendered = template.render(colors=self.colors, styles=merged_styles)
-            merged_styles[key] = rich.style.Style.parse(rendered)
+            # do a bare lookup so that text_low = "text" works
+            if value in merged_styles:
+                merged_styles[key] = merged_styles[value]
+            else:
+                template = jinja_env.from_string(value)
+                # allow {{style.foreground}} or {{styles.foreground}}
+                # or {{color.background}} or {{colors.background}}
+                rendered = template.render(
+                    color=self.colors,
+                    colors=self.colors,
+                    style=merged_styles,
+                    styles=merged_styles,
+                )
+                merged_styles[key] = rich.style.Style.parse(rendered)
 
         self.styles = merged_styles
 

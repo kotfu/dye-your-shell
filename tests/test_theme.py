@@ -37,12 +37,14 @@ SAMPLE_THEME = """
     pink =  "#ff79c6"
     purple =  "#bd93f9"
     yellow =  "#f1fa8c"
+
+    foreground_unknown = "{{ colors.unknown }}"
+
     background_high = "{{ colors.background }}"
     background_medium = "{{ color.background }}"
     background_low = "background"
     background_double1 = "{{ color.background_low }}"
     background_double2 = "background_medium"
-    foreground_low = "{{ colors.unknown }}"
 
     [styles]
     notyet = "{{ styles.foreground }}"
@@ -147,7 +149,7 @@ def test_colors_double2_reference(sthm):
 
 
 def test_colors_unknown_reference(sthm):
-    assert sthm.colors["foreground_low"] == ""
+    assert sthm.colors["foreground_unknown"] == ""
 
 
 def test_colors_load_order(sthm):
@@ -157,6 +159,13 @@ def test_colors_load_order(sthm):
 #
 # test processing of styles
 #
+def test_style(sthm):
+    assert sthm.styles["text"].color.name == "#f8f8f2"
+    assert sthm.styles["text"].color.triplet.hex == "#f8f8f2"
+    assert sthm.styles["text"].bgcolor.name == "#282a36"
+    assert sthm.styles["text"].bgcolor.triplet.hex == "#282a36"
+
+
 def test_style_color_ref(sthm):
     assert sthm.styles["foreground"].color.name == sthm.colors["foreground"]
 
@@ -164,17 +173,6 @@ def test_style_color_ref(sthm):
 def test_style_no_colors(sthm):
     assert sthm.styles["color1"].color.name == "#ff79c6"
     assert sthm.styles["color1"].color.triplet.hex == "#ff79c6"
-
-
-def test_style_complex(sthm):
-    assert sthm.styles["text"].color.name == "#f8f8f2"
-    assert sthm.styles["text"].color.triplet.hex == "#f8f8f2"
-    assert sthm.styles["text"].bgcolor.name == "#282a36"
-    assert sthm.styles["text"].bgcolor.triplet.hex == "#282a36"
-    assert sthm.styles["text_high"].color.name == "#f8f8f2"
-    assert sthm.styles["text_high"].color.triplet.hex == "#f8f8f2"
-    assert sthm.styles["text_high"].bgcolor.name == "#282a36"
-    assert sthm.styles["text_high"].bgcolor.triplet.hex == "#282a36"
 
 
 def test_style_reference(sthm):

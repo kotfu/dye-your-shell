@@ -34,37 +34,10 @@ foreground = "#f8f8f2"
 foreground_high = "foreground"
 foreground_medium = "foreground"
 foreground_low = "foreground"
-"""
 
-NEW_PATTERN = """
-    [colors]
-    background =  "#282a36"
-    foreground =  "#f8f8f2"
-    notyet =  "{{ colors.yellow }}"
-    green =  "#50fa7b"
-    orange =  "#ffb86c"
-    pink =  "#ff79c6"
-    purple =  "#bd93f9"
-    yellow =  "#f1fa8c"
-    background_high = "{{ colors.background }}"
-    background_medium = "{{ color.background }}"
-    background_low = "background"
-    background_double1 = "{{ color.background_low }}"
-    background_double2 = "background_medium"
-    foreground_low = "{{ colors.unknown }}"
-
-    [styles]
-    notyet = "{{ styles.foreground }}"
-    foreground = "{{ color.foreground }}"
-    text = "bold {{ colors.foreground }} on {{ colors.background }}"
-    text_high = "{{ styles.text }}"
-    text_medium = "{{ style.text }}"
-    text_low = "text"
-    text_double1 = "{{ style.text_low }}"
-    text_double2 = "text_medium"
-    color1 = "#ff79c6"
-    color2 = "{{ colors.unknown }}"
-    color3 = ""
+[styles]
+themeonly = "{{color.foreground}} on #393b47"
+foreground = "{{ color.foreground }}"
 """
 
 SAMPLE_PATTERN = """
@@ -78,8 +51,36 @@ prevent_themes = true
 [colors]
 pattern_purple =  "#bd93f8"
 pattern_yellow =  "#f1fa8b"
+notyet =  "{{ colors.yellow }}"
+
+foreground =  "#e9e9e3"
+background =  "#282a36"
+
+foreground_unknown = "{{ colors.unknown }}"
+
+background_high = "{{ colors.background }}"
+background_medium = "{{ color.background }}"
+background_low = "background"
+background_double1 = "{{ color.background_low }}"
+background_double2 = "background_medium"
+
+yellow = "#e2eb9c"
 
 [styles]
+notyet = "{{ styles.text }}"
+foreground = "{{ color.foreground }}"
+text = "bold {{ colors.foreground }} on {{ colors.background }}"
+text_high = "{{ styles.text }}"
+text_medium = "{{ style.text }}"
+text_low = "text"
+text_double1 = "{{ style.text_low }}"
+text_double2 = "text_medium"
+text_colorref = "{{ color.foreground_medium }}"
+color1 = "#ff79c6"
+color2 = "{{ colors.unknown }}"
+color3 = "{{ style.unknown }}"
+color4 = ""
+
 pattern_text = '#cccccc on #ffffff'
 pattern_text_high = '#000000 on #ffffff'
 pattern_text_low = '#999999 on #ffffff'
@@ -110,8 +111,14 @@ command.dontrun = "echo qqq"
 
 
 @pytest.fixture
+def sthm():
+    """the sample theme"""
+    return Theme.loads(SAMPLE_THEME)
+
+
+@pytest.fixture
 def spat():
-    """the sample pattern"""
+    """the sample pattern without loading the theme"""
     pattern = Pattern.loads(SAMPLE_PATTERN)
     pattern.process()
     return pattern
@@ -167,14 +174,14 @@ def test_loads_colors(spat):
     assert isinstance(spat.colors, dict)
     assert isinstance(spat.colors["pattern_purple"], str)
     assert spat.colors["pattern_purple"] == "#bd93f8"
-    assert len(spat.colors) == 2
+    assert len(spat.colors) == 12
 
 
 def test_loads_styles(spat):
     assert isinstance(spat.styles, dict)
     assert isinstance(spat.styles["pattern_text"], rich.style.Style)
     assert isinstance(spat.styles["pattern_text_high"], rich.style.Style)
-    assert len(spat.styles) == 4
+    assert len(spat.styles) == 17
 
 
 #
@@ -238,10 +245,24 @@ def test_has_scope():
 
 
 #
-# test processing of colors and styles
+# test processing of colors
 #
-def test_color(sthmpat):
+def test_color_pattern(sthmpat):
+    """a color that is only defined in the pattern"""
     assert sthmpat.colors["background"] == "#282a36"
+
+
+def test_color_theme(sthmpat):
+    """a color that is only defined in the theme"""
+    assert sthmpat.colors["foreground_high"] == "#f8f8f2"
+
+
+def test_color_pattern_override_theme(sthm, spat, sthmpat):
+    """a color defined in both pattern and theme, make sure pattern overrides"""
+    assert sthm.colors["foreground"] == "#f8f8f2"
+    # make sure we get the same answer whether we load the theme or not
+    assert spat.colors["foreground"] == "#e9e9e3"
+    assert sthmpat.colors["foreground"] == "#e9e9e3"
 
 
 def test_colors_reference(sthmpat):
@@ -265,11 +286,98 @@ def test_colors_double2_reference(sthmpat):
 
 
 def test_colors_unknown_reference(sthmpat):
-    assert sthmpat.colors["foreground_low"] == ""
+    assert sthmpat.colors["foreground_unknown"] == ""
 
 
 def test_colors_load_order(sthmpat):
     assert sthmpat.colors["notyet"] == ""
+
+
+#
+# test processing of styles
+#
+def test_style_pattern(spat):
+    """defined only in the pattern, referencing colors
+    only in the pattern"""
+    assert spat.styles["text"].color.name == "#e9e9e3"
+    assert spat.styles["text"].color.triplet.hex == "#e9e9e3"
+    assert spat.styles["text"].bgcolor.name == "#282a36"
+    assert spat.styles["text"].bgcolor.triplet.hex == "#282a36"
+
+
+def test_style_theme(sthmpat):
+    """a style that is only defined in the theme"""
+    assert sthmpat.styles["themeonly"].bgcolor.name == "#393b47"
+
+
+def test_style_pattern_overrides_theme(sthm, spat, sthmpat):
+    """a color defined in both pattern and theme, make sure pattern overrides"""
+    # here's the definition from the theme
+    assert sthm.styles["foreground"].color.name == "#f8f8f2"
+    # make sure we get the same answer whether we load the theme or not
+    assert spat.styles["foreground"].color.name == "#e9e9e3"
+    assert sthmpat.styles["foreground"].color.name == "#e9e9e3"
+
+
+def test_style_reference_color_only_in_theme(sthmpat):
+    assert sthmpat.styles["text_colorref"].color.name == "#f8f8f2"
+
+
+def test_style_color_ref(sthmpat):
+    """a style that references a color"""
+    assert sthmpat.styles["foreground"].color.name == sthmpat.colors["foreground"]
+
+
+def test_style_no_color_reference(sthmpat):
+    """test a style that doesn't reference any colors, just a plain
+    hexcode as the definition"""
+    assert sthmpat.styles["color1"].color.name == "#ff79c6"
+    assert sthmpat.styles["color1"].color.triplet.hex == "#ff79c6"
+
+
+def test_styles_reference(sthmpat):
+    """a style that references another style as {{styles.text_high}}"""
+    assert sthmpat.styles["text_high"] == sthmpat.styles["text"]
+
+
+def test_style_reference(sthmpat):
+    """a style that references another style as {{style.text_medium}}"""
+    assert sthmpat.styles["text_medium"] == sthmpat.styles["text"]
+
+
+def test_styles_bare_reference(sthmpat):
+    assert sthmpat.styles["text_low"] == sthmpat.styles["text"]
+
+
+def test_styles_double1_reference(sthmpat):
+    assert sthmpat.styles["text_double1"] == sthmpat.styles["text"]
+
+
+def test_styles_double2_reference(sthmpat):
+    assert sthmpat.styles["text_double2"] == sthmpat.styles["text"]
+
+
+def test_style_unknown_color_reference(sthmpat):
+    # look for a style object, but one that's empty
+    assert isinstance(sthmpat.styles["color2"], rich.style.Style)
+    assert not sthmpat.styles["color2"]
+
+
+def test_style_unknown_style_reference(sthmpat):
+    # look for a style object, but one that's empty
+    assert isinstance(sthmpat.styles["color3"], rich.style.Style)
+    assert not sthmpat.styles["color3"]
+
+
+def test_styles_load_order(sthmpat):
+    # look for a style object, but one that's empty
+    assert isinstance(sthmpat.styles["notyet"], rich.style.Style)
+    assert not sthmpat.styles["notyet"]
+
+
+def test_style_empty(sthmpat):
+    assert isinstance(sthmpat.styles["color4"], rich.style.Style)
+    assert not sthmpat.styles["color4"]
 
 
 #
