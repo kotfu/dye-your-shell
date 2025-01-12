@@ -232,7 +232,7 @@ class Pattern:
                 )
             processed_vars[var] = str(proc.stdout, "UTF-8")
 
-        # then add the regular variables, interpolating as we go
+        # then add the regular variables, processing them as templates
         try:
             # make a shallow copy, because we are gonna delete any capture
             # vars and we want the definition to stay pristine
@@ -249,7 +249,14 @@ class Pattern:
                 raise DyeError(f"variable '{var}' has already been defined.")
             template = jinja_env.from_string(definition)
             processed_vars[var] = template.render(
-                colors=self.colors, styles=self.styles, variables=processed_vars
+                color=self.colors,
+                colors=self.colors,
+                style=self.styles,
+                styles=self.styles,
+                var=processed_vars,
+                vars=processed_vars,
+                variable=processed_vars,
+                variables=processed_vars,
             )
 
         self.variables = processed_vars

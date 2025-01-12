@@ -25,6 +25,7 @@
 import pytest
 import rich.errors
 import rich.style
+import tomlkit
 
 from dye import DyeError, DyeSyntaxError, Pattern, Theme
 
@@ -381,116 +382,120 @@ def test_style_empty(sthmpat):
 
 
 #
+# test variable definition and usage in the [variables] table
 #
-# test variables, both definition and usage
-#
-
-#
-# def test_process_definition_capture_error(theme):
-#     # the extra f in printff should return a non-zero
-#     # exit code, which is an error
-#     tomlstr = """
-#         [variables]
-#         capture.thevar = "printff '%s' thevalue"
-#     """
-#     with pytest.raises(DyeError):
-#         theme.loads(tomlstr)
+def test_variable():
+    pattern_str = """
+        [variables]
+        varname = "value"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    assert pattern.variables["varname"] == "value"
 
 
-# def test_process_definition_undefined_variable(theme):
-#     tomlstr = """
-#         [variables]
-#         one = "{var:two}"
-#     """
-#     with pytest.raises(DyeError):
-#         theme.loads(tomlstr)
+def test_variables_reference():
+    pattern_str = """
+        [variables]
+        varname = "value"
+        var1 = "{{var.varname}}"
+        var2 = "{{vars.varname}}"
+        var3 = "{{variable.varname}}"
+        var4 = "{{variables.varname}}"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    assert pattern.variables["var1"] == "value"
+    assert pattern.variables["var2"] == "value"
+    assert pattern.variables["var3"] == "value"
+    assert pattern.variables["var4"] == "value"
+
+
+def test_undefined_variable_reference():
+    pattern_str = """
+        [variables]
+        varname = "value"
+        var1 = "{{var.notdefined}}"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    assert pattern.variables["var1"] == ""
+
+
+def test_variables_color_reference():
+    pattern_str = """
+        [colors]
+        bright_green = "#99e343"
+
+        [variables]
+        var1 = "{{color.bright_green}}"
+        var2 = "{{colors.bright_green}}"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    assert pattern.variables["var1"] == "#99e343"
+    assert pattern.variables["var1"] == "#99e343"
+
+
+def test_variables_style_reference():
+    pattern_str = """
+        [styles]
+        bright_green = "#99e343"
+
+        [variables]
+        var1 = "{{style.bright_green|fg_hex}}"
+        var2 = "{{styles.bright_green|fg_hex}}"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    assert pattern.variables["var1"] == "#99e343"
+    assert pattern.variables["var1"] == "#99e343"
+
+
+def test_capture_variable():
+    pattern_str = """
+        [variables]
+        capture.somevar = "printf 'hello there'"
+    """
+    pattern = Pattern.loads(pattern_str)
+    pattern.process()
+    assert pattern.variables["somevar"] == "hello there"
 
 
 def test_capture_variable_error():
     pattern_str = """
         [variables]
         capture.somevar = "barf_is_not_a_shell_command"
-
-        [scopes.iterm]
-        agent = "iterm"
     """
     pattern = Pattern.loads(pattern_str)
     with pytest.raises(DyeError):
         pattern.process()
 
 
-def test_variable_redefine():
+def test_variable_redefine1_error():
+    pattern_str = """
+        [variables]
+        somevar = "builtin echo hi"
+        somevar = "can't do this"
+    """
+    with pytest.raises(tomlkit.exceptions.KeyAlreadyPresent):
+        Pattern.loads(pattern_str)
+
+
+def test_variable_redefine2_error():
     pattern_str = """
         [variables]
         capture.somevar = "builtin echo hi"
         somevar = "can't do this"
-        [scopes.iterm]
-        agent = "iterm"
     """
     pattern = Pattern.loads(pattern_str)
     with pytest.raises(DyeError):
         pattern.process()
 
 
-##################
-##################
-##################
 #
-# test style and variable processing on initialization
-#
-
-
-# def test_process_definition(theme):
-#     tomlstr = """
-#         [styles]
-#         background =  "#282a36"
-#         foreground =  "#f8f8f2"
-#         current_line =  "#f8f8f2 on #44475a"
-#         comment =  "#6272a4"
-#         cyan =  "#8be9fd"
-#         green =  "#50fa7b"
-#         orange =  "#ffb86c"
-#         pink =  "#ff79c6"
-#         purple =  "#bd93f9"
-#         yellow =  "#f1fa8c"
-
-#         [variables]
-#         capture.somevar = "printf '%s' {var:replace}"
-#         secondhalf = "5555"
-#         replace = "{var:secondhalf}"
-#         firsthalf = "fred"
-#         myred = "{var:firsthalf}{variable:secondhalf}"
-#         igreen = "{style:green:fghexnohash}"
-#         capture.anothervar = "printf '%s' myvalue"
-#     """
-#     theme.loads(tomlstr)
-#     # check the styles
-#     assert isinstance(theme.styles, dict)
-#     assert isinstance(theme.styles["cyan"], rich.style.Style)
-#     assert theme.styles["cyan"].color.name == "#8be9fd"
-#     assert theme.styles["yellow"].color.name == "#f1fa8c"
-#     assert len(theme.styles) == 10
-#     # check the variables
-#     assert len(theme.variables) == 7
-#     # capture doesn't interpolate variables
-#     assert theme.variables["somevar"] == "{var:replace}"
-#     # make sure capture variable actually captures
-#     assert theme.variables["anothervar"] == "myvalue"
-#     # styles interpolate into variables
-#     assert theme.variables["igreen"] == "50fa7b"
-#     # variables interpolate into variables
-#     assert theme.variables["replace"] == "5555"
-#     assert theme.variables["myred"] == "fred5555"
-
-
-# def test_process_definition_duplicate_variables(theme):
-#     tomlstr = """
-#         [variables]
-#         capture.thevar = "printf '%s' thevalue"
-#         thevar = "fred"
-#     """
-#     with pytest.raises(DyeError):
-#         theme.loads(tomlstr)
+# TODO test variable usage in scopes, ie Scope object or Pattern._process_scopes()
+# TODO test scope processing
 
 
 # # TODO this should test the init in GeneratorBase which sets scope_styles
@@ -564,176 +569,3 @@ def test_variable_redefine():
 # #     styles = thm.styles_from(scopedef)
 # #     assert isinstance(styles, dict)
 # #     assert styles == {}
-
-
-# #
-# # test dye_dir() property
-# #
-# def test_dye_dir_environment_variable(dye, mocker, tmp_path):
-#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)})
-#     # dye_dir should be a Path object
-#     assert dye.dye_dir == tmp_path
-
-
-# def test_dye_dir_no_environment_variable(dye, mocker):
-#     # ensure no DYE_DIR environment variable exists
-#     mocker.patch.dict(os.environ, {}, clear=True)
-#     with pytest.raises(DyeError):
-#         _ = dye.dye_dir
-
-
-# def test_dye_dir_invalid_directory(dye, mocker, tmp_path):
-#     invalid = tmp_path / "doesntexist"
-#     mocker.patch.dict(os.environ, {"DYE_DIR": str(invalid)})
-#     with pytest.raises(DyeError):
-#         _ = dye.dye_dir
-
-
-# #
-# # test all the variations of load_from_args()
-# #
-# def test_load_from_args_no_theme(dye, mocker):
-#     # we need empty args, and empty environment, and with
-#     # all of this empty, we should get an exception
-#     mocker.patch.dict(os.environ, {}, clear=True)
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = None
-#     with pytest.raises(DyeError):
-#         dye.load_from_args(args)
-
-
-# def test_load_from_args_filename(dye, mocker, tmp_path):
-#     # give a bogus theme file in the environment, which should be
-#     # ignored because the filename in the arguments should take
-#     # precendence
-#     mocker.patch.dict(os.environ, {"THEME_FILE": "nosuchfile"}, clear=True)
-
-#     # go write a theme file that we can actually open
-#     themefile = tmp_path / "sometheme.toml"
-#     toml = """
-#     [styles]
-#     text = "#ffcc00 on #003322"
-#     """
-#     with open(themefile, "w", encoding="utf8") as fvar:
-#         fvar.write(toml)
-
-#     args = argparse.Namespace()
-#     args.file = str(themefile)
-#     args.theme = None
-
-#     dye.load_from_args(args)
-#     assert dye.theme.definition
-#     assert dye.theme.styles
-
-
-# def test_load_from_args_invalid_filename(dye, mocker, tmp_path):
-#     # give a real theme file in the environment, which should be
-#     # ignored because the filename in the arguments should take
-#     # precendence, this should generate an error because we
-#     # specified a file which could not be opened
-
-#     # go write a theme file that we can actually open
-#     envfile = tmp_path / "sometheme.toml"
-#     with open(envfile, "w", encoding="utf8") as fvar:
-#         fvar.write("# an empty toml theme file")
-#     mocker.patch.dict(os.environ, {"THEME_FILE": str(envfile)}, clear=True)
-
-#     themefile = tmp_path / "doesntexist.toml"
-#     args = argparse.Namespace()
-#     args.file = str(themefile)
-#     args.theme = None
-
-#     with pytest.raises(FileNotFoundError):
-#         dye.load_from_args(args)
-
-
-# def test_load_from_args_env(dye, mocker, tmp_path):
-#     # go write a theme file that we can actually open
-#     themefile = tmp_path / "sometheme.toml"
-#     tomlstr = """
-#         [styles]
-#         text = "#ffcc00 on #003322"
-#     """
-#     with open(themefile, "w", encoding="utf8") as fvar:
-#         fvar.write(tomlstr)
-
-#     mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
-
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = None
-
-#     dye.load_from_args(args)
-#     assert dye.theme.definition
-#     assert dye.theme.styles
-
-
-# def test_load_from_args_env_invalid(dye, mocker, tmp_path):
-#     # a theme file in the environment variable which doesn't exist
-#     # should raise an exception
-#     themefile = tmp_path / "doesntexist.toml"
-#     mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
-
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = None
-
-#     with pytest.raises(FileNotFoundError):
-#         dye.load_from_args(args)
-
-
-# def test_load_from_args_theme_file(dye, mocker, tmp_path):
-#     # give a theme name, but the full name including the .toml
-#     themefile = tmp_path / "themefile.toml"
-#     tomlstr = """
-#         [styles]
-#         text = "#ffcc00 on #003322"
-#     """
-#     with open(themefile, "w", encoding="utf8") as fvar:
-#         fvar.write(tomlstr)
-
-#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
-
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = "themefile.toml"
-
-#     dye.load_from_args(args)
-#     assert dye.theme.definition
-#     assert dye.theme.styles
-
-
-# def test_load_from_args_theme_file_invalid(dye, mocker, tmp_path):
-#     # we have a valid theme dir, but we are going to give
-#     # a filename with extension as the theme arguemtn
-#     # but that filename won't exist
-#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
-
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = "notfound.toml"
-
-#     with pytest.raises(DyeError):
-#         dye.load_from_args(args)
-
-
-# def test_load_from_args_theme_name(dye, mocker, tmp_path):
-#     # give a theme name, but the full name including the .toml
-#     themefile = tmp_path / "themefile.toml"
-#     tomlstr = """
-#         [styles]
-#         text = "#ffcc00 on #003322"
-#     """
-#     with open(themefile, "w", encoding="utf8") as fvar:
-#         fvar.write(tomlstr)
-
-#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
-
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = "themefile"
-
-#     dye.load_from_args(args)
-#     assert dye.theme.definition
-#     assert dye.theme.styles
