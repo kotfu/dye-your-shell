@@ -254,6 +254,7 @@ class Dye:
     @property
     def dye_dir(self):
         """Get the dye configuration directory from the shell environment"""
+        # TODO write unit tests for this
         try:
             ddir = pathlib.Path(os.environ["DYE_DIR"])
         except KeyError as exc:
