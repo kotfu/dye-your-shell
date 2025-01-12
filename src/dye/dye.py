@@ -26,7 +26,6 @@ import contextlib
 import inspect
 import os
 import pathlib
-import sys
 
 import rich.box
 import rich.color
@@ -228,6 +227,11 @@ class Dye:
         we have this as a separate method so that it can be patched
         in our test suite
         """
+        # force_terminal can be True, False, or None
+        # argparse will always set it to be True or False
+        # we need it to be True or None
+        if not force_color:
+            force_color = None
         return rich.console.Console(
             soft_wrap=True,
             markup=False,
@@ -242,6 +246,11 @@ class Dye:
         we have this as a separate method so that it can be patched
         in our test suite
         """
+        # force_terminal can be True, False, or None
+        # argparse will always set it to be True or False
+        # we need it to be True or None
+        if not force_color:
+            force_color = None
         return rich.console.Console(
             stderr=True,
             soft_wrap=True,
