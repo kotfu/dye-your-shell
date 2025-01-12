@@ -1,4 +1,6 @@
-# shell-themer
+# dye-your-shell
+
+activate color output in shell commands using themes and patterns
 
 There are many modern *nix and *bsd command line tools which can output
 using a full 16.7 million color palette. For example:
@@ -9,29 +11,33 @@ using a full 16.7 million color palette. For example:
 * [gum](https://github.com/charmbracelet/gum)
 * [eza](https://eza.rocks/)
 
-Even the venerable `ls` can show various types of files in different colors.
+Even the GNU Project's venerable `ls` can show various types of files in
+different colors.
 
 Unfortunately, these tools all use slightly different color configuration mechanisms.
 With enough fiddling, you can get your shell init scripts to make all these tools
 use a similar color scheme, but if you want to change it, you've got a lot of work
 ahead.
 
-`shell-themer` uses a single theme configuration file to standardize and unify
-a set of color configurations, and generates the shell code to implement those
-changes.
+`dye-your-shell` installs a command line program named `dye` to do its work.
+
+`dye` reads a configuration file to define a set of colors, and how to
+apply those colors to as many command line tools as can support it. This
+configuration file is called a pattern.
 
 All that hand tweaking in your shell init files can now be replaced with:
 ```
-export THEME_FILE=~/themes/dracula.toml
-source <(shell-themer generate)
+export DYE_PATTERN_FILE=~/.dye/dracula.toml
+source <(dye apply)
 ```
 
 This changes all your environment variables and other settings for the many
 shell tools you use to reflect the colors in the theme you have specified.
 
-## Theme Files
 
-Here's an example of a theme file:
+## Pattern Files
+
+Here's an example of a pattern file:
 ```
 #
 # sample definition for a dracula theme
@@ -102,7 +108,7 @@ style.query = "pink"
 
 You'll need python version 3.9 or higher. Install with [pipx](https://pipx.pypa.io/stable/):
 ```
-$ pipx install shell_themer
+$ pipx install dye-your-shell
 ```
 
 You need a *nix-ish bash shell environment. Probably works in Windows Subsystem
