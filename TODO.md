@@ -39,6 +39,8 @@
 [ ] if you use ansi color numbers or names (instead of hex codes) in a style, it won't interpolate properly
     because the interpolator assumes that the color has a .triplet. See rich.color.get_truecolor() which
     we can use to fix this
+[ ] make a 'dye print' or 'dye echo' command that outputs text but let's you use colors from your theme
+    in it. use either rich syntax or our 'template syntax'
 
 ## documentation and website
   - show how to set BAT_THEME
