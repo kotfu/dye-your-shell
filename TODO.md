@@ -45,6 +45,13 @@
 [ ] make a 'dye patterns' command that lists out the patterns, need it for theme-activate() bash func
 [ ] update README.md
 [x] delete jinja_exploration.py
+[ ] fix 'dye preview', it doesn't show colors any more
+[ ] write unit tests for pattern.py for stitching together a theme and a pattern
+[ ] switch from colors.red and styles.text and variables.myvar to the singular
+    version of each. The pattern file just reads so much nicer.
+[ ] make styles do a lookup like they used to, ie "style.prompt = 'my_style'"
+    it's so much more readable than '{{styles.my_style}}
+
 
 - documentation and website
   - show how to set BAT_THEME
