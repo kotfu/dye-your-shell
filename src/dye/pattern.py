@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""classes for storing a pattern"""
+"""class for storing and processing a pattern"""
 
 import contextlib
 import subprocess
@@ -33,7 +33,7 @@ from .filters import jinja_filters
 
 
 class Pattern:
-    """load and parse a pattern file into a theme object"""
+    """load and parse a pattern file into a pattern object"""
 
     @classmethod
     def loads(cls, tomlstring=None):
@@ -133,6 +133,17 @@ class Pattern:
         """merge the colors from this pattern and the given theme together
 
         this sets self.colors
+
+        A color can be referenced in this section in any of three ways:
+
+        foreground = "#f8f8f2"
+        foreground_high = "foreground"
+        foreground_medium = "{{ colors.foreground }}"
+        foreground_low = "{{ color.foreground }}"
+
+        A color is just a string, there is nothing done to the value of the color.
+        You could do everything with a variable that you can do with a color,
+        it's just a convenient way to group/name them.
         """
         merged_colors = theme.colors.copy() if theme else {}
 
@@ -146,9 +157,17 @@ class Pattern:
         #     your pattern that has already been defined in the theme,
         #     the definition in the pattern will over-ride
         # we also pass the growing list of merged_colors as context
+
+        # do a bare lookup so that foreground_low = "foreground" works
         for key, value in pattern_colors.items():
-            template = jinja_env.from_string(value)
-            merged_colors[key] = template.render(colors=merged_colors)
+            if value in merged_colors:
+                merged_colors[key] = merged_colors[value]
+            else:
+                template = jinja_env.from_string(value)
+                # this lets us do {{colors.foreground}} or {{color.foreground}}
+                merged_colors[key] = template.render(
+                    color=merged_colors, colors=merged_colors
+                )
 
         self.colors = merged_colors
 

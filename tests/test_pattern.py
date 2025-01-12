@@ -26,9 +26,48 @@ import pytest
 import rich.errors
 import rich.style
 
-from dye import DyeError, DyeSyntaxError, Pattern
+from dye import DyeError, DyeSyntaxError, Pattern, Theme
 
-STATIC_PATTERN = """
+SAMPLE_THEME = """
+[colors]
+foreground = "#f8f8f2"
+foreground_high = "foreground"
+foreground_medium = "foreground"
+foreground_low = "foreground"
+"""
+
+NEW_PATTERN = """
+    [colors]
+    background =  "#282a36"
+    foreground =  "#f8f8f2"
+    notyet =  "{{ colors.yellow }}"
+    green =  "#50fa7b"
+    orange =  "#ffb86c"
+    pink =  "#ff79c6"
+    purple =  "#bd93f9"
+    yellow =  "#f1fa8c"
+    background_high = "{{ colors.background }}"
+    background_medium = "{{ color.background }}"
+    background_low = "background"
+    background_double1 = "{{ color.background_low }}"
+    background_double2 = "background_medium"
+    foreground_low = "{{ colors.unknown }}"
+
+    [styles]
+    notyet = "{{ styles.foreground }}"
+    foreground = "{{ color.foreground }}"
+    text = "bold {{ colors.foreground }} on {{ colors.background }}"
+    text_high = "{{ styles.text }}"
+    text_medium = "{{ style.text }}"
+    text_low = "text"
+    text_double1 = "{{ style.text_low }}"
+    text_double2 = "text_medium"
+    color1 = "#ff79c6"
+    color2 = "{{ colors.unknown }}"
+    color3 = ""
+"""
+
+SAMPLE_PATTERN = """
 description = "Oxygen is a pattern with lots of space"
 type = "dark"
 version = "2.0"
@@ -71,9 +110,19 @@ command.dontrun = "echo qqq"
 
 
 @pytest.fixture
-def static_pat():
-    pattern = Pattern.loads(STATIC_PATTERN)
+def spat():
+    """the sample pattern"""
+    pattern = Pattern.loads(SAMPLE_PATTERN)
     pattern.process()
+    return pattern
+
+
+@pytest.fixture
+def sthmpat():
+    """the sample pattern with the sample theme merged into it"""
+    theme = Theme.loads(SAMPLE_THEME)
+    pattern = Pattern.loads(SAMPLE_PATTERN)
+    pattern.process(theme)
     return pattern
 
 
@@ -85,7 +134,7 @@ def test_load(tmp_path):
     # give a theme name, but the full name including the .toml
     patternfile = tmp_path / "pattern.toml"
     with open(patternfile, "w", encoding="utf8") as fvar:
-        fvar.write(STATIC_PATTERN)
+        fvar.write(SAMPLE_PATTERN)
 
     with open(patternfile, encoding="utf8") as fvar:
         pat = Pattern.load(fvar)
@@ -95,9 +144,9 @@ def test_load(tmp_path):
     assert len(pat.definition) == 9
 
 
-def test_loads(static_pat):
-    assert isinstance(static_pat.definition, dict)
-    assert len(static_pat.definition) == 9
+def test_loads(spat):
+    assert isinstance(spat.definition, dict)
+    assert len(spat.definition) == 9
 
 
 def test_loads_empty():
@@ -114,18 +163,18 @@ def test_loads_none():
     # assert theme.styles == {}
 
 
-def test_loads_colors(static_pat):
-    assert isinstance(static_pat.colors, dict)
-    assert isinstance(static_pat.colors["pattern_purple"], str)
-    assert static_pat.colors["pattern_purple"] == "#bd93f8"
-    assert len(static_pat.colors) == 2
+def test_loads_colors(spat):
+    assert isinstance(spat.colors, dict)
+    assert isinstance(spat.colors["pattern_purple"], str)
+    assert spat.colors["pattern_purple"] == "#bd93f8"
+    assert len(spat.colors) == 2
 
 
-def test_loads_styles(static_pat):
-    assert isinstance(static_pat.styles, dict)
-    assert isinstance(static_pat.styles["pattern_text"], rich.style.Style)
-    assert isinstance(static_pat.styles["pattern_text_high"], rich.style.Style)
-    assert len(static_pat.styles) == 4
+def test_loads_styles(spat):
+    assert isinstance(spat.styles, dict)
+    assert isinstance(spat.styles["pattern_text"], rich.style.Style)
+    assert isinstance(spat.styles["pattern_text_high"], rich.style.Style)
+    assert len(spat.styles) == 4
 
 
 #
@@ -133,8 +182,8 @@ def test_loads_styles(static_pat):
 # these tests just ensure the data is extracted propertly
 # from the toml
 #
-def test_description(static_pat):
-    assert static_pat.description == "Oxygen is a pattern with lots of space"
+def test_description(spat):
+    assert spat.description == "Oxygen is a pattern with lots of space"
 
 
 def test_no_description():
@@ -189,8 +238,66 @@ def test_has_scope():
 
 
 #
-# test processing the pattern and theme
+# test processing of colors and styles
 #
+def test_color(sthmpat):
+    assert sthmpat.colors["background"] == "#282a36"
+
+
+def test_colors_reference(sthmpat):
+    assert sthmpat.colors["background_high"] == sthmpat.colors["background"]
+
+
+def test_color_reference(sthmpat):
+    assert sthmpat.colors["background_medium"] == sthmpat.colors["background"]
+
+
+def test_colors_bare_reference(sthmpat):
+    assert sthmpat.colors["background_low"] == sthmpat.colors["background"]
+
+
+def test_colors_double1_reference(sthmpat):
+    assert sthmpat.colors["background_double1"] == sthmpat.colors["background"]
+
+
+def test_colors_double2_reference(sthmpat):
+    assert sthmpat.colors["background_double2"] == sthmpat.colors["background"]
+
+
+def test_colors_unknown_reference(sthmpat):
+    assert sthmpat.colors["foreground_low"] == ""
+
+
+def test_colors_load_order(sthmpat):
+    assert sthmpat.colors["notyet"] == ""
+
+
+#
+#
+# test variables, both definition and usage
+#
+
+#
+# def test_process_definition_capture_error(theme):
+#     # the extra f in printff should return a non-zero
+#     # exit code, which is an error
+#     tomlstr = """
+#         [variables]
+#         capture.thevar = "printff '%s' thevalue"
+#     """
+#     with pytest.raises(DyeError):
+#         theme.loads(tomlstr)
+
+
+# def test_process_definition_undefined_variable(theme):
+#     tomlstr = """
+#         [variables]
+#         one = "{var:two}"
+#     """
+#     with pytest.raises(DyeError):
+#         theme.loads(tomlstr)
+
+
 def test_capture_variable_error():
     pattern_str = """
         [variables]
@@ -278,26 +385,6 @@ def test_variable_redefine():
 #         theme.loads(tomlstr)
 
 
-# def test_process_definition_capture_error(theme):
-#     # the extra f in printff should return a non-zero
-#     # exit code, which is an error
-#     tomlstr = """
-#         [variables]
-#         capture.thevar = "printff '%s' thevalue"
-#     """
-#     with pytest.raises(DyeError):
-#         theme.loads(tomlstr)
-
-
-# def test_process_definition_undefined_variable(theme):
-#     tomlstr = """
-#         [variables]
-#         one = "{var:two}"
-#     """
-#     with pytest.raises(DyeError):
-#         theme.loads(tomlstr)
-
-
 # # TODO this should test the init in GeneratorBase which sets scope_styles
 # # def test_styles_from(thm):
 # #     tomlstr = """
@@ -369,11 +456,6 @@ def test_variable_redefine():
 # #     styles = thm.styles_from(scopedef)
 # #     assert isinstance(styles, dict)
 # #     assert styles == {}
-
-
-# #
-# # test variable related methods, including interpolation
-# #
 
 
 # #
