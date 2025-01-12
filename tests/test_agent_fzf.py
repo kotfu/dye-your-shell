@@ -54,7 +54,6 @@ def test_fzf_attribs_from_style(styledef, fzf):
     agent = "fzf"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     agent = dye.agents.Fzf("myscope", pattern)
     assert fzf == agent._fzf_attribs_from_style(style)
 
@@ -93,7 +92,6 @@ def test_fzf_from_style(name, styledef, fzf):
     agent = "fzf"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     agent = dye.agents.Fzf("myscope", pattern)
     assert fzf == agent._fzf_from_style(name, style)
 

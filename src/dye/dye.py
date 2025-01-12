@@ -399,9 +399,7 @@ class Dye:
         """
         # pylint: disable=too-many-branches
         theme = self.load_theme_from_args(args, required=False)
-        pattern = self.load_pattern_from_args(args)
-        pattern.process(theme)
-        # pattern now has everything in it we need
+        pattern = self.load_pattern_from_args(args, theme)
 
         if args.scope:
             to_activate = args.scope.split(",")
@@ -590,7 +588,7 @@ class Dye:
 
         return Theme()
 
-    def load_pattern_from_args(self, args):
+    def load_pattern_from_args(self, args, theme=None):
         """load, but don't process/execute the pattern
 
         Resolution order:
@@ -620,5 +618,5 @@ class Dye:
             raise DyeError("no pattern specified")
 
         with open(fname, "rb") as fobj:
-            pattern = Pattern.load(fobj)
+            pattern = Pattern.load(fobj, theme)
         return pattern

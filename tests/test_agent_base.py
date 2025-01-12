@@ -44,7 +44,6 @@ def test_agent_base_name():
     agent = "shell"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     eza = dye.agents.EnvironmentVariables("myscope", pattern)
     assert eza.agent == "environment_variables"
     fzfgen = dye.agents.Fzf("myscope", pattern)

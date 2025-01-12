@@ -64,7 +64,6 @@ def test_eza_colors_from_style(name, styledef, expected):
     agent = "eza"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     agent = dye.agents.Eza("myscope", pattern)
     code, render = agent.ls_colors_from_style(
         name,

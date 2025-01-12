@@ -39,7 +39,7 @@
     stuff like is_enabled checking, adding a run() method?, style processing
     in the scope, etc.
 [ ] unit tests in test_pattern.py or test_scope.py for all the processing of a scope
-[ ] move Pattern.process() into Pattern.load() and Pattern.loads()
+
 
 ## documentation and website
   - show how to set BAT_THEME

@@ -36,7 +36,7 @@ class Pattern:
     """load and parse a pattern file into a pattern object"""
 
     @classmethod
-    def loads(cls, tomlstring=None):
+    def loads(cls, tomlstring=None, theme=None):
         """Load a pattern from a given string, and return a new pattern object
 
         doesn't do any processing or applying of the pattern
@@ -49,16 +49,18 @@ class Pattern:
             toparse = ""
         pattern = cls()
         pattern.definition = tomlkit.loads(toparse)
+        pattern._process(theme)
         return pattern
 
     @classmethod
-    def load(cls, fobj):
+    def load(cls, fobj, theme=None):
         """Load a pattern a file object
 
         doesn't do any processing or applying of the pattern
         """
         pattern = cls()
         pattern.definition = tomlkit.load(fobj)
+        pattern._process(theme)
         return pattern
 
     #
@@ -111,7 +113,7 @@ class Pattern:
         except KeyError:
             return None
 
-    def process(self, theme=None):
+    def _process(self, theme=None):
         """Process the loaded pattern definition, merging in a theme if given
 
         returns nothing, populates stuff in the current object:

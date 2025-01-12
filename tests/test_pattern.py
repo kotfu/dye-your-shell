@@ -121,7 +121,6 @@ def sthm():
 def spat():
     """the sample pattern without loading the theme"""
     pattern = Pattern.loads(SAMPLE_PATTERN)
-    pattern.process()
     return pattern
 
 
@@ -129,8 +128,7 @@ def spat():
 def sthmpat():
     """the sample pattern with the sample theme merged into it"""
     theme = Theme.loads(SAMPLE_THEME)
-    pattern = Pattern.loads(SAMPLE_PATTERN)
-    pattern.process(theme)
+    pattern = Pattern.loads(SAMPLE_PATTERN, theme)
     return pattern
 
 
@@ -239,7 +237,6 @@ def test_has_scope():
         style.background = "white"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
 
     assert pattern.has_scope("qqq")
     assert not pattern.has_scope("fred")
@@ -390,7 +387,6 @@ def test_variable():
         varname = "value"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     assert pattern.variables["varname"] == "value"
 
 
@@ -404,7 +400,6 @@ def test_variables_reference():
         var4 = "{{variables.varname}}"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     assert pattern.variables["var1"] == "value"
     assert pattern.variables["var2"] == "value"
     assert pattern.variables["var3"] == "value"
@@ -418,7 +413,6 @@ def test_undefined_variable_reference():
         var1 = "{{var.notdefined}}"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     assert pattern.variables["var1"] == ""
 
 
@@ -432,7 +426,6 @@ def test_variables_color_reference():
         var2 = "{{colors.bright_green}}"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     assert pattern.variables["var1"] == "#99e343"
     assert pattern.variables["var1"] == "#99e343"
 
@@ -447,7 +440,6 @@ def test_variables_style_reference():
         var2 = "{{styles.bright_green|fg_hex}}"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     assert pattern.variables["var1"] == "#99e343"
     assert pattern.variables["var1"] == "#99e343"
 
@@ -458,7 +450,6 @@ def test_capture_variable():
         capture.somevar = "printf 'hello there'"
     """
     pattern = Pattern.loads(pattern_str)
-    pattern.process()
     assert pattern.variables["somevar"] == "hello there"
 
 
@@ -467,9 +458,8 @@ def test_capture_variable_error():
         [variables]
         capture.somevar = "barf_is_not_a_shell_command"
     """
-    pattern = Pattern.loads(pattern_str)
     with pytest.raises(DyeError):
-        pattern.process()
+        Pattern.loads(pattern_str)
 
 
 def test_variable_redefine1_error():
@@ -488,9 +478,8 @@ def test_variable_redefine2_error():
         capture.somevar = "builtin echo hi"
         somevar = "can't do this"
     """
-    pattern = Pattern.loads(pattern_str)
     with pytest.raises(DyeError):
-        pattern.process()
+        Pattern.loads(pattern_str)
 
 
 #
