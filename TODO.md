@@ -16,12 +16,6 @@
     - prevent_themes is boolean if present
     - requires_theme refers to a file that exists
 [ ] make a 'dye patterns' command that lists out the patterns, need it for theme-activate() bash func
-[ ] write unit tests for pattern.py for stitching together a theme and a pattern
-[ ] switch from colors.red and styles.text and variables.myvar to the singular
-    version of each. The pattern file just reads so much nicer.
-[ ] make styles do a lookup like they used to, ie "style.prompt = 'my_style'"
-    it's so much more readable than '{{styles.my_style}}. Do the same thing for
-    colors
 [ ] see if we can download/convert/create our palettes from an online repository of color themes
 [ ] add generator for GREP_COLORS https://www.gnu.org/software/grep/manual/grep.html#index-GREP_005fCOLORS-environment-variable
 [ ] figure out how to add support for eza theme files
@@ -34,13 +28,18 @@
 [ ] create a page that shows various ways to create table entries (i.e. inline method style.directory, or separate table method)
 [ ] create a 'template-jinja' generator which can process a template file or inline string and then write
     write it out to the filesystem somewhere. Use this to get your theme info into other config
-    files like starship.toml. So you would create starship.toml.template and 'shell-themer' would
+    files like starship.toml. So you would create starship.toml.template and 'dye' would
     process it and insert your theme colors/variables/etc and output a starship.toml for you
 [ ] if you use ansi color numbers or names (instead of hex codes) in a style, it won't interpolate properly
     because the interpolator assumes that the color has a .triplet. See rich.color.get_truecolor() which
     we can use to fix this
 [ ] make a 'dye print' or 'dye echo' command that outputs text but let's you use colors from your theme
     in it. use either rich syntax or our 'template syntax'
+[ ] make a Scope object and move all the scope logic out of pattern into it. That's
+    stuff like is_enabled checking, adding a run() method?, style processing
+    in the scope, etc.
+[ ] unit tests in test_pattern.py or test_scope.py for all the processing of a scope
+[ ] move Pattern.process() into Pattern.load() and Pattern.loads()
 
 ## documentation and website
   - show how to set BAT_THEME
