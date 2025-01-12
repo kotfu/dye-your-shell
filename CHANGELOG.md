@@ -8,18 +8,22 @@ and the format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [0.9.0] - 2025/01/11
 
 ### Changed
 
 - `ls_colors` agent renamed to `gnu_ls`
 
-### Added
-
 ### Removed
 
 - removed `exa_colors` agent because exa is unmaintained. Use
   [eza](https://eza.rocks/) instead with the `eza` agent
+
+
+### Fixed
+
+- last release didn't include all dependencies and was therefore broken. This
+  has been fixed.
 
 
 ## [0.8.0] - 2025-01-09
