@@ -60,7 +60,7 @@ SAMPLE_THEME = """
 
 
 @pytest.fixture
-def sample_theme():
+def sthm():
     return Theme.loads(SAMPLE_THEME)
 
 
@@ -85,24 +85,24 @@ def test_load(tmp_path):
     assert len(theme.styles) == 11
 
 
-def test_loads(sample_theme):
-    assert isinstance(sample_theme.definition, dict)
-    assert len(sample_theme.definition) == 2
+def test_loads(sthm):
+    assert isinstance(sthm.definition, dict)
+    assert len(sthm.definition) == 2
 
 
-def test_loads_colors(sample_theme):
-    assert isinstance(sample_theme.colors, dict)
-    assert isinstance(sample_theme.colors["orange"], str)
-    assert sample_theme.colors["orange"] == "#ffb86c"
-    assert len(sample_theme.colors) == 14
+def test_loads_colors(sthm):
+    assert isinstance(sthm.colors, dict)
+    assert isinstance(sthm.colors["orange"], str)
+    assert sthm.colors["orange"] == "#ffb86c"
+    assert len(sthm.colors) == 14
 
 
-def test_loads_styles(sample_theme):
-    assert isinstance(sample_theme.styles, dict)
-    assert isinstance(sample_theme.styles["text"], rich.style.Style)
-    assert isinstance(sample_theme.styles["text_high"], rich.style.Style)
-    assert isinstance(sample_theme.styles["color1"], rich.style.Style)
-    assert len(sample_theme.styles) == 11
+def test_loads_styles(sthm):
+    assert isinstance(sthm.styles, dict)
+    assert isinstance(sthm.styles["text"], rich.style.Style)
+    assert isinstance(sthm.styles["text_high"], rich.style.Style)
+    assert isinstance(sthm.styles["color1"], rich.style.Style)
+    assert len(sthm.styles) == 11
 
 
 def test_loads_empty():
@@ -122,94 +122,87 @@ def test_loads_none():
 #
 # test processing of colors
 #
-def test_color(sample_theme):
-    assert sample_theme.colors["background"] == "#282a36"
+def test_color(sthm):
+    assert sthm.colors["background"] == "#282a36"
 
 
-def test_colors_reference(sample_theme):
-    assert sample_theme.colors["background_high"] == sample_theme.colors["background"]
+def test_colors_reference(sthm):
+    assert sthm.colors["background_high"] == sthm.colors["background"]
 
 
-def test_color_reference(sample_theme):
-    assert sample_theme.colors["background_medium"] == sample_theme.colors["background"]
+def test_color_reference(sthm):
+    assert sthm.colors["background_medium"] == sthm.colors["background"]
 
 
-def test_colors_bare_reference(sample_theme):
-    assert sample_theme.colors["background_low"] == sample_theme.colors["background"]
+def test_colors_bare_reference(sthm):
+    assert sthm.colors["background_low"] == sthm.colors["background"]
 
 
-def test_colors_double1_reference(sample_theme):
-    assert (
-        sample_theme.colors["background_double1"] == sample_theme.colors["background"]
-    )
+def test_colors_double1_reference(sthm):
+    assert sthm.colors["background_double1"] == sthm.colors["background"]
 
 
-def test_colors_double2_reference(sample_theme):
-    assert (
-        sample_theme.colors["background_double2"] == sample_theme.colors["background"]
-    )
+def test_colors_double2_reference(sthm):
+    assert sthm.colors["background_double2"] == sthm.colors["background"]
 
 
-def test_colors_unknown_reference(sample_theme):
-    assert sample_theme.colors["foreground_low"] == ""
+def test_colors_unknown_reference(sthm):
+    assert sthm.colors["foreground_low"] == ""
 
 
-def test_colors_load_order(sample_theme):
-    assert sample_theme.colors["notyet"] == ""
+def test_colors_load_order(sthm):
+    assert sthm.colors["notyet"] == ""
 
 
 #
 # test processing of styles
 #
-def test_style_color_ref(sample_theme):
-    assert (
-        sample_theme.styles["foreground"].color.name
-        == sample_theme.colors["foreground"]
-    )
+def test_style_color_ref(sthm):
+    assert sthm.styles["foreground"].color.name == sthm.colors["foreground"]
 
 
-def test_style_no_colors(sample_theme):
-    assert sample_theme.styles["color1"].color.name == "#ff79c6"
-    assert sample_theme.styles["color1"].color.triplet.hex == "#ff79c6"
+def test_style_no_colors(sthm):
+    assert sthm.styles["color1"].color.name == "#ff79c6"
+    assert sthm.styles["color1"].color.triplet.hex == "#ff79c6"
 
 
-def test_style_complex(sample_theme):
-    assert sample_theme.styles["text"].color.name == "#f8f8f2"
-    assert sample_theme.styles["text"].color.triplet.hex == "#f8f8f2"
-    assert sample_theme.styles["text"].bgcolor.name == "#282a36"
-    assert sample_theme.styles["text"].bgcolor.triplet.hex == "#282a36"
-    assert sample_theme.styles["text_high"].color.name == "#f8f8f2"
-    assert sample_theme.styles["text_high"].color.triplet.hex == "#f8f8f2"
-    assert sample_theme.styles["text_high"].bgcolor.name == "#282a36"
-    assert sample_theme.styles["text_high"].bgcolor.triplet.hex == "#282a36"
+def test_style_complex(sthm):
+    assert sthm.styles["text"].color.name == "#f8f8f2"
+    assert sthm.styles["text"].color.triplet.hex == "#f8f8f2"
+    assert sthm.styles["text"].bgcolor.name == "#282a36"
+    assert sthm.styles["text"].bgcolor.triplet.hex == "#282a36"
+    assert sthm.styles["text_high"].color.name == "#f8f8f2"
+    assert sthm.styles["text_high"].color.triplet.hex == "#f8f8f2"
+    assert sthm.styles["text_high"].bgcolor.name == "#282a36"
+    assert sthm.styles["text_high"].bgcolor.triplet.hex == "#282a36"
 
 
-def test_style_reference(sample_theme):
-    assert sample_theme.styles["text_medium"] == sample_theme.styles["text"]
+def test_style_reference(sthm):
+    assert sthm.styles["text_medium"] == sthm.styles["text"]
 
 
-def test_styles_bare_reference(sample_theme):
-    assert sample_theme.styles["text_low"] == sample_theme.styles["text"]
+def test_styles_bare_reference(sthm):
+    assert sthm.styles["text_low"] == sthm.styles["text"]
 
 
-def test_styles_double1_reference(sample_theme):
-    assert sample_theme.styles["text_double1"] == sample_theme.styles["text"]
+def test_styles_double1_reference(sthm):
+    assert sthm.styles["text_double1"] == sthm.styles["text"]
 
 
-def test_styles_double2_reference(sample_theme):
-    assert sample_theme.styles["text_double2"] == sample_theme.styles["text"]
+def test_styles_double2_reference(sthm):
+    assert sthm.styles["text_double2"] == sthm.styles["text"]
 
 
-def test_style_unknown_reference(sample_theme):
-    assert not sample_theme.styles["color2"]
-    assert isinstance(sample_theme.styles["color2"], rich.style.Style)
+def test_style_unknown_reference(sthm):
+    assert not sthm.styles["color2"]
+    assert isinstance(sthm.styles["color2"], rich.style.Style)
 
 
-def test_styles_load_order(sample_theme):
-    assert not sample_theme.styles["notyet"]
-    assert isinstance(sample_theme.styles["notyet"], rich.style.Style)
+def test_styles_load_order(sthm):
+    assert not sthm.styles["notyet"]
+    assert isinstance(sthm.styles["notyet"], rich.style.Style)
 
 
-def test_style_empty(sample_theme):
-    assert not sample_theme.styles["color3"]
-    assert isinstance(sample_theme.styles["color3"], rich.style.Style)
+def test_style_empty(sthm):
+    assert not sthm.styles["color3"]
+    assert isinstance(sthm.styles["color3"], rich.style.Style)
