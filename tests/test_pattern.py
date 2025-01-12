@@ -26,7 +26,7 @@ import pytest
 import rich.errors
 import rich.style
 
-from dye import DyeSyntaxError, Pattern
+from dye import DyeError, DyeSyntaxError, Pattern
 
 STATIC_PATTERN = """
 description = "Oxygen is a pattern with lots of space"
@@ -137,45 +137,51 @@ def test_description(static_pat):
     assert static_pat.description == "Oxygen is a pattern with lots of space"
 
 
+def test_no_description():
+    pattern_str = """prevent_themes = true"""
+    pat = Pattern.loads(pattern_str)
+    assert pat.description is None
+
+
 def test_prevent_themes():
-    tomlstr = """prevent_themes = true"""
-    pat = Pattern.loads(tomlstr)
+    pattern_str = """prevent_themes = true"""
+    pat = Pattern.loads(pattern_str)
     assert pat.prevent_themes is True
 
 
 def test_prevent_themes_not_present():
-    tomlstr = """description = 'hi'"""
-    pat = Pattern.loads(tomlstr)
+    pattern_str = """description = 'hi'"""
+    pat = Pattern.loads(pattern_str)
     assert pat.prevent_themes is False
 
 
 def test_prevent_themes_not_boolean():
-    tomlstr = "prevent_themes = 'nope'"
-    pat = Pattern.loads(tomlstr)
+    pattern_str = "prevent_themes = 'nope'"
+    pat = Pattern.loads(pattern_str)
     with pytest.raises(DyeSyntaxError):
         _ = pat.prevent_themes
 
 
 def test_requires_theme():
-    tomlstr = """requires_theme = '/path/to/theme'"""
-    pat = Pattern.loads(tomlstr)
+    pattern_str = """requires_theme = '/path/to/theme'"""
+    pat = Pattern.loads(pattern_str)
     assert pat.requires_theme == "/path/to/theme"
 
 
 def test_requires_theme_not_present():
-    tomlstr = """description = 'hi'"""
-    pat = Pattern.loads(tomlstr)
+    pattern_str = """description = 'hi'"""
+    pat = Pattern.loads(pattern_str)
     assert pat.requires_theme is None
 
 
 def test_has_scope():
-    pattern_toml = """
+    pattern_str = """
         [scopes.qqq]
         agent = "iterm"
         style.foreground = "blue"
         style.background = "white"
     """
-    pattern = Pattern.loads(pattern_toml)
+    pattern = Pattern.loads(pattern_str)
     pattern.process()
 
     assert pattern.has_scope("qqq")
@@ -185,6 +191,30 @@ def test_has_scope():
 #
 # test processing the pattern and theme
 #
+def test_capture_variable_error():
+    pattern_str = """
+        [variables]
+        capture.somevar = "barf_is_not_a_shell_command"
+
+        [scopes.iterm]
+        agent = "iterm"
+    """
+    pattern = Pattern.loads(pattern_str)
+    with pytest.raises(DyeError):
+        pattern.process()
+
+
+def test_variable_redefine():
+    pattern_str = """
+        [variables]
+        capture.somevar = "builtin echo hi"
+        somevar = "can't do this"
+        [scopes.iterm]
+        agent = "iterm"
+    """
+    pattern = Pattern.loads(pattern_str)
+    with pytest.raises(DyeError):
+        pattern.process()
 
 
 ##################
