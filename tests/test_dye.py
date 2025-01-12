@@ -27,7 +27,7 @@ import os
 import pytest
 from rich_argparse import RichHelpFormatter
 
-from dye import Dye
+from dye import Dye, DyeError
 from dye import __main__ as mainmodule
 
 
@@ -175,6 +175,32 @@ def test_unknown_command(dye_cmdline, capsys):
 
 
 #
+# test dye_dir() property
+#
+def test_dye_dir_environment_variable(mocker, tmp_path):
+    dye = Dye()
+    mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)})
+    # dye_dir should be a Path object
+    assert dye.dye_dir == tmp_path
+
+
+def test_dye_dir_no_environment_variable(mocker):
+    # ensure no DYE_DIR environment variable exists
+    mocker.patch.dict(os.environ, {}, clear=True)
+    dye = Dye()
+    with pytest.raises(DyeError):
+        _ = dye.dye_dir
+
+
+def test_dye_dir_invalid_directory(mocker, tmp_path):
+    invalid = tmp_path / "doesntexist"
+    mocker.patch.dict(os.environ, {"DYE_DIR": str(invalid)})
+    dye = Dye()
+    with pytest.raises(DyeError):
+        _ = dye.dye_dir
+
+
+#
 # test Dye.main(), the entry point for the command line script
 #
 def test_dye_main(mocker):
@@ -211,3 +237,153 @@ def test___main__(mocker):
         mainmodule.doit()
     # unpack the exception to see if got the return value
     assert excinfo.value.code == 42
+
+
+# #
+# # test all the variations of load_from_args()
+# #
+# def test_load_from_args_no_theme(dye, mocker):
+#     # we need empty args, and empty environment, and with
+#     # all of this empty, we should get an exception
+#     mocker.patch.dict(os.environ, {}, clear=True)
+#     args = argparse.Namespace()
+#     args.file = None
+#     args.theme = None
+#     with pytest.raises(DyeError):
+#         dye.load_from_args(args)
+
+
+# def test_load_from_args_filename(dye, mocker, tmp_path):
+#     # give a bogus theme file in the environment, which should be
+#     # ignored because the filename in the arguments should take
+#     # precendence
+#     mocker.patch.dict(os.environ, {"THEME_FILE": "nosuchfile"}, clear=True)
+
+#     # go write a theme file that we can actually open
+#     themefile = tmp_path / "sometheme.toml"
+#     toml = """
+#     [styles]
+#     text = "#ffcc00 on #003322"
+#     """
+#     with open(themefile, "w", encoding="utf8") as fvar:
+#         fvar.write(toml)
+
+#     args = argparse.Namespace()
+#     args.file = str(themefile)
+#     args.theme = None
+
+#     dye.load_from_args(args)
+#     assert dye.theme.definition
+#     assert dye.theme.styles
+
+
+# def test_load_from_args_invalid_filename(dye, mocker, tmp_path):
+#     # give a real theme file in the environment, which should be
+#     # ignored because the filename in the arguments should take
+#     # precendence, this should generate an error because we
+#     # specified a file which could not be opened
+
+#     # go write a theme file that we can actually open
+#     envfile = tmp_path / "sometheme.toml"
+#     with open(envfile, "w", encoding="utf8") as fvar:
+#         fvar.write("# an empty toml theme file")
+#     mocker.patch.dict(os.environ, {"THEME_FILE": str(envfile)}, clear=True)
+
+#     themefile = tmp_path / "doesntexist.toml"
+#     args = argparse.Namespace()
+#     args.file = str(themefile)
+#     args.theme = None
+
+#     with pytest.raises(FileNotFoundError):
+#         dye.load_from_args(args)
+
+
+# def test_load_from_args_env(dye, mocker, tmp_path):
+#     # go write a theme file that we can actually open
+#     themefile = tmp_path / "sometheme.toml"
+#     tomlstr = """
+#         [styles]
+#         text = "#ffcc00 on #003322"
+#     """
+#     with open(themefile, "w", encoding="utf8") as fvar:
+#         fvar.write(tomlstr)
+
+#     mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
+
+#     args = argparse.Namespace()
+#     args.file = None
+#     args.theme = None
+
+#     dye.load_from_args(args)
+#     assert dye.theme.definition
+#     assert dye.theme.styles
+
+
+# def test_load_from_args_env_invalid(dye, mocker, tmp_path):
+#     # a theme file in the environment variable which doesn't exist
+#     # should raise an exception
+#     themefile = tmp_path / "doesntexist.toml"
+#     mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
+
+#     args = argparse.Namespace()
+#     args.file = None
+#     args.theme = None
+
+#     with pytest.raises(FileNotFoundError):
+#         dye.load_from_args(args)
+
+
+# def test_load_from_args_theme_file(dye, mocker, tmp_path):
+#     # give a theme name, but the full name including the .toml
+#     themefile = tmp_path / "themefile.toml"
+#     tomlstr = """
+#         [styles]
+#         text = "#ffcc00 on #003322"
+#     """
+#     with open(themefile, "w", encoding="utf8") as fvar:
+#         fvar.write(tomlstr)
+
+#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
+
+#     args = argparse.Namespace()
+#     args.file = None
+#     args.theme = "themefile.toml"
+
+#     dye.load_from_args(args)
+#     assert dye.theme.definition
+#     assert dye.theme.styles
+
+
+# def test_load_from_args_theme_file_invalid(dye, mocker, tmp_path):
+#     # we have a valid theme dir, but we are going to give
+#     # a filename with extension as the theme arguemtn
+#     # but that filename won't exist
+#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
+
+#     args = argparse.Namespace()
+#     args.file = None
+#     args.theme = "notfound.toml"
+
+#     with pytest.raises(DyeError):
+#         dye.load_from_args(args)
+
+
+# def test_load_from_args_theme_name(dye, mocker, tmp_path):
+#     # give a theme name, but the full name including the .toml
+#     themefile = tmp_path / "themefile.toml"
+#     tomlstr = """
+#         [styles]
+#         text = "#ffcc00 on #003322"
+#     """
+#     with open(themefile, "w", encoding="utf8") as fvar:
+#         fvar.write(tomlstr)
+
+#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
+
+#     args = argparse.Namespace()
+#     args.file = None
+#     args.theme = "themefile"
+
+#     dye.load_from_args(args)
+#     assert dye.theme.definition
+#     assert dye.theme.styles
