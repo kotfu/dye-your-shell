@@ -21,18 +21,20 @@ ahead.
 
 `dye-your-shell` installs a command line program named `dye` to do its work.
 
-`dye` reads a configuration file to define a set of colors, and how to
-apply those colors to as many command line tools as can support it. This
-configuration file is called a pattern.
+`dye` reads a configuration file containing a set of colors, and instructions on how to
+apply those colors to as many command line tools as can support it. This configuration
+file is called a pattern. Each command line tool (ie bat, fzf, eza) has it's own set of
+instructions in the pattern which are powered by an agent, which is included in `dye`.
+This agent knows how to easily apply the colors to that command line tool, for example
+by setting an environment variable, or executing certain shell commands, or copying
+a template to a config file.
 
-All that hand tweaking in your shell init files can now be replaced with:
+Instead of tweaking your collection of bash scripts to create or change all these
+colors, you now just tell `dye` to apply your pattern.
 ```
 export DYE_PATTERN_FILE=~/.dye/dracula.toml
 source <(dye apply)
 ```
-
-This changes all your environment variables and other settings for the many
-shell tools you use to reflect the colors in the theme you have specified.
 
 
 ## Pattern Files
