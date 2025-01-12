@@ -38,13 +38,21 @@ STATIC_THEME = """
     purple =  "#bd93f9"
     yellow =  "#f1fa8c"
     background_high = "{{ colors.background }}"
+    background_medium = "{{ color.background }}"
+    background_low = "background"
+    background_double1 = "{{ color.background_low }}"
+    background_double2 = "background_medium"
     foreground_low = "{{ colors.unknown }}"
 
     [styles]
     notyet = "{{ styles.foreground }}"
-    foreground = "{{ colors.foreground }}"
+    foreground = "{{ color.foreground }}"
     text = "bold {{ colors.foreground }} on {{ colors.background }}"
     text_high = "{{ styles.text }}"
+    text_medium = "{{ style.text }}"
+    text_low = "text"
+    text_double1 = "{{ style.text_low }}"
+    text_double2 = "text_medium"
     color1 = "#ff79c6"
     color2 = "{{ colors.unknown }}"
     color3 = ""
@@ -73,8 +81,8 @@ def test_load(tmp_path):
     # open and read the file, load() will work too
     assert isinstance(theme.definition, dict)
     assert len(theme.definition) == 2
-    assert len(theme.colors) == 10
-    assert len(theme.styles) == 7
+    assert len(theme.colors) == 14
+    assert len(theme.styles) == 11
 
 
 def test_loads(static_theme):
@@ -86,7 +94,7 @@ def test_loads_colors(static_theme):
     assert isinstance(static_theme.colors, dict)
     assert isinstance(static_theme.colors["orange"], str)
     assert static_theme.colors["orange"] == "#ffb86c"
-    assert len(static_theme.colors) == 10
+    assert len(static_theme.colors) == 14
 
 
 def test_loads_styles(static_theme):
@@ -94,7 +102,7 @@ def test_loads_styles(static_theme):
     assert isinstance(static_theme.styles["text"], rich.style.Style)
     assert isinstance(static_theme.styles["text_high"], rich.style.Style)
     assert isinstance(static_theme.styles["color1"], rich.style.Style)
-    assert len(static_theme.styles) == 7
+    assert len(static_theme.styles) == 11
 
 
 def test_loads_empty():
@@ -112,10 +120,34 @@ def test_loads_none():
 
 
 #
-# test processing of theme elements
+# test processing of colors
 #
+def test_color(static_theme):
+    assert static_theme.colors["background"] == "#282a36"
+
+
 def test_colors_reference(static_theme):
     assert static_theme.colors["background_high"] == static_theme.colors["background"]
+
+
+def test_color_reference(static_theme):
+    assert static_theme.colors["background_medium"] == static_theme.colors["background"]
+
+
+def test_colors_bare_reference(static_theme):
+    assert static_theme.colors["background_low"] == static_theme.colors["background"]
+
+
+def test_colors_double1_reference(static_theme):
+    assert (
+        static_theme.colors["background_double1"] == static_theme.colors["background"]
+    )
+
+
+def test_colors_double2_reference(static_theme):
+    assert (
+        static_theme.colors["background_double2"] == static_theme.colors["background"]
+    )
 
 
 def test_colors_unknown_reference(static_theme):
@@ -124,6 +156,16 @@ def test_colors_unknown_reference(static_theme):
 
 def test_colors_load_order(static_theme):
     assert static_theme.colors["notyet"] == ""
+
+
+#
+# test processing of styles
+#
+def test_style_color_ref(static_theme):
+    assert (
+        static_theme.styles["foreground"].color.name
+        == static_theme.colors["foreground"]
+    )
 
 
 def test_style_no_colors(static_theme):
@@ -142,14 +184,30 @@ def test_style_complex(static_theme):
     assert static_theme.styles["text_high"].bgcolor.triplet.hex == "#282a36"
 
 
-def test_styles_load_order(static_theme):
-    assert not static_theme.styles["notyet"]
-    assert isinstance(static_theme.styles["notyet"], rich.style.Style)
+def test_style_reference(static_theme):
+    assert static_theme.styles["text_medium"] == static_theme.styles["text"]
+
+
+def test_styles_bare_reference(static_theme):
+    assert static_theme.styles["text_low"] == static_theme.styles["text"]
+
+
+def test_styles_double1_reference(static_theme):
+    assert static_theme.styles["text_double1"] == static_theme.styles["text"]
+
+
+def test_styles_double2_reference(static_theme):
+    assert static_theme.styles["text_double2"] == static_theme.styles["text"]
 
 
 def test_style_unknown_reference(static_theme):
     assert not static_theme.styles["color2"]
     assert isinstance(static_theme.styles["color2"], rich.style.Style)
+
+
+def test_styles_load_order(static_theme):
+    assert not static_theme.styles["notyet"]
+    assert isinstance(static_theme.styles["notyet"], rich.style.Style)
 
 
 def test_style_empty(static_theme):

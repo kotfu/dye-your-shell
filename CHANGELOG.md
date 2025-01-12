@@ -14,6 +14,10 @@ and the format of this file follows recommendations from
 
 ### Changed
 
+- in themes and patterns you can now reference another color or style in
+  multiple ways. Colors can be '{{ color.red }}', '{{ colors.red }}', or
+  'red'. Styles can be '{{ style.text }}', '{{ styles.text }}' or 'text'.
+
 
 ## [0.9.0] - 2025/01/11
 

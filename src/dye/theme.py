@@ -91,8 +91,15 @@ class Theme:
             raw_colors = {}
         self.colors = {}
         for key, value in raw_colors.items():
-            template = env.from_string(value)
-            self.colors[key] = template.render(colors=self.colors)
+            # do a bare lookup so that foreground_low = "foreground" works
+            if value in self.colors:
+                self.colors[key] = self.colors[value]
+            else:
+                template = env.from_string(value)
+                # this lets us do {{colors.foreground}} or {{color.foreground}}
+                self.colors[key] = template.render(
+                    colors=self.colors, color=self.colors
+                )
 
         # process the elements, using the colors as variables
         # each element in should be a rich.Style() object
@@ -102,6 +109,17 @@ class Theme:
             raw_styles = {}
         self.styles = {}
         for key, value in raw_styles.items():
-            template = env.from_string(value)
-            rendered = template.render(colors=self.colors, styles=self.styles)
-            self.styles[key] = rich.style.Style.parse(rendered)
+            # do a bare lookup so that text_low = "text" works
+            if value in self.styles:
+                self.styles[key] = self.styles[value]
+            else:
+                template = env.from_string(value)
+                # allow {{style.foreground}} or {{styles.foreground}}
+                # or {{color.background}} or {{colors.background}}
+                rendered = template.render(
+                    color=self.colors,
+                    colors=self.colors,
+                    style=self.styles,
+                    styles=self.styles,
+                )
+                self.styles[key] = rich.style.Style.parse(rendered)
