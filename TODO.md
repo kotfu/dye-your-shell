@@ -35,10 +35,8 @@
     we can use to fix this
 [ ] make a 'dye print' or 'dye echo' command that outputs text but let's you use colors from your theme
     in it. use either rich syntax or our 'template syntax'
-[ ] make a Scope object and move all the scope logic out of pattern into it. That's
-    stuff like is_enabled checking, adding a run() method?, style processing
-    in the scope, etc.
 [ ] unit tests in test_pattern.py or test_scope.py for all the processing of a scope
+[ ] see if we can use pygments styles as a theme in dye
 
 
 ## documentation and website
