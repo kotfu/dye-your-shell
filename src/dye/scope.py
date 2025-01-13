@@ -172,19 +172,17 @@ class Scope:
         returns output consisting of shell commands which must
         be sourced in the current shell in order to become active
         """
-        # TODO call self._enabled to see if the agent should even run
-        # adding the comments to output
-
-        # run the agent, printing any shell commands it returns
-        output = self.agent.run(comments)
-        if output:
-            print(output)
+        if self._enabled(comments):
+            # run the agent, printing any shell commands it returns
+            output = self.agent.run(comments)
+            if output:
+                print(output)
 
     def _enabled(self, comments=False):
         """Determine if the scope is enabled
         The default is that the scope is enabled
 
-        returns (bool, array(str))
+        returns whether this scope is enabled
 
         If can be disabled by any of these in the pattern file:
 
@@ -195,7 +193,8 @@ class Scope:
 
         if 'enabled = false' is present, then enabled_if is not checked
 
-        Throws KeyError if scope does not exist
+        May print output to be executed by the shell, may execute
+        shell commands too
         """
         with contextlib.suppress(KeyError):
             enabled = self.definition["enabled"]
