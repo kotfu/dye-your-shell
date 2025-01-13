@@ -28,10 +28,10 @@ import sys
 from dye import Dye
 
 
-def doit():
+def bootstrap():
     """made this so we can test it"""
     if __name__ == "__main__":
         sys.exit(Dye.main())
 
 
-doit()
+bootstrap()

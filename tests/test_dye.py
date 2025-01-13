@@ -232,7 +232,7 @@ def test___main__(mocker):
     mocker.patch("dye.Dye.main", return_value=42)
     mocker.patch.object(mainmodule, "__name__", "__main__")
     with pytest.raises(SystemExit) as excinfo:
-        mainmodule.doit()
+        mainmodule.bootstrap()
     # unpack the exception to see if got the return value
     assert excinfo.value.code == 42
 
