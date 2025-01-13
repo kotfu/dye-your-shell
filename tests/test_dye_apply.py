@@ -97,7 +97,7 @@ def test_unknown_scope(dye_cmdline, capsys):
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_ERROR
     assert not out
-    assert err
+    assert err == "dye: unknownscope: no such scope\n"
 
 
 def test_no_scopes(dye_cmdline, capsys):

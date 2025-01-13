@@ -70,12 +70,6 @@ class Scope:
         """A toml definition of the scope, which has had all templates processed"""
         self.definition = {}
 
-        """The name of the agent from the toml definition"""
-        self.agent_name = None
-
-        """The agent class"""
-        self.agent = None
-
         """The dictionary of style objects defined in this scope"""
         self.styles = {}
 
@@ -91,7 +85,7 @@ class Scope:
         try:
             scopedef = pattern.definition["scopes"][name]
         except KeyError as exc:
-            raise DyeError("scope '{name}' not found") from exc
+            raise DyeError(f"{name}: no such scope") from exc
         self.name = name
 
         env = jinja2.Environment()
@@ -114,7 +108,6 @@ class Scope:
         self.definition = self._process_graph(scopedef, render_func)
 
         self._process_scope_styles()
-        self._process_agent()
 
     def _process_graph(self, dataset, render_func):
         """recursive function to crawl through a dictionary and
@@ -150,31 +143,28 @@ class Scope:
 
         self.styles = processed_styles
 
-    def _process_agent(self):
-        """set self.agent_name and self.agent"""
-
+    def run_agent(self, comments=False):
+        """
+        returns output consisting of shell commands which must
+        be sourced in the current shell in order to become active
+        """
         try:
-            self.agent_name = self.definition["agent"]
+            agent_name = self.definition["agent"]
         except KeyError as exc:
             errmsg = f"scope '{self.name}' does not have an agent."
             raise DyeSyntaxError(errmsg) from exc
 
         try:
             # go get the apropriate class for the agent
-            agent_cls = AgentBase.classmap[self.agent_name]
+            agent_cls = AgentBase.classmap[agent_name]
             # initialize the class with the scope (that's our self)
-            self.agent = agent_cls(self)
+            agent = agent_cls(self)
         except KeyError as exc:
-            raise DyeError(f"{self.agent_name}: unknown agent") from exc
+            raise DyeError(f"{agent_name}: unknown agent") from exc
 
-    def run_agent(self, comments=False):
-        """
-        returns output consisting of shell commands which must
-        be sourced in the current shell in order to become active
-        """
         if self._enabled(comments):
             # run the agent, printing any shell commands it returns
-            output = self.agent.run(comments)
+            output = agent.run(comments)
             if output:
                 print(output)
 
