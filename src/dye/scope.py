@@ -162,13 +162,18 @@ class Scope:
         except KeyError as exc:
             raise DyeError(f"{agent_name}: unknown agent") from exc
 
-        if self._enabled(comments):
+        if self._enabled():
+            if comments:
+                print(f"# scope '{self.name}'")
             # run the agent, printing any shell commands it returns
             output = agent.run(comments)
             if output:
                 print(output)
+        else:
+            if comments:
+                print(f"# scope '{self.name}' skipped because it is not enabled")
 
-    def _enabled(self, comments=False):
+    def _enabled(self):
         """Determine if the scope is enabled
         The default is that the scope is enabled
 

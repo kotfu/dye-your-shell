@@ -503,7 +503,7 @@ def test_scopes():
 
     assert len(pattern.scopes) == 2
     assert isinstance(pattern.scopes["qqq"], Scope)
-    assert pattern.scopes["fff"].agent_name == "environment_variables"
+    assert pattern.scopes["fff"].name == "fff"
 
 
 def test_scopes_empty():
