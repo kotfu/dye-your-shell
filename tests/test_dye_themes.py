@@ -28,7 +28,7 @@ from dye import Dye
 
 
 #
-# test the list command
+# test the themes command
 #
 def test_themes(dye_cmdline, capsys, mocker, tmp_path):
     # gotta patch dye_dir, which reads the environment variable DYE_DIR
