@@ -400,6 +400,8 @@ class Dye:
         theme = self.load_theme_from_args(args, required=False)
         pattern = self.load_pattern_from_args(args, theme)
 
+        # if we got scope(s) on the command line, use them, otherwise we'll
+        # apply all scopes
         to_apply = args.scope.split(",") if args.scope else list(pattern.scopes.keys())
 
         for scope_name in to_apply:

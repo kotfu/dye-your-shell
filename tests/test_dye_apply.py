@@ -24,7 +24,7 @@
 
 import pytest
 
-from dye import Dye, DyeError
+from dye import Dye
 
 #
 # test scope selection
@@ -68,6 +68,10 @@ SCOPE_PATTERN = """
     styles.prompt = "{{styles.green}}"
     styles.indicator = "{{styles.cyan}}"
     styles.match = "{{styles.pink}}"
+
+    [scopes.env]
+    agent = "environment_variables"
+    unset = "NO_COLOR"
     """
 
 
@@ -79,6 +83,20 @@ def test_single_scope(dye_cmdline, capsys):
     assert not err
     lines = out.splitlines()
     assert len(lines) == 1
+    assert "export FZF_DEFAULT_OPTS=" in lines[0]
+
+
+def test_multiple_scopes(dye_cmdline, capsys):
+    exit_code = dye_cmdline("apply -s env,fzf", None, SCOPE_PATTERN)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert out
+    assert not err
+    lines = out.splitlines()
+    assert len(lines) == 2
+    # scopes should come out in the order specified
+    assert "unset NO_COLOR" in lines[0]
+    assert "export FZF_DEFAULT_OPTS" in lines[1]
 
 
 def test_all_scopes(dye_cmdline, capsys):
@@ -88,8 +106,8 @@ def test_all_scopes(dye_cmdline, capsys):
     assert out
     assert not err
     lines = out.splitlines()
-    # 2 lines from iterm, 1 from fzf
-    assert len(lines) == 3
+    # 2 lines from iterm, 1 from fzf, 1 for env
+    assert len(lines) == 4
 
 
 def test_unknown_scope(dye_cmdline, capsys):
