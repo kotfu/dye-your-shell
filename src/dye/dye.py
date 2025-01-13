@@ -320,7 +320,8 @@ class Dye:
 
     def command_print(self, args):
         """print arbitrary strings applying styles from a theme or pattern"""
-        print(" ".join(args.string))
+        endchar = "" if args.n else None
+        print(" ".join(args.string), end=endchar)
         return self.EXIT_SUCCESS
 
     def command_agents(self, _):
@@ -597,6 +598,9 @@ class Dye:
             formatter_class=RichHelpFormatter,
             help="print text using styles from a theme or pattern",
         )
+        newline_help = "do not append a newline"
+        parser.add_argument("-n", action="store_true", help=newline_help)
+
         string_help = "strings to be printed"
         parser.add_argument("string", nargs="*", help=string_help)
 

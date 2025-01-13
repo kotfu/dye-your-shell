@@ -35,3 +35,12 @@ def test_print_basic(dye_cmdline, capsys):
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
     assert out == f"{strings}\n"
+
+
+def test_print_no_newline(dye_cmdline, capsys):
+    strings = "Hello there. General Kenobi."
+    exit_code = dye_cmdline(f"print -n {strings}")
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    assert out == f"{strings}"
