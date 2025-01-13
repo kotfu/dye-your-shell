@@ -30,11 +30,24 @@ from dye import Dye
 #
 def test_preview(dye_cmdline, capsys):
     theme_toml = """
+        [colors]
+        background = "#282a36"
+        current_line = "#44475a"
+        foreground = "#f8f8f2"
+        comment = "#6272a4"
+        cyan = "#8be9fd"
+        green = "#50fa7b"
+        orange = "#ffb86c"
+        pink = "#ff79c6"
+        purple = "#bd93f9"
+        red = "#ff5555"
+        yellow = "#f1fa8c"
+
         [styles]
         # have to define a 'text' style or preview doesn't work
         text = "#f6f6f0 on #222531"
         current_line =  "#f8f8f2 on #44475a"
-        comment =  "#6272a4"
+        comment =  "{{color.comment}}"
     """
     exit_code = dye_cmdline("preview", theme_toml)
     out, err = capsys.readouterr()
@@ -42,6 +55,32 @@ def test_preview(dye_cmdline, capsys):
     assert out
     assert not err
     # here's a list of strings that should be in the output
-    tests = ["current_line", "comment", "text"]
+    tests = ["current_line", "comment", "text", "cyan", "pink", "purple"]
     for test in tests:
         assert test in out
+
+
+def test_preview_no_text(dye_cmdline, capsys):
+    theme_toml = """
+        [colors]
+        background = "#282a36"
+        current_line = "#44475a"
+        foreground = "#f8f8f2"
+        comment = "#6272a4"
+        cyan = "#8be9fd"
+        green = "#50fa7b"
+        orange = "#ffb86c"
+        pink = "#ff79c6"
+        purple = "#bd93f9"
+        red = "#ff5555"
+        yellow = "#f1fa8c"
+
+        [styles]
+        current_line =  "#f8f8f2 on #44475a"
+        comment =  "{{color.comment}}"
+    """
+    exit_code = dye_cmdline("preview", theme_toml)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_ERROR
+    assert not out
+    assert "theme must define a 'text' style" in err
