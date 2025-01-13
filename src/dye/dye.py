@@ -52,167 +52,6 @@ class Dye:
     HELP_ELEMENTS = ["args", "groups", "help", "metavar", "prog", "syntax", "text"]
 
     #
-    # methods for running from the command line
-    #
-    @classmethod
-    def argparser(cls):
-        """Build the argument parser"""
-
-        RichHelpFormatter.usage_markup = True
-        RichHelpFormatter.group_name_formatter = str.lower
-
-        parser = argparse.ArgumentParser(
-            description=(
-                "activate color output in shell commands using themes and patterns"
-            ),
-            formatter_class=RichHelpFormatter,
-            add_help=False,
-            epilog=(
-                "type  '[argparse.prog]%(prog)s[/argparse.prog]"
-                " [argparse.args]<command>[/argparse.args] -h' for command"
-                " specific help"
-            ),
-        )
-
-        hgroup = parser.add_mutually_exclusive_group()
-        help_help = "show this help message and exit"
-        hgroup.add_argument(
-            "-h",
-            "--help",
-            action="store_true",
-            help=help_help,
-        )
-        version_help = "show the program version and exit"
-        hgroup.add_argument(
-            "-v",
-            "--version",
-            action="store_true",
-            help=version_help,
-        )
-
-        # colors
-        cgroup = parser.add_mutually_exclusive_group()
-        nocolor_help = "disable color in help output, overrides $DYE_COLORS"
-        cgroup.add_argument(
-            "--no-color", dest="nocolor", action="store_true", help=nocolor_help
-        )
-        color_help = "provide a color specification for help output"
-        cgroup.add_argument("--color", metavar="<colorspec>", help=color_help)
-
-        forcecolor_help = (
-            "force color output even if standard output is not a terminal"
-            " (i.e. if it's a file or a pipe to less)"
-        )
-        parser.add_argument("--force-color", action="store_true", help=forcecolor_help)
-
-        # set up for the sub commands
-        subparsers = parser.add_subparsers(
-            dest="command",
-            title="arguments",
-            metavar="<command>",
-            required=False,
-            help="command to perform, which must be one of the following:",
-        )
-
-        # apply command
-        apply_help = "apply a theme"
-        apply_parser = subparsers.add_parser(
-            "apply",
-            description=apply_help,
-            formatter_class=RichHelpFormatter,
-            help=apply_help,
-        )
-        pattern_group = apply_parser.add_mutually_exclusive_group()
-        pattern_file_help = "specify a file containing a pattern"
-        pattern_group.add_argument(
-            "-f", "--patternfile", metavar="<path>", help=pattern_file_help
-        )
-        pattern_name_help = "specify a pattern by name from $DYE_DIR"
-        pattern_group.add_argument(
-            "-p", "--patternname", metavar="<name>", help=pattern_name_help
-        )
-        theme_group = apply_parser.add_mutually_exclusive_group()
-        theme_file_help = "specify a file containing a theme"
-        theme_group.add_argument(
-            "-t", "--themefile", metavar="<path>", help=theme_file_help
-        )
-        theme_name_help = "specify a theme by name from $DYE_DIR/themes"
-        theme_group.add_argument(
-            "-n", "--themename", metavar="<name>", help=theme_name_help
-        )
-
-        scope_help = "only apply the given scope"
-        apply_parser.add_argument("-s", "--scope", help=scope_help)
-        comment_help = "add comments to the generated shell output"
-        apply_parser.add_argument(
-            "-c", "--comment", action="store_true", help=comment_help
-        )
-
-        # preview command
-        preview_help = "show a preview of the styles in a theme"
-        preview_parser = subparsers.add_parser(
-            "preview",
-            description=preview_help,
-            formatter_class=RichHelpFormatter,
-            help=preview_help,
-        )
-        theme_group = preview_parser.add_mutually_exclusive_group()
-        theme_file_help = "specify a file containing a theme"
-        theme_group.add_argument(
-            "-t", "--themefile", metavar="<path>", help=theme_file_help
-        )
-        theme_name_help = "specify a theme by name from $DYE_DIR/themes"
-        theme_group.add_argument(
-            "-n", "--themename", metavar="<name>", help=theme_name_help
-        )
-
-        # agents command
-        agents_help = "list all known agents"
-        subparsers.add_parser(
-            "agents",
-            description=agents_help,
-            formatter_class=RichHelpFormatter,
-            help=agents_help,
-        )
-
-        # themes command
-        themes_help = "list available themes"
-        subparsers.add_parser(
-            "themes",
-            description=themes_help,
-            formatter_class=RichHelpFormatter,
-            help=themes_help,
-        )
-
-        # help command
-        help_help = "display this usage message"
-        subparsers.add_parser(
-            "help",
-            description=help_help,
-            formatter_class=RichHelpFormatter,
-            help=help_help,
-        )
-
-        return parser
-
-    @classmethod
-    def main(cls, argv=None):
-        """Entry point from the command line
-
-        parse arguments and call dispatch() for processing
-        """
-
-        parser = cls.argparser()
-        try:
-            args = parser.parse_args(argv)
-        except SystemExit as exc:
-            return exc.code
-
-        # create an instance of ourselves
-        thm = cls(force_color=args.force_color)
-        return thm.dispatch(parser.prog, args)
-
-    #
     # initialization and properties
     #
     def __init__(self, force_color=False):
@@ -307,6 +146,8 @@ class Dye:
                 exit_code = self.command_apply(args)
             elif args.command == "preview":
                 exit_code = self.command_preview(args)
+            elif args.command == "print":
+                exit_code = self.command_print(args)
             elif args.command == "agents":
                 exit_code = self.command_agents(args)
             elif args.command == "themes":
@@ -477,6 +318,11 @@ class Dye:
         self.console.print(rich.panel.Panel(outer_table, style=text_style))
         return self.EXIT_SUCCESS
 
+    def command_print(self, args):
+        """print arbitrary strings applying styles from a theme or pattern"""
+        print(" ".join(args.string))
+        return self.EXIT_SUCCESS
+
     def command_agents(self, _):
         """list all available agents and a short description of each"""
         # ignore all other args
@@ -599,3 +445,191 @@ class Dye:
         with open(fname, "rb") as fobj:
             pattern = Pattern.load(fobj, theme)
         return pattern
+
+    #
+    # static methods for running from the command line
+    # main() below is called from src/dye/__main__.py
+    #
+    @staticmethod
+    def main(argv=None):
+        """Entry point from the command line
+
+        parse arguments and call dispatch() for processing
+        """
+
+        parser = Dye.argparser()
+        try:
+            args = parser.parse_args(argv)
+        except SystemExit as exc:
+            return exc.code
+
+        # create an instance of ourselves
+        thm = Dye(force_color=args.force_color)
+        return thm.dispatch(parser.prog, args)
+
+    @staticmethod
+    def argparser():
+        """Build the argument parser"""
+
+        RichHelpFormatter.usage_markup = True
+        RichHelpFormatter.group_name_formatter = str.lower
+
+        parser = argparse.ArgumentParser(
+            description=(
+                "activate color output in shell commands using themes and patterns"
+            ),
+            formatter_class=RichHelpFormatter,
+            add_help=False,
+            epilog=(
+                "type  '[argparse.prog]%(prog)s[/argparse.prog]"
+                " [argparse.args]<command>[/argparse.args] -h' for command"
+                " specific help"
+            ),
+        )
+
+        hgroup = parser.add_mutually_exclusive_group()
+        help_help = "show this help message and exit"
+        hgroup.add_argument(
+            "-h",
+            "--help",
+            action="store_true",
+            help=help_help,
+        )
+        version_help = "show the program version and exit"
+        hgroup.add_argument(
+            "-v",
+            "--version",
+            action="store_true",
+            help=version_help,
+        )
+
+        # colors
+        cgroup = parser.add_mutually_exclusive_group()
+        nocolor_help = "disable color in help output, overrides $DYE_COLORS"
+        cgroup.add_argument(
+            "--no-color", dest="nocolor", action="store_true", help=nocolor_help
+        )
+        color_help = "provide a color specification for help output"
+        cgroup.add_argument("--color", metavar="<colorspec>", help=color_help)
+
+        forcecolor_help = (
+            "force color output even if standard output is not a terminal"
+            " (i.e. if it's a file or a pipe to less)"
+        )
+        parser.add_argument("--force-color", action="store_true", help=forcecolor_help)
+
+        # set up for the sub commands
+        subparsers = parser.add_subparsers(
+            dest="command",
+            title="arguments",
+            metavar="<command>",
+            required=False,
+            help="command to perform, which must be one of the following:",
+        )
+
+        Dye._argparser_apply(subparsers)
+        Dye._argparser_preview(subparsers)
+        Dye._argparser_print(subparsers)
+        Dye._argparser_agents(subparsers)
+        Dye._argparser_themes(subparsers)
+        Dye._argparser_help(subparsers)
+
+        return parser
+
+    @staticmethod
+    def _argparser_apply(subparsers):
+        # apply command
+        cmdhelp = "apply a theme"
+        parser = subparsers.add_parser(
+            "apply",
+            description=cmdhelp,
+            formatter_class=RichHelpFormatter,
+            help=cmdhelp,
+        )
+        pattern_group = parser.add_mutually_exclusive_group()
+        pfile_help = "specify a file containing a pattern"
+        pattern_group.add_argument(
+            "-f", "--patternfile", metavar="<path>", help=pfile_help
+        )
+        pname_help = "specify a pattern by name from $DYE_DIR"
+        pattern_group.add_argument(
+            "-p", "--patternname", metavar="<name>", help=pname_help
+        )
+        theme_group = parser.add_mutually_exclusive_group()
+        tfile_help = "specify a file containing a theme"
+        theme_group.add_argument("-t", "--themefile", metavar="<path>", help=tfile_help)
+        tname_help = "specify a theme by name from $DYE_DIR/themes"
+        theme_group.add_argument("-n", "--themename", metavar="<name>", help=tname_help)
+
+        scope_help = "only apply the given scope"
+        parser.add_argument("-s", "--scope", help=scope_help)
+        comment_help = "add comments to the generated shell output"
+        parser.add_argument("-c", "--comment", action="store_true", help=comment_help)
+
+    @staticmethod
+    def _argparser_preview(subparsers):
+        """Add a subparser for the preview command"""
+        cmd_help = "show a preview of the styles in a theme"
+        parser = subparsers.add_parser(
+            "preview",
+            description=cmd_help,
+            formatter_class=RichHelpFormatter,
+            help=cmd_help,
+        )
+        theme_group = parser.add_mutually_exclusive_group()
+        file_help = "specify a file containing a theme"
+        theme_group.add_argument("-t", "--themefile", metavar="<path>", help=file_help)
+        name_help = "specify a theme by name from $DYE_DIR/themes"
+        theme_group.add_argument("-n", "--themename", metavar="<name>", help=name_help)
+
+    @staticmethod
+    def _argparser_print(subparsers):
+        """Add a subparser for the print command"""
+        desc = """
+            Print text using styles from a theme or pattern.
+            String arguments are printed, seperated by a space, and followed
+            by a newline character, to standard output.
+        """
+        # desc = textwrap.dedent(desc)
+        parser = subparsers.add_parser(
+            "print",
+            description=desc,
+            formatter_class=RichHelpFormatter,
+            help="print text using styles from a theme or pattern",
+        )
+        string_help = "strings to be printed"
+        parser.add_argument("string", nargs="*", help=string_help)
+
+    @staticmethod
+    def _argparser_agents(subparsers):
+        """Add a subparser for the agents command"""
+        # agents command
+        agents_help = "list all known agents"
+        subparsers.add_parser(
+            "agents",
+            description=agents_help,
+            formatter_class=RichHelpFormatter,
+            help=agents_help,
+        )
+
+    @staticmethod
+    def _argparser_themes(subparsers):
+        """Add a subparser for the themes command"""
+        themes_help = "list available themes"
+        subparsers.add_parser(
+            "themes",
+            description=themes_help,
+            formatter_class=RichHelpFormatter,
+            help=themes_help,
+        )
+
+    @staticmethod
+    def _argparser_help(subparsers):
+        """Add a subparser for the help command"""
+        help_help = "display this usage message"
+        subparsers.add_parser(
+            "help",
+            description=help_help,
+            formatter_class=RichHelpFormatter,
+            help=help_help,
+        )
