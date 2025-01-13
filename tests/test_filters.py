@@ -28,10 +28,9 @@ has everything in it
 """
 
 import pytest
-import rich
 
-from dye import Dye
 from dye.filters import jinja_filters
+from dye.pattern import Pattern
 
 #
 # jinja_filters()
@@ -109,44 +108,24 @@ TEMPLATES = [
 
 
 @pytest.mark.parametrize("template, rendered", TEMPLATES)
-def test_filters(dye_cmdline, capsys, template, rendered):
+def test_filters(template, rendered):
+    pattern_str = f"""
+        [styles]
+        dark_orange = "#ff6c1c on #222222"
+        pink = "bold #df769b"
+        cyan = "#09ecff on default"
+        default = "default"
+        nothing = ""
+
+        [variables]
+        something = "Hello There."
+        output = "echo {template}"
     """
-    pattern_str has two kinds of embedded processing
-
-    First, the python f-string takes the template argument
-    and puts it where {template} is
-
-    Second, jinja is going to process the whole string and pick up the
-    {{ colors.background }} thing
-    """
-    pattern_str = (
-        """
-            [colors]
-            background = "#222222"
-
-            [styles]
-            dark_orange = "#ff6c1c on {{ colors.background }}"
-            pink = "bold #df769b"
-            cyan = "#09ecff on default"
-            default = "default"
-            nothing = ""
-
-            [variables]
-            something = "Hello There."
-        """
-        f"""
-            [scopes.echo]
-            agent = "shell"
-            command.one = "echo {template}"
-        """
-    )
-    exit_code = dye_cmdline("apply", None, pattern_str)
-    out, _ = capsys.readouterr()
-    assert exit_code == Dye.EXIT_SUCCESS
-    assert out == f"echo {rendered}\n"
+    pattern = Pattern.loads(pattern_str)
+    assert pattern.variables["output"] == f"echo {rendered}"
 
 
-def test_ansi_on_off(dye_cmdline, capsys):
+def test_ansi_on_off():
     """
     pattern_str has two kinds of embedded processing
 
@@ -157,11 +136,8 @@ def test_ansi_on_off(dye_cmdline, capsys):
     {{ colors.background }} thing
     """
     pattern_str = """
-        [colors]
-        background = "#222222"
-
         [styles]
-        dark_orange = "#ff6c1c on {{ colors.background }}"
+        dark_orange = "#ff6c1c on #222222"
         pink = "bold #df769b"
         cyan = "#09ecff on default"
         default = "default"
@@ -169,16 +145,8 @@ def test_ansi_on_off(dye_cmdline, capsys):
 
         [variables]
         something = "Hello There."
-
-        [scopes.opts]
-        agent = "environment_variables"
-        export.OPTS = "--prompt={{styles.dark_orange|ansi_on}}>>{{styles.dark_orange|ansi_off}}"
+        opts = "--prompt={{styles.dark_orange|ansi_on}}>>{{styles.dark_orange|ansi_off}}"
     """
-    exit_code = dye_cmdline("apply", None, pattern_str)
-    out, _ = capsys.readouterr()
-    assert exit_code == Dye.EXIT_SUCCESS
-    # we aren't going to validate what the ansi codes are,
-    # we'll just compare the plain string to whatever
-    # is returned and make sure the returned thing is longer
+    pattern = Pattern.loads(pattern_str)
     expected_plaintext = 'export OPTS="--prompt=>>"\n'
-    assert len(out) > len(expected_plaintext)
+    assert len(pattern.variables["opts"]) > len(expected_plaintext)
