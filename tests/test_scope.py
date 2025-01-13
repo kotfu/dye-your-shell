@@ -22,6 +22,46 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
+import pytest
+
+from dye.exceptions import DyeError
+from dye.pattern import Pattern
+from dye.scope import Scope
+
+SAMPLE_PATTERN = """
+[scopes.iterm]
+agent = "iterm"
+cursor = "block"
+
+[scopes.nocolor]
+agent = "environment_variables"
+export.NO_COLOR = "true"
+
+[scopes.shell]
+agent = "shell"
+is_enabled = false
+command.dontrun = "echo qqq"
+"""
+
+
+@pytest.fixture
+def spat():
+    pattern = Pattern.loads(SAMPLE_PATTERN)
+    return pattern
+
+
+def test_init_scope_not_found(spat):
+    with pytest.raises(DyeError):
+        Scope("scopedoesntexist", spat)
+
+
+def test_scope_no_agent():
+    pattern_str = """
+    [scopes.noagent]
+    """
+    with pytest.raises(DyeError):
+        Pattern.loads(pattern_str)
+
 
 # # TODO this should test the init in GeneratorBase which sets scope_styles
 # # def test_styles_from(thm):

@@ -276,7 +276,7 @@ class Pattern:
             raw_scopes = self.definition["scopes"]
 
         for name in raw_scopes:
-            scope = Scope.extract(self, name)
+            scope = Scope(name, self)
             self.scopes[name] = scope
 
     #

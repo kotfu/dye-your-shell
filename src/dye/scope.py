@@ -26,6 +26,7 @@ import subprocess
 
 import jinja2
 import rich
+import tomlkit
 
 from .agents import AgentBase
 from .exceptions import DyeError, DyeSyntaxError
@@ -49,29 +50,32 @@ class Scope:
         scope.run_agent()
     """
 
-    @classmethod
-    def extract(cls, pattern=None, name=None):
-        """Extract a scope object from a pattern object"""
-        if pattern and name:
-            scope = cls()
-            scope._process(pattern, name)
-            return scope
-
-        return None
-
     #
     # initialization and properties
     #
-    def __init__(self):
+    def __init__(self, name, pattern):
         """Construct a new Scope object"""
 
-        self.name = {}
+        self.name = name
+        """Name of the scope, pass it to the constructor"""
 
-        """A toml definition of the scope, which has had all templates processed"""
         self.definition = {}
+        """A toml definition of the scope, which has had all templates processed"""
 
-        """The dictionary of style objects defined in this scope"""
         self.styles = {}
+        """The dictionary of style objects defined in this scope"""
+
+        self.agent_name = None
+        self.agent = None
+
+        self._process(pattern, name)
+
+    def validate(self):
+        try:
+            self.agent_name = self.definition["agent"]
+        except KeyError:
+            errmsg = f"scope '{self.name}' does not have an agent."
+            raise DyeSyntaxError(errmsg) from None
 
     def _process(self, pattern, name):
         """Process the scope definition
@@ -106,7 +110,7 @@ class Scope:
             return template.render()
 
         self.definition = self._process_graph(scopedef, render_func)
-
+        self._process_agent()
         self._process_scope_styles()
 
     def _process_graph(self, dataset, render_func):
@@ -126,6 +130,21 @@ class Scope:
                 # don't try and render non-string values
                 result[key] = value
         return result
+
+    def _process_agent(self):
+        """validate and set self.agent_name and self.agent"""
+        try:
+            self.agent_name = self.definition["agent"]
+        except KeyError:
+            errmsg = f"scope '{self.name}' does not have an agent."
+            raise DyeSyntaxError(errmsg) from None
+        try:
+            # go get the apropriate class for the agent
+            agent_cls = AgentBase.classmap[self.agent_name]
+            # initialize the class with the scope (that's our self)
+            self.agent = agent_cls(self)
+        except KeyError as exc:
+            raise DyeError(f"{self.agent_name}: unknown agent") from exc
 
     def _process_scope_styles(self):
         """create a dictionary of style objects parsed from self.definition
@@ -148,25 +167,11 @@ class Scope:
         returns output consisting of shell commands which must
         be sourced in the current shell in order to become active
         """
-        try:
-            agent_name = self.definition["agent"]
-        except KeyError as exc:
-            errmsg = f"scope '{self.name}' does not have an agent."
-            raise DyeSyntaxError(errmsg) from exc
-
-        try:
-            # go get the apropriate class for the agent
-            agent_cls = AgentBase.classmap[agent_name]
-            # initialize the class with the scope (that's our self)
-            agent = agent_cls(self)
-        except KeyError as exc:
-            raise DyeError(f"{agent_name}: unknown agent") from exc
-
         if self._enabled():
             if comments:
                 print(f"# scope '{self.name}'")
             # run the agent, printing any shell commands it returns
-            output = agent.run(comments)
+            output = self.agent.run(comments)
             if output:
                 print(output)
         else:

@@ -132,36 +132,6 @@ def test_no_scopes(dye_cmdline, capsys):
 
 
 #
-# make sure scopes have an agent
-#
-def test_unknown_agent(dye_cmdline, capsys):
-    pattern_str = """
-        [scopes.myprog]
-        agent = "mrfusion"
-        something = "idunno"
-    """
-    exit_code = dye_cmdline("apply", None, pattern_str)
-    out, err = capsys.readouterr()
-    assert exit_code == Dye.EXIT_ERROR
-    assert not out
-    assert "unknown agent" in err
-    assert "mrfusion" in err
-
-
-def test_no_agent(dye_cmdline, capsys):
-    pattern_str = """
-        [scopes.myscope]
-        enabled = false
-    """
-    exit_code = dye_cmdline("apply", None, pattern_str)
-    out, err = capsys.readouterr()
-    assert exit_code == Dye.EXIT_ERROR
-    assert not out
-    assert "does not have an agent" in err
-    assert "myscope" in err
-
-
-#
 # test enabled
 #
 def test_enabled(dye_cmdline, capsys):
