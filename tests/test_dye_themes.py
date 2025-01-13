@@ -30,10 +30,8 @@ from dye import Dye
 #
 # test the list command
 #
-def test_list(dye_cmdline, capsys, mocker, tmp_path):
-    # gotta patch dye_dir, which reads the environment variable
-    # DYE_DIR. We don't want this test throwing errors if it's not
-    # set
+def test_themes(dye_cmdline, capsys, mocker, tmp_path):
+    # gotta patch dye_dir, which reads the environment variable DYE_DIR
     dirmock = mocker.patch(
         "dye.Dye.dye_dir", create=True, new_callable=mock.PropertyMock
     )
@@ -55,3 +53,31 @@ def test_list(dye_cmdline, capsys, mocker, tmp_path):
     assert not err
     for base in bases:
         assert base in out
+
+
+def test_themes_no_theme_dir(dye_cmdline, capsys, mocker, tmp_path):
+    # gotta patch dye_dir, which reads the environment variable DYE_DIR
+    dirmock = mocker.patch(
+        "dye.Dye.dye_dir", create=True, new_callable=mock.PropertyMock
+    )
+    dirmock.return_value = tmp_path
+    # now go run the command, which should list the themes
+    exit_code = dye_cmdline("themes")
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_ERROR
+    assert not out
+    assert "is not a directory" in err
+
+
+def test_themes_no_dye_dir(dye_cmdline, capsys, mocker, tmp_path):
+    # gotta patch dye_dir, which reads the environment variable DYE_DIR
+    dirmock = mocker.patch(
+        "dye.Dye.dye_dir", create=True, new_callable=mock.PropertyMock
+    )
+    dirmock.return_value = None
+    # now go run the command, which should list the themes
+    exit_code = dye_cmdline("themes")
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_ERROR
+    assert not out
+    assert "DYE_DIR environment variable must be set" in err

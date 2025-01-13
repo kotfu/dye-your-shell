@@ -70,13 +70,6 @@ class Scope:
 
         self._process(pattern, name)
 
-    def validate(self):
-        try:
-            self.agent_name = self.definition["agent"]
-        except KeyError:
-            errmsg = f"scope '{self.name}' does not have an agent."
-            raise DyeSyntaxError(errmsg) from None
-
     def _process(self, pattern, name):
         """Process the scope definition
 
@@ -144,7 +137,9 @@ class Scope:
             # initialize the class with the scope (that's our self)
             self.agent = agent_cls(self)
         except KeyError as exc:
-            raise DyeError(f"{self.agent_name}: unknown agent") from exc
+            raise DyeError(
+                f"{self.agent_name}: unknown agent in scope '{self.name}"
+            ) from exc
 
     def _process_scope_styles(self):
         """create a dictionary of style objects parsed from self.definition

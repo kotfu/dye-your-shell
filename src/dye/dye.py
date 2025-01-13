@@ -262,24 +262,25 @@ class Dye:
 
     @property
     def dye_dir(self):
-        """Get the dye configuration directory from the shell environment"""
-        # TODO write unit tests for this
+        """Get the dye configuration directory from the shell environment
+
+        returns a pathlib.Path if $DYE_DIR is set, else None
+        """
         try:
-            ddir = pathlib.Path(os.environ["DYE_DIR"])
-        except KeyError as exc:
-            raise DyeError("environment variable DYE_DIR not set") from exc
-        if not ddir.is_dir():
-            raise DyeError(f"{ddir}: no such directory")
-        return ddir
+            return pathlib.Path(os.environ["DYE_DIR"])
+        except KeyError:
+            return None
 
     @property
     def dye_theme_dir(self):
-        """Get the dye themes directory"""
-        # TODO write unit tests for this
-        tdir = self.dye_dir / "themes"
-        if not tdir.is_dir():
-            raise DyeError(f"{tdir}: no such directory")
-        return tdir
+        """Get the dye themes directory
+
+        returns a pathlib.Path if $DYE_DIR is set, else None
+        """
+        if self.dye_dir:
+            return self.dye_dir / "themes"
+
+        return None
 
     #
     # methods to process command line arguments and dispatch them
@@ -501,6 +502,16 @@ class Dye:
     def command_themes(self, _):
         """Print a list of all themes"""
         # ignore all other args
+        if not self.dye_theme_dir:
+            errmsg = (
+                "the DYE_DIR environment variable must be set"
+                " and that directory must contain a 'themes' directory"
+            )
+            raise DyeError(errmsg)
+        if not self.dye_theme_dir.is_dir():
+            errmsg = f"{self.dye_theme_dir}: is not a directory"
+            raise DyeError(errmsg)
+
         themeglob = self.dye_theme_dir.glob("*.toml")
         themes = []
         for theme in themeglob:

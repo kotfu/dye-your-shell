@@ -188,16 +188,14 @@ def test_dye_dir_no_environment_variable(mocker):
     # ensure no DYE_DIR environment variable exists
     mocker.patch.dict(os.environ, {}, clear=True)
     dye = Dye()
-    with pytest.raises(DyeError):
-        _ = dye.dye_dir
+    assert not dye.dye_dir
 
 
 def test_dye_dir_invalid_directory(mocker, tmp_path):
     invalid = tmp_path / "doesntexist"
     mocker.patch.dict(os.environ, {"DYE_DIR": str(invalid)})
     dye = Dye()
-    with pytest.raises(DyeError):
-        _ = dye.dye_dir
+    assert dye.dye_dir == invalid
 
 
 #

@@ -63,6 +63,15 @@ def test_scope_no_agent():
         Pattern.loads(pattern_str)
 
 
+def test_scope_unknown_agent():
+    pattern_str = """
+    [scopes.unknown]
+    agent = "fredflintstone"
+    """
+    with pytest.raises(DyeError):
+        Pattern.loads(pattern_str)
+
+
 # # TODO this should test the init in GeneratorBase which sets scope_styles
 # # def test_styles_from(thm):
 # #     tomlstr = """
