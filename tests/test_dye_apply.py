@@ -24,7 +24,7 @@
 
 import pytest
 
-from dye import Dye
+from dye import Dye, DyeError
 
 #
 # test scope selection

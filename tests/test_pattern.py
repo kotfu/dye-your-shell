@@ -27,7 +27,10 @@ import rich.errors
 import rich.style
 import tomlkit
 
-from dye import DyeError, DyeSyntaxError, Pattern, Theme
+from dye.exceptions import DyeError, DyeSyntaxError
+from dye.pattern import Pattern
+from dye.scope import Scope
+from dye.theme import Theme
 
 SAMPLE_THEME = """
 [colors]
@@ -227,19 +230,6 @@ def test_requires_theme_not_present():
     pattern_str = """description = 'hi'"""
     pat = Pattern.loads(pattern_str)
     assert pat.requires_theme is None
-
-
-def test_has_scope():
-    pattern_str = """
-        [scopes.qqq]
-        agent = "iterm"
-        style.foreground = "blue"
-        style.background = "white"
-    """
-    pattern = Pattern.loads(pattern_str)
-
-    assert pattern.has_scope("qqq")
-    assert not pattern.has_scope("fred")
 
 
 #
@@ -483,78 +473,45 @@ def test_variable_redefine2_error():
 
 
 #
-# TODO test variable usage in scopes, ie Scope object or Pattern._process_scopes()
-# TODO test scope processing
+# test a few scope related things
+#
+def test_has_scope():
+    pattern_str = """
+        [scopes.qqq]
+        agent = "iterm"
+        style.foreground = "blue"
+        style.background = "white"
+    """
+    pattern = Pattern.loads(pattern_str)
+
+    assert pattern.has_scope("qqq")
+    assert not pattern.has_scope("fred")
 
 
-# # TODO this should test the init in GeneratorBase which sets scope_styles
-# # def test_styles_from(thm):
-# #     tomlstr = """
-# #         [styles]
-# #         background =  "#282a36"
-# #         foreground =  "#f8f8f2"
-# #         current_line =  "#f8f8f2 on #44475a"
-# #         comment =  "#6272a4"
-# #         cyan =  "#8be9fd"
-# #         green =  "#50fa7b"
-# #         orange =  "#ffb86c"
-# #         pink =  "#ff79c6"
-# #         purple =  "#bd93f9"
-# #         red =  "#ff5555"
-# #         yellow =  "#f1fa8c"
+def test_scopes():
+    pattern_str = """
+        [scopes.qqq]
+        agent = "iterm"
+        style.foreground = "blue"
+        style.background = "white"
 
-# #         [scope.iterm]
-# #         generator = "iterm"
-# #         style.foreground = "foreground"
-# #         style.background = "background"
+        [scopes.fff]
+        agent = "environment_variables"
+        unset = "listvar"
+    """
+    pattern = Pattern.loads(pattern_str)
 
-# #         [scope.fzf]
-# #         generator = "fzf"
-
-# #         # attributes specific to fzf
-# #         environment_variable = "FZF_DEFAULT_OPTS"
-
-# #         # command line options
-# #         opt.--prompt = ">"
-# #         opt.--border = "single"
-# #         opt.--pointer = "•"
-# #         opt.--info = "hidden"
-# #         opt.--no-sort = true
-# #         opt."+i" = true
-
-# #         # styles
-# #         style.text = "foreground"
-# #         style.label = "green"
-# #         style.border = "orange"
-# #         style.selected = "current_line"
-# #         style.prompt = "green"
-# #         style.indicator = "cyan"
-# #         style.match = "pink"
-# #         style.localstyle = "green on black"
-# #     """
-# #     thm.loads(tomlstr)
-# #     scopedef = thm.scopedef_for("fzf")
-# #     styles = thm.styles_from(scopedef)
-# #     assert isinstance(styles, dict)
-# #     assert len(styles) == 8
-# #     assert "indicator" in styles.keys()
-# #     assert isinstance(styles["localstyle"], rich.style.Style)
-# #     style = styles["selected"]
-# #     assert style.color.name == "#f8f8f2"
-# #     assert style.bgcolor.name == "#44475a"
+    assert len(pattern.scopes) == 2
+    assert isinstance(pattern.scopes["qqq"], Scope)
+    assert pattern.scopes["fff"].agent_name == "environment_variables"
 
 
-# # TODO I don't think we need to test this, as long as we test the
-# # init() method of GeneratorBase
-# # def test_styles_from_unknown(thm):
-# #     tomlstr = """
-# #         [scope.iterm]
-# #         generator = "iterm"
-# #         style.foreground = "foreground"
-# #         style.background = "background"
-# #     """
-# #     thm.loads(tomlstr)
-# #     scopedef = thm.scopedef_for("unknown")
-# #     styles = thm.styles_from(scopedef)
-# #     assert isinstance(styles, dict)
-# #     assert styles == {}
+def test_scopes_empty():
+    pattern_str = """
+        [variables]
+        hi = "there"
+    """
+    pattern = Pattern.loads(pattern_str)
+
+    assert len(pattern.scopes) == 0
+    assert pattern.scopes == {}

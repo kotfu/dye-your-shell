@@ -397,53 +397,19 @@ class Dye:
 
         output is suitable for `source < $(dye apply)`
         """
-        # pylint: disable=too-many-branches
         theme = self.load_theme_from_args(args, required=False)
         pattern = self.load_pattern_from_args(args, theme)
 
-        if args.scope:
-            to_activate = args.scope.split(",")
-        else:
-            to_activate = []
-            try:
-                for scope in pattern.definition["scopes"]:
-                    to_activate.append(scope)
-            except KeyError:
-                pass
+        to_apply = args.scope.split(",") if args.scope else list(pattern.scopes.keys())
 
-        for scope in to_activate:
+        for scope_name in to_apply:
             # checking here in case they supplied a scope on the command line that
             # doesn't exist
-            if pattern.has_scope(scope):
-                scopedef = pattern.scopes[scope]
-                # find the agent for this scope
-                try:
-                    agent_name = scopedef["agent"]
-                except KeyError as exc:
-                    errmsg = f"scope '{scope}' does not have an agent."
-                    raise DyeError(errmsg) from exc
-                # check if the scope is disabled
-                if not pattern.is_scope_enabled(scope):
-                    if args.comment:
-                        print(f"# scope '{scope}' skipped because it is not enabled")
-                    continue
-                # scope is enabled, so print the comment
-                if args.comment:
-                    print(f"# scope '{scope}'")
-
-                try:
-                    # go get the apropriate class for the agent
-                    agent_cls = AgentBase.classmap[agent_name]
-                    # initialize the class with the scope and scope definition
-                    agent = agent_cls(scope, pattern)
-                    # run the agent, printing any shell commands it returns
-                    output = agent.run()
-                    if output:
-                        print(output)
-                except KeyError as exc:
-                    raise DyeError(f"{agent_name}: unknown agent") from exc
-            else:
-                raise DyeError(f"{scope}: no such scope")
+            try:
+                scope = pattern.scopes[scope_name]
+            except KeyError as exc:
+                raise DyeError(f"{scope_name}: no such scope") from exc
+            scope.run_agent(args.comment)
         return self.EXIT_SUCCESS
 
     def command_preview(self, args):

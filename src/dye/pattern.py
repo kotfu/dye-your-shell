@@ -30,13 +30,14 @@ import tomlkit
 
 from .exceptions import DyeError, DyeSyntaxError
 from .filters import jinja_filters
+from .scope import Scope
 
 
 class Pattern:
     """load and parse a pattern file into a pattern object"""
 
-    @classmethod
-    def loads(cls, tomlstring=None, theme=None):
+    @staticmethod
+    def loads(tomlstring=None, theme=None):
         """Load a pattern from a given string, and return a new pattern object
 
         doesn't do any processing or applying of the pattern
@@ -47,20 +48,21 @@ class Pattern:
             # tomlkit can't parse None, so if we got it as the default
             # or if the caller pased None intentionally...
             toparse = ""
-        pattern = cls()
+        pattern = Pattern()
         pattern.definition = tomlkit.loads(toparse)
         pattern._process(theme)
         return pattern
 
-    @classmethod
-    def load(cls, fobj, theme=None):
+    @staticmethod
+    def load(fobj, theme=None):
         """Load a pattern a file object
 
         doesn't do any processing or applying of the pattern
         """
-        pattern = cls()
+        pattern = Pattern()
         pattern.definition = tomlkit.load(fobj)
         pattern._process(theme)
+
         return pattern
 
     #
@@ -129,7 +131,7 @@ class Pattern:
         self._process_colors(jinja_env, theme)
         self._process_styles(jinja_env, theme)
         self._process_variables(jinja_env)
-        self._process_scopes(jinja_env)
+        self._process_scopes()
 
     def _process_colors(self, jinja_env, theme=None):
         """merge the colors from this pattern and the given theme together
@@ -263,102 +265,23 @@ class Pattern:
 
         self.variables = processed_vars
 
-    def _process_scopes(self, jinja_env):
+    def _process_scopes(self):
         """process value in every scope as a template to resolve
         colors, styles, and variables
 
-        sets self.scopes
+        sets self.scopes as a dict of objects
         """
+        raw_scopes = {}
+        with contextlib.suppress(KeyError):
+            raw_scopes = self.definition["scopes"]
 
-        def render_func(value):
-            template = jinja_env.from_string(value)
-            return template.render(
-                colors=self.colors,
-                styles=self.styles,
-                variables=self.variables,
-            )
-
-        try:
-            scopes = self.definition["scopes"]
-            self.scopes = self._process_nested_dict(scopes, render_func)
-        except KeyError:
-            # no [scopes] present
-            self.scopes = {}
-
-    def _process_nested_dict(self, dataset, render_func):
-        """recursive function to crawl through a dictionary and
-        call render_func for every nested dict and list item
-
-        """
-        result = {}
-        for key, value in dataset.items():
-            if isinstance(value, dict):
-                result[key] = self._process_nested_dict(value, render_func)
-            elif isinstance(value, list):
-                result[key] = map(render_func, value)
-            elif isinstance(value, str):
-                result[key] = render_func(value)
-            else:
-                # don't try and render non-string values
-                result[key] = value
-        return result
+        for name in raw_scopes:
+            scope = Scope.extract(self, name)
+            self.scopes[name] = scope
 
     #
     # scope methods
     #
     def has_scope(self, scope):
         """Check if the given scope exists."""
-        return scope in self.definition["scopes"]
-
-    def is_scope_enabled(self, scope):
-        """Determine if the scope is enabled
-        The default is that the scope is enabled
-
-        If can be disabled by:
-
-            enabled = false
-
-        or:
-            enabled_if = "{shell cmd}" returns a non-zero exit code
-
-        if 'enabled = false' is present, then enabled_if is not checked
-
-        Throws KeyError if scope does not exist
-        """
-        scopedef = self.scopes[scope]
-        with contextlib.suppress(KeyError):
-            enabled = scopedef["enabled"]
-            if not isinstance(enabled, bool):
-                raise DyeSyntaxError(
-                    f"scope '{scope}' requires 'enabled' to be true or false"
-                )
-            # this is authoritative, if it exists, ignore enabled_if below
-            return enabled
-
-        # no enabled directive, so we check for enabled_if
-        try:
-            enabled_if = scopedef["enabled_if"]
-            if not enabled_if:
-                # we have a key, but an empty value (aka command)
-                # by rule we say it's enabled
-                return True
-        except KeyError:
-            # no enabled_if key, so we must be enabled
-            return True
-
-        # if we get here we have something in enabled_if that
-        # we need to go run
-        env = jinja2.Environment()
-        template = env.from_string(enabled_if)
-        resolved_cmd = template.render(
-            colors=self.colors, styles=self.styles, variables=self.variables
-        )
-
-        proc = subprocess.run(
-            resolved_cmd, shell=True, check=False, capture_output=True
-        )
-        if proc.returncode != 0:  # noqa: SIM103
-            # the shell command returned a non-zero exit code
-            # and this scope should therefore be disabled
-            return False
-        return True
+        return scope in self.scopes

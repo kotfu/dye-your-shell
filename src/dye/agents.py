@@ -53,26 +53,10 @@ class AgentBase(abc.ABC):
         # make a registry of subclasses as they are defined
         cls.classmap[cls._name_of(cls.__name__)] = cls
 
-    def __init__(self, scope, pattern):
+    def __init__(self, scope):
         super().__init__()
-        self.agent = self._name_of(self.__class__.__name__)
+        self.agent_name = self._name_of(self.__class__.__name__)
         self.scope = scope
-        self.scopedef = pattern.scopes[scope]
-        self.pattern = pattern
-        self.scope_styles = self._process_scope_styles()
-
-    def _process_scope_styles(self):
-        # create scope_styles, the styles parsed from scopedef
-        try:
-            raw_styles = self.scopedef["styles"]
-        except (KeyError, TypeError):
-            raw_styles = {}
-
-        processed_styles = {}
-        for name, styledef in raw_styles.items():
-            processed_styles[name] = rich.style.Style.parse(styledef)
-
-        return processed_styles
 
     @classmethod
     def _name_of(cls, name: str) -> str:
@@ -83,14 +67,14 @@ class AgentBase(abc.ABC):
         return name.lower()
 
     @abc.abstractmethod
-    def run(self) -> str:
+    def run(self, comments=False) -> str:
         """Do agent work. Anything returned will be sourced by the shell"""
 
 
 class LsColorsFromStyle:
     """Generator mixin to create ls_colors type styles"""
 
-    def ls_colors_from_style(self, name, style, mapp, scope, allow_unknown=False):
+    def ls_colors_from_style(self, name, style, mapp, scope_name, allow_unknown=False):
         """create an entry suitable for LS_COLORS from a style
 
         name should be a valid LS_COLORS entry, could be a code representing
@@ -107,7 +91,7 @@ class LsColorsFromStyle:
 
         **msgdata - used for generating useful error messages
         prog = the name of the program
-        scope = is the scope where this mapped occured
+        scope_name = is the scope where this mapped occured
 
         returns a tuple of the mapped name and a phrase to add to LS_COLORS
         """
@@ -125,7 +109,7 @@ class LsColorsFromStyle:
                 # they used a style for a file attribute that isn't in the map
                 # which is not allowed
                 raise DyeError(
-                    f"unknown style '{name}' while processing" f" scope '{scope}'"
+                    f"unknown style '{name}' while processing" f" scope '{scope_name}'"
                 ) from exc
 
         if style.color.type == rich.color.ColorType.DEFAULT:
@@ -148,10 +132,10 @@ class LsColorsFromStyle:
 class EnvironmentVariables(AgentBase):
     "Export and unset environment variables"
 
-    def run(self) -> str:
+    def run(self, comments=False) -> str:
         output = []
         try:
-            unsets = self.scopedef["unset"]
+            unsets = self.scope.definition["unset"]
             if isinstance(unsets, str):
                 # if they used a string in the config file instead of a list
                 # process it like a single item instead of trying to process
@@ -164,7 +148,7 @@ class EnvironmentVariables(AgentBase):
             pass
         # render the variables to export
         try:
-            exports = self.scopedef["export"]
+            exports = self.scope.definition["export"]
             for var, value in exports.items():
                 output.append(f'export {var}="{value}"')
         except KeyError:
@@ -281,12 +265,12 @@ class Eza(AgentBase, LsColorsFromStyle):
         EZA_COLORS_MAP[friendly] = actual
         EZA_COLORS_MAP[actual] = actual
 
-    def run(self):
+    def run(self, comments=False):
         "Render a EZA_COLORS variable suitable for eza"
         outlist = []
         # figure out if we are clearing builtin styles
         with contextlib.suppress(KeyError):
-            clear_builtin = self.scopedef["clear_builtin"]
+            clear_builtin = self.scope.definition["clear_builtin"]
             if not isinstance(clear_builtin, bool):
                 raise DyeSyntaxError(
                     f"scope '{self.scope}' requires 'clear_builtin' to be true or false"
@@ -296,14 +280,14 @@ class Eza(AgentBase, LsColorsFromStyle):
                 outlist.append("reset")
 
         # iterate over the styles given in our configuration
-        for name, style in self.scope_styles.items():
+        for name, style in self.scope.styles.items():
             if style:
                 _, render = self.ls_colors_from_style(
                     name,
                     style,
                     self.EZA_COLORS_MAP,
                     allow_unknown=True,
-                    scope=self.scope,
+                    scope_name=self.scope,
                 )
                 outlist.append(render)
 
@@ -311,7 +295,7 @@ class Eza(AgentBase, LsColorsFromStyle):
 
         # figure out which environment variable to put it in
         try:
-            varname = self.scopedef["environment_variable"]
+            varname = self.scope.definition["environment_variable"]
         except KeyError:
             varname = "EZA_COLORS"
 
@@ -325,12 +309,12 @@ class Eza(AgentBase, LsColorsFromStyle):
 class Fzf(AgentBase):
     "Set fzf options and environment variables"
 
-    def run(self) -> str:
+    def run(self, comments=False) -> str:
         """render attribs into a shell statement to set an environment variable"""
         optstr = ""
         # process all the command line options
         try:
-            opts = self.scopedef["opts"]
+            opts = self.scope.definition["opts"]
         except KeyError:
             opts = {}
 
@@ -343,11 +327,11 @@ class Fzf(AgentBase):
         # process all the styles
         colors = []
         # then add them back
-        for name, style in self.scope_styles.items():
+        for name, style in self.scope.styles.items():
             colors.append(self._fzf_from_style(name, style))
         # turn off all the colors, and add our color strings
         try:
-            colorbase = f"{self.scopedef['colorbase']},"
+            colorbase = f"{self.scope.definition['colorbase']},"
         except KeyError:
             colorbase = ""
         if colorbase or colors:
@@ -357,7 +341,7 @@ class Fzf(AgentBase):
 
         # figure out which environment variable to put it in
         try:
-            varname = self.scopedef["environment_variable"]
+            varname = self.scope.definition["environment_variable"]
         except KeyError:
             varname = "FZF_DEFAULT_OPTS"
         print(f'export {varname}="{optstr}{colorstr}"')
@@ -457,13 +441,13 @@ class GnuLs(AgentBase, LsColorsFromStyle):
         LS_COLORS_MAP[friendly] = actual
         LS_COLORS_MAP[actual] = actual
 
-    def run(self):
+    def run(self, comments=False):
         "Render a LS_COLORS variable suitable for GNU ls"
         outlist = []
         havecodes = []
         # figure out if we are clearing builtin styles
         try:
-            clear_builtin = self.scopedef["clear_builtin"]
+            clear_builtin = self.scope.definition["clear_builtin"]
             if not isinstance(clear_builtin, bool):
                 raise DyeSyntaxError(
                     f"scope '{self.scope}' requires 'clear_builtin' to be true or false"
@@ -472,13 +456,13 @@ class GnuLs(AgentBase, LsColorsFromStyle):
             clear_builtin = False
 
         # iterate over the styles given in our configuration
-        for name, style in self.scope_styles.items():
+        for name, style in self.scope.styles.items():
             if style:
                 mapcode, render = self.ls_colors_from_style(
                     name,
                     style,
                     self.LS_COLORS_MAP,
-                    self.scope,
+                    self.scope.name,
                     allow_unknown=False,
                 )
                 havecodes.append(mapcode)
@@ -495,7 +479,7 @@ class GnuLs(AgentBase, LsColorsFromStyle):
                         style,
                         self.LS_COLORS_MAP,
                         allow_unknown=False,
-                        scope=self.scope,
+                        scope_name=self.scope,
                     )
                     outlist.append(render)
 
@@ -503,7 +487,7 @@ class GnuLs(AgentBase, LsColorsFromStyle):
 
         # figure out which environment variable to put it in
         try:
-            varname = self.scopedef["environment_variable"]
+            varname = self.scope.definition["environment_variable"]
         except KeyError:
             varname = "LS_COLORS"
 
@@ -517,7 +501,7 @@ class GnuLs(AgentBase, LsColorsFromStyle):
 class Iterm(AgentBase):
     "Send escape sequences to iTerm terminal emulator"
 
-    def run(self):
+    def run(self, comments=False):
         """send escape sequences to iTerm to make it do stuff"""
         output = []
 
@@ -539,7 +523,7 @@ class Iterm(AgentBase):
     def _iterm_profile(self, output):
         """add commands to output to tell iterm to change to a profile"""
         try:
-            profile = self.scopedef["profile"]
+            profile = self.scope.definition["profile"]
             cmd = r'builtin echo -en "\e]1337;'
             cmd += f"SetProfile={profile}"
             cmd += r'\a"'
@@ -551,7 +535,7 @@ class Iterm(AgentBase):
     def _iterm_tab(self, output):
         """add commands to output to change the tab or window title background color"""
         with contextlib.suppress(KeyError):
-            style = self.scope_styles["tab"]
+            style = self.scope.styles["tab"]
             if style.color.is_default:
                 # set the command to change the tab color back to the default,
                 # meaning whatever is set in the profile.
@@ -596,7 +580,7 @@ class Iterm(AgentBase):
         """
         # check the cursor shape
         try:
-            cursor = self.scopedef["cursor"]
+            cursor = self.scope.definition["cursor"]
         except KeyError:
             cursor = None
         if cursor:
@@ -621,7 +605,7 @@ class Iterm(AgentBase):
     def _iterm_render_style(self, output, style_name, iterm_key):
         """append an iterm escape sequence to change the color palette to output"""
         try:
-            style = self.scope_styles[style_name]
+            style = self.scope.styles[style_name]
             clr = style.color.get_truecolor()
             # gotta use raw strings here so the \e and \a don't get
             # interpreted by python, they need to be passed through
@@ -638,12 +622,13 @@ class Iterm(AgentBase):
 class Shell(AgentBase):
     "Execute arbitary shell commands"
 
-    def run(self):
+    def run(self, comments=False):
         output = []
         try:
-            cmds = self.scopedef["command"]
+            cmds = self.scope.definition["command"]
             for _, cmd in cmds.items():
                 output.append(cmd)
         except KeyError:
+            # no commands given
             pass
         return "\n".join(output)

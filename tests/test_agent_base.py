@@ -37,14 +37,17 @@ def test_agent_base_classmap():
 
 
 def test_agent_base_name():
-    # we have to have a pattern in order for the agent to initialize
+    # we have to have a scope to initialze the agent
     # so lets make a fake one
     pattern_str = """
-    [scopes.myscope]
-    agent = "shell"
+    [scopes.scope1]
+    agent = "environment_variables"
+
+    [scopes.scope2]
+    agent = "fzf"
     """
     pattern = Pattern.loads(pattern_str)
-    eza = dye.agents.EnvironmentVariables("myscope", pattern)
-    assert eza.agent == "environment_variables"
-    fzfgen = dye.agents.Fzf("myscope", pattern)
-    assert fzfgen.agent == "fzf"
+    eza = dye.agents.EnvironmentVariables(pattern.scopes["scope1"])
+    assert eza.agent_name == "environment_variables"
+    fzfgen = dye.agents.Fzf(pattern.scopes["scope2"])
+    assert fzfgen.agent_name == "fzf"

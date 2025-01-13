@@ -69,7 +69,7 @@ def test_ls_colors_from_style(name, styledef, expected):
     agent = "gnu_ls"
     """
     pattern = Pattern.loads(pattern_str)
-    agent = dye.agents.GnuLs("myscope", pattern)
+    agent = dye.agents.GnuLs(pattern.scopes["myscope"])
     # now we can go test the render
     code, render = agent.ls_colors_from_style(
         name,
