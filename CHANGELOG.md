@@ -8,7 +8,7 @@ and the format of this file follows recommendations from
 [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
-## [Unreleased]
+## [0.10.0] - 2025-01-14
 
 ### Added
 
@@ -23,7 +23,7 @@ and the format of this file follows recommendations from
   'red'. Styles can be '{{ style.text }}', '{{ styles.text }}' or 'text'.
 
 
-## [0.9.0] - 2025/01/11
+## [0.9.0] - 2025-01-11
 
 ### Changed
 
