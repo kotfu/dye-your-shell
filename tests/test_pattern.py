@@ -284,6 +284,12 @@ def test_colors_load_order(sthmpat):
 #
 # test processing of styles
 #
+def test_empty_pattern(sthm):
+    pattern = Pattern.loads("", sthm)
+    assert pattern.colors["foreground"]
+    assert pattern.styles["themeonly"]
+
+
 def test_style_pattern(spat):
     """defined only in the pattern, referencing colors
     only in the pattern"""

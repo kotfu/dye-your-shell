@@ -240,7 +240,7 @@ class Dye:
         output is suitable for `source < $(dye apply)`
         """
         theme = self.load_theme_from_args(args, required=False)
-        pattern = self.load_pattern_from_args(args, theme)
+        pattern = self.load_pattern_from_args(args, required=True, theme=theme)
 
         # if we got scope(s) on the command line, use them, otherwise we'll
         # apply all scopes
@@ -258,7 +258,7 @@ class Dye:
 
     def command_preview(self, args):
         """Display a preview of the styles in a theme"""
-        theme = self.load_theme_from_args(args)
+        theme = self.load_theme_from_args(args, required=True)
 
         outer_table = rich.table.Table(
             box=None, expand=True, show_header=False, padding=0
@@ -320,8 +320,18 @@ class Dye:
 
     def command_print(self, args):
         """print arbitrary strings applying styles from a theme or pattern"""
-        endchar = "" if args.n else None
-        print(" ".join(args.string), end=endchar)
+        theme = self.load_theme_from_args(args, required=False)
+        pattern = self.load_pattern_from_args(args, required=False, theme=theme)
+
+        style = None
+        if args.style:
+            with contextlib.suppress(KeyError):
+                style = pattern.styles[args.style]
+
+        if args.n:
+            self.console.print(" ".join(args.string), style=style, end="")
+        else:
+            self.console.print(" ".join(args.string), style=style)
         return self.EXIT_SUCCESS
 
     def command_agents(self, _):
@@ -382,24 +392,20 @@ class Dye:
 
         Resolution order:
         1. --themefile, -t from the command line
-        2. --themename, -n from the command line
-        3. $DYE_THEME_FILE environment variable
+        2. $DYE_THEME_FILE environment variable
 
         This returns a theme object
 
         :raises: an exception if we can't find a theme file
 
         """
+        if not required and args.no_theme:
+            return Pattern()
+
         fname = None
 
-        if args.themefile:
-            fname = args.themefile
-        elif args.themename:
-            fname = self.dye_theme_dir / args.themename
-            if not fname.is_file():
-                fname = self.dye_theme_dir / f"{args.themename}.toml"
-                if not fname.is_file():
-                    raise DyeError(f"{args.themename}: theme not found")
+        if args.theme_file:
+            fname = args.theme_file
         else:
             with contextlib.suppress(KeyError):
                 fname = pathlib.Path(os.environ["DYE_THEME_FILE"])
@@ -414,38 +420,41 @@ class Dye:
 
         return Theme()
 
-    def load_pattern_from_args(self, args, theme=None):
-        """load, but don't process/execute the pattern
+    def load_pattern_from_args(self, args, required=True, theme=None):
+        """load a pattern file from the args
 
         Resolution order:
         1. --patternfile -f from the command line
-        2. --patternname, -p from the command line
-        3. $DYE_PATTERN_FILE environment variable
+        2. $DYE_PATTERN_FILE environment variable
 
         This returns a pattern object
 
         :raises: an exception if we can't find a pattern file
 
+        It's up to the caller to match up the required parameters and the
+        args in the namespace. If you pass required=False, this will check for
+        args.no_pattern and ignore the environment variable and args.pattern_file
         """
+        if not required and args.no_pattern:
+            return Pattern.loads(None, theme)
+
         fname = None
 
-        if args.patternfile:
-            fname = args.patternfile
-        elif args.patternname:
-            fname = self.dye_theme_dir / args.patternname
-            if not fname.is_file():
-                fname = self.dye_theme_dir / f"{args.patternname}.toml"
-                if not fname.is_file():
-                    raise DyeError(f"{args.patternname}: pattern not found")
+        if args.pattern_file:
+            fname = args.pattern_file
         else:
             with contextlib.suppress(KeyError):
                 fname = pathlib.Path(os.environ["DYE_PATTERN_FILE"])
-        if not fname:
+
+        if fname:
+            with open(fname, "rb") as fobj:
+                pattern = Pattern.load(fobj, theme)
+            return pattern
+
+        if required:
             raise DyeError("no pattern specified")
 
-        with open(fname, "rb") as fobj:
-            pattern = Pattern.load(fobj, theme)
-        return pattern
+        return Pattern()
 
     #
     # static methods for running from the command line
@@ -517,7 +526,9 @@ class Dye:
             "force color output even if standard output is not a terminal"
             " (i.e. if it's a file or a pipe to less)"
         )
-        parser.add_argument("--force-color", action="store_true", help=forcecolor_help)
+        parser.add_argument(
+            "-F", "--force-color", action="store_true", help=forcecolor_help
+        )
 
         # set up for the sub commands
         subparsers = parser.add_subparsers(
@@ -547,20 +558,10 @@ class Dye:
             formatter_class=RichHelpFormatter,
             help=cmdhelp,
         )
-        pattern_group = parser.add_mutually_exclusive_group()
         pfile_help = "specify a file containing a pattern"
-        pattern_group.add_argument(
-            "-f", "--patternfile", metavar="<path>", help=pfile_help
-        )
-        pname_help = "specify a pattern by name from $DYE_DIR"
-        pattern_group.add_argument(
-            "-p", "--patternname", metavar="<name>", help=pname_help
-        )
-        theme_group = parser.add_mutually_exclusive_group()
+        parser.add_argument("-f", "--pattern-file", metavar="<path>", help=pfile_help)
         tfile_help = "specify a file containing a theme"
-        theme_group.add_argument("-t", "--themefile", metavar="<path>", help=tfile_help)
-        tname_help = "specify a theme by name from $DYE_DIR/themes"
-        theme_group.add_argument("-n", "--themename", metavar="<name>", help=tname_help)
+        parser.add_argument("-t", "--theme-file", metavar="<path>", help=tfile_help)
 
         scope_help = "only apply the given scope"
         parser.add_argument("-s", "--scope", help=scope_help)
@@ -579,9 +580,7 @@ class Dye:
         )
         theme_group = parser.add_mutually_exclusive_group()
         file_help = "specify a file containing a theme"
-        theme_group.add_argument("-t", "--themefile", metavar="<path>", help=file_help)
-        name_help = "specify a theme by name from $DYE_DIR/themes"
-        theme_group.add_argument("-n", "--themename", metavar="<name>", help=name_help)
+        theme_group.add_argument("-t", "--theme-file", metavar="<path>", help=file_help)
 
     @staticmethod
     def _argparser_print(subparsers):
@@ -600,6 +599,27 @@ class Dye:
         )
         newline_help = "do not append a newline"
         parser.add_argument("-n", action="store_true", help=newline_help)
+
+        pattern_group = parser.add_mutually_exclusive_group()
+        pfile_help = "specify a file containing a pattern"
+        pattern_group.add_argument(
+            "-f", "--pattern-file", metavar="<path>", help=pfile_help
+        )
+        no_pattern_help = "don't load any pattern, ignores DYE_PATTERN_FILE"
+        pattern_group.add_argument(
+            "--no-pattern", action="store_true", help=no_pattern_help
+        )
+
+        theme_group = parser.add_mutually_exclusive_group()
+        tfile_help = "specify a file containing a theme"
+        theme_group.add_argument(
+            "-t", "--theme-file", metavar="<path>", help=tfile_help
+        )
+        no_theme_help = "don't load any theme, ignores DYE_THEME_FILE"
+        theme_group.add_argument("--no-theme", action="store_true", help=no_theme_help)
+
+        style_help = "apply this style to the output"
+        parser.add_argument("-s", "--style", metavar="<style>", help=style_help)
 
         string_help = "strings to be printed"
         parser.add_argument("string", nargs="*", help=string_help)

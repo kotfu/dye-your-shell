@@ -44,3 +44,31 @@ def test_print_no_newline(dye_cmdline, capsys):
     assert exit_code == Dye.EXIT_SUCCESS
     assert not err
     assert out == f"{strings}"
+
+
+def test_print_theme_style(dye_cmdline, capsys):
+    theme_str = """
+    [styles]
+    bright_green = "#99e343 bold"
+    """
+    strings = "Hello there. General Kenobi."
+    exit_code = dye_cmdline(f"print -s bright_green {strings}", theme_str)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    assert strings in out
+    # there better be some ansi codes in there, but we aren't going to test which ones
+    assert len(out) > len(f"{strings}\n")
+
+
+def test_print_theme_invalid_style(dye_cmdline, capsys):
+    theme_str = """
+    [styles]
+    bright_green = "#99e343 bold"
+    """
+    strings = "Hello there. General Kenobi."
+    exit_code = dye_cmdline(f"print -s bbright_green {strings}", theme_str)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert not err
+    assert out == f"{strings}\n"

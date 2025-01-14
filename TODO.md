@@ -7,8 +7,10 @@
 [ ] make enabled_if and enabled generate more detailed comments
 [ ] add a command like preview to validate a theme, ie did you define a 'text' style,
     do you have a description and type, etc.
-[ ] should jinja environment have undefined=jinja2.StrictUndefined, ie should we generate
-    errors on unknown references or keep silently replacing them with empty strings
+[ ] should jinja environment have undefined=jinja2.StrictUndefined?, ie should we generate
+    errors on unknown references or keep silently replacing them with empty strings?
+    If we change this, or make it an option, then we have to make sure to update
+    'dye print' as well.
 [ ] make 'dye themes' show some basic info about each theme, type, description, etc.
 [ ] switch to uv
 [ ] add a command like apply that validates a pattern
@@ -37,6 +39,7 @@
     in it. use either rich syntax or our 'template syntax'
 [ ] unit tests in test_pattern.py or test_scope.py for all the processing of a scope
 [ ] see if we can use pygments styles as a theme in dye
+[ ] make -d show debugging output on stderr so you can see what's going on
 
 
 ## documentation and website
