@@ -59,6 +59,7 @@ class Dye:
 
         self.console = self._create_console(force_color)
         self.error_console = self._create_error_console(force_color)
+        self.print_console = self._create_print_console(force_color)
 
     def _create_console(self, force_color):
         """create a rich console object to be used for output
@@ -94,6 +95,26 @@ class Dye:
             stderr=True,
             soft_wrap=True,
             markup=False,
+            emoji=False,
+            highlight=False,
+            force_terminal=force_color,
+        )
+
+    def _create_print_console(self, force_color):
+        """create a rich console object to be used for output for the
+        print command, which enables console markup
+
+        we have this as a separate method so that it can be patched
+        in our test suite
+        """
+        # force_terminal can be True, False, or None
+        # argparse will always set it to be True or False
+        # we need it to be True or None
+        if not force_color:
+            force_color = None
+        return rich.console.Console(
+            soft_wrap=True,
+            markup=True,
             emoji=False,
             highlight=False,
             force_terminal=force_color,
@@ -328,10 +349,14 @@ class Dye:
             with contextlib.suppress(KeyError):
                 style = pattern.styles[args.style]
 
-        if args.n:
-            self.console.print(" ".join(args.string), style=style, end="")
-        else:
-            self.console.print(" ".join(args.string), style=style)
+        # build a rich.theme object from our styles
+        rich_theme = rich.theme.Theme(pattern.styles)
+        # and use it for just a moment
+        with self.print_console.use_theme(rich_theme, inherit=False):
+            if args.n:
+                self.print_console.print(" ".join(args.string), style=style, end="")
+            else:
+                self.print_console.print(" ".join(args.string), style=style)
         return self.EXIT_SUCCESS
 
     def command_agents(self, _):

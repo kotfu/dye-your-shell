@@ -12,6 +12,10 @@ and the format of this file follows recommendations from
 
 ### Added
 
+- `dye print` command like echo but can use styles from themes and patterns
+  on the output. This command uses [console markup](https://rich.readthedocs.io/en/latest/markup.html) from rich to use your styles in the output
+
+
 ### Changed
 
 - in themes and patterns you can now reference another color or style in
