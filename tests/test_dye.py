@@ -22,7 +22,6 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
-import argparse
 import os
 
 import pytest

@@ -137,7 +137,7 @@ def test_ansi_on_off():
     """
     pattern_str = """
         [styles]
-        dark_orange = "#ff6c1c on #222222"
+        orng = "#ff6c1c on #222222"
         pink = "bold #df769b"
         cyan = "#09ecff on default"
         default = "default"
@@ -145,7 +145,7 @@ def test_ansi_on_off():
 
         [variables]
         something = "Hello There."
-        opts = "--prompt={{styles.dark_orange|ansi_on}}>>{{styles.dark_orange|ansi_off}}"
+        opts = "--prompt={{styles.orng|ansi_on}}>>{{styles.orng|ansi_off}}"
     """
     pattern = Pattern.loads(pattern_str)
     expected_plaintext = 'export OPTS="--prompt=>>"\n'
