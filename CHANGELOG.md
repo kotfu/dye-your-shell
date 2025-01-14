@@ -12,7 +12,15 @@ and the format of this file follows recommendations from
 
 ### Added
 
-### Changed
+- in a pattern scope, you can now create styles with either
+  `style.prompt = "#cccccc"` or `styles.prompt = "#cccccc"`.
+  You should pick one or the other and not intermingle them
+  in your pattern. If you do, `styles.prompt` will silently
+  override `style.prompt`.
+- in a pattern scope, `style.prompt = "{{ styles.mystyle }}"` and
+  `styles.prompt = "mystyle"`. Ie, you can reference a style in
+  your theme or pattern directly by name instead of requiring the
+  more formal curly brace syntax.
 
 
 ## [0.10.0] - 2025-01-14

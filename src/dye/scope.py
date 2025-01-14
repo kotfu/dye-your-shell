@@ -103,7 +103,7 @@ class Scope:
 
         self.definition = self._process_graph(scopedef, render_func)
         self._process_agent()
-        self._process_scope_styles()
+        self._process_scope_styles(pattern)
 
     def _process_graph(self, dataset, render_func):
         """recursive function to crawl through a dictionary and
@@ -140,19 +140,31 @@ class Scope:
                 f"{self.agent_name}: unknown agent in scope '{self.name}"
             ) from exc
 
-    def _process_scope_styles(self):
+    def _process_scope_styles(self, pattern):
         """create a dictionary of style objects parsed from self.definition
 
         sets self.styles
         """
         try:
-            raw_styles = self.definition["styles"]
+            raw_styles = self.definition["style"]
         except (KeyError, TypeError):
             raw_styles = {}
+        try:
+            more_styles = self.definition["styles"]
+        except (KeyError, TypeError):
+            more_styles = {}
+        # merge these two together, the order we do this means that
+        # styles override style
+        for name, styledef in more_styles.items():
+            raw_styles[name] = styledef
 
         processed_styles = {}
         for name, styledef in raw_styles.items():
-            processed_styles[name] = rich.style.Style.parse(styledef)
+            # lookup the style by name in pattern.styles
+            if styledef in pattern.styles:
+                processed_styles[name] = pattern.styles[styledef]
+            else:
+                processed_styles[name] = rich.style.Style.parse(styledef)
 
         self.styles = processed_styles
 

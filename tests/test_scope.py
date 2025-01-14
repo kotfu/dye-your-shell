@@ -29,6 +29,11 @@ from dye.pattern import Pattern
 from dye.scope import Scope
 
 SAMPLE_PATTERN = """
+[styles]
+orange = "#d5971a"
+cyan = "#09ecff"
+purple = "#7060eb"
+
 [scopes.iterm]
 agent = "iterm"
 cursor = "block"
@@ -41,6 +46,15 @@ export.NO_COLOR = "true"
 agent = "shell"
 is_enabled = false
 command.dontrun = "echo qqq"
+
+[scopes.fzf]
+agent = "fzf"
+styles.file = "orange"
+styles.directory = "{{ style.cyan }}"
+style.border = "purple"
+# purple should win
+styles.prompt = "purple"
+style.prompt = "orange"
 """
 
 
@@ -70,6 +84,28 @@ def test_scope_unknown_agent():
     """
     with pytest.raises(DyeError):
         Pattern.loads(pattern_str)
+
+
+def test_scope_styles_lookup(spat):
+    scope = spat.scopes["fzf"]
+    assert scope.styles["file"] == spat.styles["orange"]
+    assert scope.styles["directory"] == spat.styles["cyan"]
+
+
+def test_scope_style(spat):
+    # check that you can use
+    # style.file = "#ffffff" and it will work just like styles.file = "#ffffff" does
+    scope = spat.scopes["fzf"]
+    assert scope.styles["border"] == spat.styles["purple"]
+
+
+def test_scope_styles_overrides_style(spat):
+    # check that if you have both
+    # styles.prompt = "#333333"
+    # style.prompt = "#ffffff"
+    # you get #333333
+    scope = spat.scopes["fzf"]
+    assert scope.styles["prompt"] == spat.styles["purple"]
 
 
 # # TODO this should test the init in GeneratorBase which sets scope_styles
