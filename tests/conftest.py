@@ -82,6 +82,18 @@ def dye_cmdline(mocker):
         width=2048,
     )
 
+    console_patch = mocker.patch("dye.Dye._create_print_console")
+    console_patch.return_value = rich.console.Console(
+        soft_wrap=True,
+        markup=True,
+        emoji=False,
+        highlight=False,
+        # force display to true color so we can look for ansi codes in output
+        color_system="truecolor",
+        # don't let it autodetect the width, we don't want any line wrapping
+        width=2048,
+    )
+
     dye = Dye()
 
     def _executor(cmdline, theme_toml=None, pattern_toml=None):
