@@ -438,6 +438,15 @@ class Dye:
         args in the namespace. If you pass required=False, this will check for
         args.no_pattern and ignore the environment variable and args.pattern_file
         """
+        # if we don't have a no_pattern attribute, make sure it's set to false
+        # some versions of the args we call with (like those for apply), don't
+        # have this argument because it doesn't make any sense
+        if not hasattr(args, "no_pattern"):
+            args.no_pattern = False
+
+        if required and args.no_pattern:
+            raise DyeError("a pattern is required and you specified --no-pattern")
+
         if not required and args.no_pattern:
             return Pattern.loads(None, theme)
 

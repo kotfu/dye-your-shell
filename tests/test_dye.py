@@ -240,8 +240,12 @@ def test___main__(mocker):
 
 
 #
-# test all the variations of load_from_args()
+# test all the variations of load_theme_from_args()
 #
+# I gave up trying to descriptively name these tests, there are too
+# many combinations. The test names would have been 90 characters long.
+# at the top of each test is a comment describing the combination this
+# test validates
 def test_load_theme_from_args_apply1(mocker):
     # no environment
     # argv = "apply"
@@ -315,7 +319,7 @@ def test_load_theme_from_args_apply4(mocker, tmp_path):
     mocker.patch.dict(os.environ, {}, clear=True)
 
     # a theme file that doesn't exist
-    themefile = tmp_path / "sometheme.toml"
+    themefile = tmp_path / "doesntexisttheme.toml"
 
     argv = f"apply --theme-file {themefile}"
 
@@ -418,137 +422,179 @@ def test_load_theme_from_args_apply7(mocker, tmp_path):
     assert theme.styles == {}
 
 
-# def test_load_from_args_filename(dye, mocker, tmp_path):
-#     # give a bogus theme file in the environment, which should be
-#     # ignored because the filename in the arguments should take
-#     # precendence
-#     mocker.patch.dict(os.environ, {"THEME_FILE": "nosuchfile"}, clear=True)
+#
+# test all the variations of load_pattern_from_args()
+#
+# I gave up trying to descriptively name these tests, there are too
+# many combinations. The test names would have been 90 characters long.
+# at the top of each test is a comment describing the combination this
+# test validates
+def test_load_pattern_from_args1(mocker):
+    # no environment
+    # argv = "print"
+    # required = True and False
+    argv = "print"
+    mocker.patch.dict(os.environ, {}, clear=True)
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
 
-#     # go write a theme file that we can actually open
-#     themefile = tmp_path / "sometheme.toml"
-#     toml = """
-#     [styles]
-#     text = "#ffcc00 on #003322"
-#     """
-#     with open(themefile, "w", encoding="utf8") as fvar:
-#         fvar.write(toml)
+    with pytest.raises(DyeError):
+        dye.load_pattern_from_args(args, required=True)
 
-#     args = argparse.Namespace()
-#     args.file = str(themefile)
-#     args.theme = None
-
-#     dye.load_from_args(args)
-#     assert dye.theme.definition
-#     assert dye.theme.styles
-
-
-# def test_load_from_args_invalid_filename(dye, mocker, tmp_path):
-#     # give a real theme file in the environment, which should be
-#     # ignored because the filename in the arguments should take
-#     # precendence, this should generate an error because we
-#     # specified a file which could not be opened
-
-#     # go write a theme file that we can actually open
-#     envfile = tmp_path / "sometheme.toml"
-#     with open(envfile, "w", encoding="utf8") as fvar:
-#         fvar.write("# an empty toml theme file")
-#     mocker.patch.dict(os.environ, {"THEME_FILE": str(envfile)}, clear=True)
-
-#     themefile = tmp_path / "doesntexist.toml"
-#     args = argparse.Namespace()
-#     args.file = str(themefile)
-#     args.theme = None
-
-#     with pytest.raises(FileNotFoundError):
-#         dye.load_from_args(args)
+    pattern = dye.load_pattern_from_args(args, required=False)
+    assert pattern.colors == {}
+    assert pattern.styles == {}
 
 
-# def test_load_from_args_env(dye, mocker, tmp_path):
-#     # go write a theme file that we can actually open
-#     themefile = tmp_path / "sometheme.toml"
-#     tomlstr = """
-#         [styles]
-#         text = "#ffcc00 on #003322"
-#     """
-#     with open(themefile, "w", encoding="utf8") as fvar:
-#         fvar.write(tomlstr)
+def test_load_pattern_from_args2(mocker):
+    # no environment
+    # argv = "print --no-pattern"
+    # required = False
+    argv = "print --no-pattern"
+    mocker.patch.dict(os.environ, {}, clear=True)
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
 
-#     mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
+    with pytest.raises(DyeError):
+        dye.load_pattern_from_args(args, required=True)
 
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = None
-
-#     dye.load_from_args(args)
-#     assert dye.theme.definition
-#     assert dye.theme.styles
+    pattern = dye.load_pattern_from_args(args, required=False)
+    assert pattern.colors == {}
+    assert pattern.styles == {}
 
 
-# def test_load_from_args_env_invalid(dye, mocker, tmp_path):
-#     # a theme file in the environment variable which doesn't exist
-#     # should raise an exception
-#     themefile = tmp_path / "doesntexist.toml"
-#     mocker.patch.dict(os.environ, {"THEME_FILE": str(themefile)}, clear=True)
+def test_load_pattern_from_args3(mocker, tmp_path):
+    # no environment
+    # argv = "print --pattern-file {exists}"
+    # required = True and False
 
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = None
+    mocker.patch.dict(os.environ, {}, clear=True)
 
-#     with pytest.raises(FileNotFoundError):
-#         dye.load_from_args(args)
+    pattern_file = tmp_path / "pattern.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(pattern_file, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
 
+    argv = f"print --pattern-file {pattern_file}"
 
-# def test_load_from_args_theme_file(dye, mocker, tmp_path):
-#     # give a theme name, but the full name including the .toml
-#     themefile = tmp_path / "themefile.toml"
-#     tomlstr = """
-#         [styles]
-#         text = "#ffcc00 on #003322"
-#     """
-#     with open(themefile, "w", encoding="utf8") as fvar:
-#         fvar.write(tomlstr)
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
 
-#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
+    theme = dye.load_pattern_from_args(args, required=True)
+    assert isinstance(theme.styles["text"], rich.style.Style)
 
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = "themefile.toml"
-
-#     dye.load_from_args(args)
-#     assert dye.theme.definition
-#     assert dye.theme.styles
+    theme = dye.load_pattern_from_args(args, required=False)
+    assert isinstance(theme.styles["text"], rich.style.Style)
 
 
-# def test_load_from_args_theme_file_invalid(dye, mocker, tmp_path):
-#     # we have a valid theme dir, but we are going to give
-#     # a filename with extension as the theme arguemtn
-#     # but that filename won't exist
-#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
+def test_load_pattern_from_args4(mocker, tmp_path):
+    # no environment
+    # argv = "print --pattern-file {doesn't exist}"
+    # required = True and False
 
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = "notfound.toml"
+    mocker.patch.dict(os.environ, {}, clear=True)
 
-#     with pytest.raises(DyeError):
-#         dye.load_from_args(args)
+    pattern_file = tmp_path / "doesntexistpattern.toml"
+
+    argv = f"print --pattern-file {pattern_file} something"
+
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+    with pytest.raises(FileNotFoundError):
+        dye.load_pattern_from_args(args, required=True)
+    with pytest.raises(FileNotFoundError):
+        dye.load_pattern_from_args(args, required=False)
 
 
-# def test_load_from_args_theme_name(dye, mocker, tmp_path):
-#     # give a theme name, but the full name including the .toml
-#     themefile = tmp_path / "themefile.toml"
-#     tomlstr = """
-#         [styles]
-#         text = "#ffcc00 on #003322"
-#     """
-#     with open(themefile, "w", encoding="utf8") as fvar:
-#         fvar.write(tomlstr)
+def test_load_pattern_from_args5(mocker, tmp_path):
+    # DYE_PATTERN_FILE exists
+    # argv = "print"
+    # required = True and False
 
-#     mocker.patch.dict(os.environ, {"DYE_DIR": str(tmp_path)}, clear=True)
+    pattern_file = tmp_path / "pattern.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(pattern_file, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
 
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = "themefile"
+    mocker.patch.dict(os.environ, {"DYE_PATTERN_FILE": f"{pattern_file}"}, clear=True)
 
-#     dye.load_from_args(args)
-#     assert dye.theme.definition
-#     assert dye.theme.styles
+    argv = "apply"
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+    theme = dye.load_pattern_from_args(args, required=True)
+    assert isinstance(theme.styles["text"], rich.style.Style)
+    theme = dye.load_pattern_from_args(args, required=False)
+    assert isinstance(theme.styles["text"], rich.style.Style)
+
+
+def test_load_pattern_from_args6(mocker, tmp_path):
+    # DYE_PATTERN_FILE exists
+    # argv = "apply --pattern-file {exists}"
+    # required = True and False
+
+    envfile = tmp_path / "envpattern.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(envfile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    mocker.patch.dict(os.environ, {"DYE_PATTERN_FILE": f"{envfile}"}, clear=True)
+
+    cmdfile = tmp_path / "cmdpattern.toml"
+    toml = """
+    [styles]
+    current_line = "#ffcc00 on #003322"
+    """
+    with open(cmdfile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    argv = f"print --pattern-file {cmdfile}"
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+
+    theme = dye.load_pattern_from_args(args, required=True)
+    assert isinstance(theme.styles["current_line"], rich.style.Style)
+    assert "text" not in theme.styles
+
+    theme = dye.load_pattern_from_args(args, required=False)
+    assert isinstance(theme.styles["current_line"], rich.style.Style)
+    assert "text" not in theme.styles
+
+
+def test_load_pattern_from_args7(mocker, tmp_path):
+    # DYE_PATTERN_FILE exists
+    # argv = "print --no-pattern"
+    # required = True and False
+
+    pattern_file = tmp_path / "sometheme.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(pattern_file, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    mocker.patch.dict(os.environ, {"DYE_PATTERN_FILE": f"{pattern_file}"}, clear=True)
+
+    argv = "print --no-pattern"
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+    with pytest.raises(DyeError):
+        dye.load_pattern_from_args(args, required=True)
+    theme = dye.load_pattern_from_args(args, required=False)
+    assert theme.styles == {}
