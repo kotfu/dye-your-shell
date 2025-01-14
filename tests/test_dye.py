@@ -22,9 +22,11 @@
 # pylint: disable=protected-access, missing-function-docstring, redefined-outer-name
 # pylint: disable=missing-module-docstring, unused-variable
 
+import argparse
 import os
 
 import pytest
+import rich
 from rich_argparse import RichHelpFormatter
 
 from dye import Dye, DyeError
@@ -237,18 +239,183 @@ def test___main__(mocker):
     assert excinfo.value.code == 42
 
 
-# #
-# # test all the variations of load_from_args()
-# #
-# def test_load_from_args_no_theme(dye, mocker):
-#     # we need empty args, and empty environment, and with
-#     # all of this empty, we should get an exception
-#     mocker.patch.dict(os.environ, {}, clear=True)
-#     args = argparse.Namespace()
-#     args.file = None
-#     args.theme = None
-#     with pytest.raises(DyeError):
-#         dye.load_from_args(args)
+#
+# test all the variations of load_from_args()
+#
+def test_load_theme_from_args_apply1(mocker):
+    # no environment
+    # argv = "apply"
+    # required = True and False
+    argv = "apply"
+    mocker.patch.dict(os.environ, {}, clear=True)
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+
+    with pytest.raises(DyeError):
+        dye.load_theme_from_args(args, required=True)
+
+    theme = dye.load_theme_from_args(args, required=False)
+    assert theme.colors == {}
+    assert theme.styles == {}
+
+
+def test_load_theme_from_args_apply2(mocker):
+    # no environment
+    # argv = "apply --no-theme"
+    # required = False
+    argv = "apply --no-theme"
+    mocker.patch.dict(os.environ, {}, clear=True)
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+
+    with pytest.raises(DyeError):
+        dye.load_theme_from_args(args, required=True)
+
+    theme = dye.load_theme_from_args(args, required=False)
+    assert theme.colors == {}
+    assert theme.styles == {}
+
+
+def test_load_theme_from_args_apply3(mocker, tmp_path):
+    # no environment
+    # argv = "apply --theme-file {exists}"
+    # required = True and False
+
+    mocker.patch.dict(os.environ, {}, clear=True)
+
+    # go write a theme file that we can actually open
+    themefile = tmp_path / "sometheme.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(themefile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    argv = f"apply --theme-file {themefile}"
+
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+
+    theme = dye.load_theme_from_args(args, required=True)
+    assert isinstance(theme.styles["text"], rich.style.Style)
+
+    theme = dye.load_theme_from_args(args, required=False)
+    assert isinstance(theme.styles["text"], rich.style.Style)
+
+
+def test_load_theme_from_args_apply4(mocker, tmp_path):
+    # no environment
+    # argv = "apply --theme-file {doesn't exist}"
+    # required = True and False
+
+    mocker.patch.dict(os.environ, {}, clear=True)
+
+    # a theme file that doesn't exist
+    themefile = tmp_path / "sometheme.toml"
+
+    argv = f"apply --theme-file {themefile}"
+
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+    with pytest.raises(FileNotFoundError):
+        dye.load_theme_from_args(args, required=True)
+    with pytest.raises(FileNotFoundError):
+        dye.load_theme_from_args(args, required=False)
+
+
+def test_load_theme_from_args_apply5(mocker, tmp_path):
+    # DYE_THEME_FILE exists
+    # argv = "apply"
+    # required = True and False
+
+    # go write a theme file that we can actually open
+    themefile = tmp_path / "sometheme.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(themefile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    mocker.patch.dict(os.environ, {"DYE_THEME_FILE": f"{themefile}"}, clear=True)
+
+    argv = "apply"
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+    theme = dye.load_theme_from_args(args, required=True)
+    assert isinstance(theme.styles["text"], rich.style.Style)
+    theme = dye.load_theme_from_args(args, required=False)
+    assert isinstance(theme.styles["text"], rich.style.Style)
+
+
+def test_load_theme_from_args_apply6(mocker, tmp_path):
+    # DYE_THEME_FILE exists
+    # argv = "apply --theme-file {exists}"
+    # required = True and False
+
+    # go write a theme file that we can actually open
+    envfile = tmp_path / "sometheme.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(envfile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    mocker.patch.dict(os.environ, {"DYE_THEME_FILE": f"{envfile}"}, clear=True)
+
+    cmdfile = tmp_path / "othertheme.toml"
+    toml = """
+    [styles]
+    current_line = "#ffcc00 on #003322"
+    """
+    with open(cmdfile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    argv = f"apply --theme-file {cmdfile}"
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+
+    theme = dye.load_theme_from_args(args, required=True)
+    assert isinstance(theme.styles["current_line"], rich.style.Style)
+    assert "text" not in theme.styles
+
+    theme = dye.load_theme_from_args(args, required=False)
+    assert isinstance(theme.styles["current_line"], rich.style.Style)
+    assert "text" not in theme.styles
+
+
+def test_load_theme_from_args_apply7(mocker, tmp_path):
+    # DYE_THEME_FILE exists
+    # argv = "apply --no-theme"
+    # required = True and False
+
+    # go write a theme file that we can actually open
+    themefile = tmp_path / "sometheme.toml"
+    toml = """
+    [styles]
+    text = "#ffcc00 on #003322"
+    """
+    with open(themefile, "w", encoding="utf8") as fvar:
+        fvar.write(toml)
+
+    mocker.patch.dict(os.environ, {"DYE_THEME_FILE": f"{themefile}"}, clear=True)
+
+    argv = "apply --no-theme"
+    argparser = Dye.argparser()
+    args = argparser.parse_args(argv.split())
+    dye = Dye()
+    with pytest.raises(DyeError):
+        dye.load_theme_from_args(args, required=True)
+    theme = dye.load_theme_from_args(args, required=False)
+    assert theme.styles == {}
 
 
 # def test_load_from_args_filename(dye, mocker, tmp_path):

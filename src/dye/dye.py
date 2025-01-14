@@ -399,8 +399,11 @@ class Dye:
         :raises: an exception if we can't find a theme file
 
         """
+        if required and args.no_theme:
+            raise DyeError("a theme is required and you specified --no-theme")
+
         if not required and args.no_theme:
-            return Pattern()
+            return Theme()
 
         fname = None
 
@@ -560,8 +563,14 @@ class Dye:
         )
         pfile_help = "specify a file containing a pattern"
         parser.add_argument("-f", "--pattern-file", metavar="<path>", help=pfile_help)
+
+        theme_group = parser.add_mutually_exclusive_group()
         tfile_help = "specify a file containing a theme"
-        parser.add_argument("-t", "--theme-file", metavar="<path>", help=tfile_help)
+        theme_group.add_argument(
+            "-t", "--theme-file", metavar="<path>", help=tfile_help
+        )
+        no_theme_help = "don't load any theme, ignores DYE_THEME_FILE"
+        theme_group.add_argument("--no-theme", action="store_true", help=no_theme_help)
 
         scope_help = "only apply the given scope"
         parser.add_argument("-s", "--scope", help=scope_help)
