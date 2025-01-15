@@ -109,7 +109,7 @@ class LsColorsFromStyle:
                 # they used a style for a file attribute that isn't in the map
                 # which is not allowed
                 raise DyeError(
-                    f"unknown style '{name}' while processing" f" scope '{scope_name}'"
+                    f"unknown style '{name}' while processing scope '{scope_name}'"
                 ) from exc
 
         if style.color.type == rich.color.ColorType.DEFAULT:
@@ -303,7 +303,7 @@ class Eza(AgentBase, LsColorsFromStyle):
         # when we are switching a theme, there may be contents in the
         # environment variable already, and we need to tromp over them
         # we chose to set the variable to empty instead of unsetting it
-        print(f'''export {varname}="{':'.join(outlist)}"''')
+        print(f'''export {varname}="{":".join(outlist)}"''')
 
 
 class Fzf(AgentBase):
@@ -495,7 +495,7 @@ class GnuLs(AgentBase, LsColorsFromStyle):
         # when we are switching a theme, there may be contents in the
         # environment variable already, and we need to tromp over them
         # we chose to set the variable to empty instead of unsetting it
-        return f'''export {varname}="{':'.join(outlist)}"'''
+        return f'''export {varname}="{":".join(outlist)}"'''
 
 
 class Iterm(AgentBase):
@@ -594,8 +594,7 @@ class Iterm(AgentBase):
                 output.append(cmd)
             else:
                 raise DyeSyntaxError(
-                    f"unknown cursor '{cursor}'"
-                    f" while processing scope '{self.scope}'"
+                    f"unknown cursor '{cursor}' while processing scope '{self.scope}'"
                 )
         # render the cursor color
         # iterm has curbg and curfg color codes, but as far as I can tell
@@ -611,7 +610,7 @@ class Iterm(AgentBase):
             # interpreted by python, they need to be passed through
             # to the echo command
             cmd = r'builtin echo -en "\e]1337;'
-            cmd += f"SetColors={iterm_key}={clr.hex.replace('#','')}"
+            cmd += f"SetColors={iterm_key}={clr.hex.replace('#', '')}"
             cmd += r'\a"'
             output.append(cmd)
         except KeyError:
