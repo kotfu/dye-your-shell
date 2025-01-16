@@ -245,11 +245,17 @@ def test___main__(mocker):
 # many combinations. The test names would have been 90 characters long.
 # at the top of each test is a comment describing the combination this
 # test validates
-def test_load_theme_from_args_apply1(mocker):
+LOAD_THEME1_ARGVS = [
+    "apply",
+    "preview",
+]
+
+
+@pytest.mark.parametrize("argv", LOAD_THEME1_ARGVS)
+def test_load_theme_from_args_apply1(argv, mocker):
     # no environment
     # argv = "apply"
     # required = True and False
-    argv = "apply"
     mocker.patch.dict(os.environ, {}, clear=True)
     argparser = Dye.argparser()
     args = argparser.parse_args(argv.split())

@@ -424,6 +424,12 @@ class Dye:
         :raises: an exception if we can't find a theme file
 
         """
+        # if we don't have a no_theme attribute, make sure it's set to false
+        # some versions of the args we call with (like fore preview), don't
+        # have this argument because it doesn't make any sense
+        if not hasattr(args, "no_theme"):
+            args.no_theme = False
+
         if required and args.no_theme:
             raise DyeError("a theme is required and you specified --no-theme")
 
