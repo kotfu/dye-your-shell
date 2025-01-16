@@ -1,0 +1,31 @@
+#
+# solarized theme with dark background
+
+description = "Classic colors from monokai in TextMate https://monokai.pro/"
+type = "dark"
+
+[colors]
+dark2      = "#161613"
+dark1      = "#1d1e19"
+background = "#272822"
+accent1    = "#f92672"  # red
+accent2    = "#fd971f"  # orange
+accent3    = "#e6db74"  # yellow
+accent4    = "#a6e22e"  # green
+accent5    = "#66d9ef"  # cyan
+accent6    = "#ae81ff"  # purple
+foreground = "#fdfff1"
+dimmed1    = "#c0c1b5"
+dimmed2    = "#919288"
+dimmed3    = "#6e7066"
+dimmed4    = "#57584f"
+dimmed5    = "#3b3c35"
+
+
+[styles]
+#
+# user interface elements
+
+# text is always the standard foreground color on the
+# standard background color
+text = "{{ color.foreground }} on {{ color.background }}"

@@ -1,0 +1,169 @@
+#
+# dracula theme
+
+description = "theme template"
+type = "dark"
+version = "1.0.0"
+
+[colors]
+# these names and colors typically come from whoever designed
+# the color palette
+#
+# https://draculatheme.com/contribute#color-palette
+# background_lighter = '#424450'
+# background_light = '#343746' # HSV (230   , 25.71, 27.45)
+# background = "#282a36"
+# background_dark = '#21222C' # HSV (234.55, 25   , 17.25)
+# background_darker = '#191A21' # HSV (234.55, 25   , 13   )
+
+
+# selection = "#44475a"
+# foreground = "#f8f8f2"
+# comment = "#6272a4"
+# cyan = "#8be9fd"
+# green = "#50fa7b"
+# orange = "#ffb86c"
+# pink = "#ff79c6"
+# purple = "#bd93f9"
+# red = "#ff5555"
+# yellow = "#f1fa8c"
+
+
+# colors can't be lighter and darker because we need the same descriptors
+# to work whether it's a light mode theme or a dark mode theme
+# so we use "more" and "less" to indicate more or less contrast
+#
+# that way
+#     {{color.foreground}} on {{color.background_more}}
+# will always have more contrast than
+#     {{color.foreground}} on {{color.background_less}}
+# and
+#     {{color.foreground_more}} on {{color.background}}
+# will always have more contrast than
+#     {{color.foreground_less}} on {{color.background}}
+#
+#
+
+# foreground colors
+#
+# for a dark theme more2 should be the closest
+# to white, and less2 should be the closest to black
+#
+# for a light theme more2 should be the closest
+# to black, and less2 should be the closest to white
+#
+# for a one color foreground palette, set them all to
+# be the same
+#
+# for a three color foreground palette set all the 'more'
+# values to be the same, and all the 'less' values
+# to be the same
+#
+# for a five color foreground palette set more2 and more
+# to be the same, and less2 and less to be the same
+foreground_more2 = "{{ colors.foreground }}"
+foreground_more1 = "{{ colors.foreground }}"
+foreground_more = "{{ colors.foreground }}"
+foreground = "{{ colors.foreground }}"
+foreground_less = "{{ colors.foreground }}"
+foreground_less1 = "{{ colors.foreground }}"
+foreground_less2 = "{{ colors.foreground }}"
+
+# standard background colors
+# high, , and low contrast with foreground
+#
+# for a dark theme more3 should be the closest
+# to black, and low3 should be the closest to white
+#
+# for a light theme more3 should be the closest
+# to white, and less3 should be the closest to black
+#
+# for a one color background palette, set them all to
+# be the same as background
+#
+# for a three color background palette set all the 'more'
+# values to be the same, and all the 'less' values
+# to be the same
+#
+# for a five color background palette set more2 and more
+# to be the same, and less2 and less to be the same
+background_more2 = "{{ colors.background }}"
+background_more1 = "{{ colors.background }}"
+background_more = "{{ colors.background }}"
+background = "{{ colors.background }}"
+background_less = "{{ colors.background }}"
+background_less1 = "{{ colors.background }}"
+background_less2 = "{{ colors.background }}"
+
+##
+## named colors
+##
+# everything on the lefthand side here should have a value assigned
+# these are the 12 colors in an RGB color wheel
+# primary colors: red, yellow, blue
+# secondary colors: cyan, magenta, yellow
+# tertiary colors: orange, chartreuse_green, spring_green,
+#                  azure, violet, rose
+#
+# there is not universal alignment with the names of these colors
+# we use the names from https://en.wikipedia.org/wiki/Color_wheel
+# if your palette has a color in the general range of these
+# segments of the color wheel, put it in here
+#
+# these are useful for having directories displayed in green
+# no matter what shade of green is in the palette
+#
+# if your theme only has one blue color, make cyan, azure, and blue all be
+# that color. If your theme has three purple colors, pick your best
+# one for violet, and put the others as accent colors below
+red = "{{ colors.red }}"
+orange = "{{ colors.orange }}"
+yellow = "{{ colors.yellow }}"
+chartreuse_green = ""
+green = "{{ colors.green }}"
+spring_green = ""
+cyan = "{{ colors.cyan }}"
+azure = ""
+blue = ""
+violet = "{{ colors.purple }}"
+magenta = "{{ colors.pink }}"
+rose = ""
+
+##
+## accent colors
+##
+# list 12 accent colors. your reddest should be 1, moving clockwise around
+# the rbg color wheel. If you have fewer than 12 accents, TODO???
+#
+accent_1 = ""
+accent_2 = ""
+accent_3 = ""
+accent_4 = ""
+accent_5 = ""
+accent_6 = ""
+accent_7 = ""
+accent_8 = ""
+accent_9 = ""
+accent_10 = ""
+accent_11 = ""
+accent_12 = ""
+
+# sometimes you need a set of 3 or a set of 4 accents that look good together
+# define those here. your triads don't have to be evenly across from each other
+# on the color wheel, it's just fine to have a dark purple, a light purple, and
+# a gold, or whatever. Same thing for the tetrad
+triad_1 = ""
+triad_2 = ""
+triad_3 = ""
+
+tetrad_1 = ""
+tetrad_2 = ""
+tetrad_3 = ""
+tetrad_4 = ""
+
+
+
+[styles]
+# text is the normal foreground and background colors
+text = "{{colors.foreground}} on {{colors.background}}"
+selected = "{{colors.foreground}} on {{colors.background_less}}"

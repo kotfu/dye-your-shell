@@ -1,0 +1,31 @@
+#
+# solarized theme with dark background
+
+description = "Noctis Obscuro theme from the VSCode Extension"
+type = "dark"
+
+[colors]
+dark2      = "#19181a"
+dark1      = "#221f22"
+background = "#031417"
+accent1    = "#ff6188"  # red
+accent2    = "#fc9867"  # orange
+accent3    = "#ffd866"  # yellow
+accent4    = "#a9dc76"  # green
+accent5    = "#78dce8"  # cyan
+accent6    = "#ab9df2"  # purple
+foreground = "#b2bacd"
+dimmed1    = "#c1c0c0"
+dimmed2    = "#939293"
+dimmed3    = "#727072"
+dimmed4    = "#5b595c"
+dimmed5    = "#403e41"
+
+
+[styles]
+#
+# user interface elements
+
+# text is always the standard foreground color on the
+# standard background color
+text = "{{ color.foreground }} on {{ color.background }}"
