@@ -21,6 +21,7 @@
 #
 """classes for storing a theme"""
 
+import benedict
 import jinja2
 import rich
 import tomlkit
@@ -80,26 +81,40 @@ class Theme:
     def _process(self):
         """process a newly loaded definition, including variables and styles
 
-        this sets self.palette and self.elements
+        this sets self.colors and self.styles
         """
         env = jinja2.Environment()
-        # get the colors, a dict of variables
-        # which can be used later
+
         try:
-            raw_colors = self.definition["colors"]
+            raw_colors = benedict.benedict(self.definition["colors"])
         except KeyError:
-            raw_colors = {}
-        self.colors = {}
-        for key, value in raw_colors.items():
-            # do a bare lookup so that foreground_low = "foreground" works
-            if value in self.colors:
-                self.colors[key] = self.colors[value]
+            raw_colors = benedict.benedict()
+        self.colors = benedict.benedict()
+
+        # we would use benedict.keypaths() but it sorts the keypaths,
+        # and order is important to us. These two lines of code I stole
+        # out of the soure for keypaths(), they are the ones right before
+        # the .sort()
+        kls = benedict.core.keylists(raw_colors)
+        keylist = [".".join([f"{key}" for key in kl]) for kl in kls]
+
+        # iterate over all the keys in raw_colors, processing and inserting
+        # the values into self.colors
+        for key in keylist:
+            value = raw_colors[key]
+            if isinstance(value, str):
+                if value in self.colors:
+                    # bare lookup so that foreground_low = "foreground" works
+                    self.colors[key] = self.colors[value]
+                else:
+                    template = env.from_string(value)
+                    self.colors[key] = template.render(
+                        # this lets us do {{colors.foreground}} or {{color.foreground}}
+                        colors=self.colors,
+                        color=self.colors,
+                    )
             else:
-                template = env.from_string(value)
-                # this lets us do {{colors.foreground}} or {{color.foreground}}
-                self.colors[key] = template.render(
-                    colors=self.colors, color=self.colors
-                )
+                self.colors[key] = value
 
         # process the elements, using the colors as variables
         # each element in should be a rich.Style() object

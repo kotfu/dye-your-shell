@@ -106,6 +106,7 @@ class Scope:
         except KeyError as exc:
             raise DyeError(f"{name}: no such scope") from exc
         scopedef.traverse(render_func)
+        self.definition = scopedef
 
         self._process_agent()
         self._process_scope_styles(pattern)

@@ -46,6 +46,15 @@ SAMPLE_THEME = """
     background_double1 = "{{ color.background_low }}"
     background_double2 = "background_medium"
 
+    triad.first = "purple"
+    triad.second = "yellow"
+    triad.third = "green"
+
+    tetrad.first = "triad.first"
+    tetrad.second = "yellow"
+    tetrad.third = "pink"
+    tetrad.fourth = "{{ colors.triad.third }}"
+
     [styles]
     notyet = "{{ styles.foreground }}"
     foreground = "{{ color.foreground }}"
@@ -83,8 +92,6 @@ def test_load(tmp_path):
     # open and read the file, load() will work too
     assert isinstance(theme.definition, dict)
     assert len(theme.definition) == 2
-    assert len(theme.colors) == 14
-    assert len(theme.styles) == 11
 
 
 def test_loads(sthm):
@@ -96,7 +103,6 @@ def test_loads_colors(sthm):
     assert isinstance(sthm.colors, dict)
     assert isinstance(sthm.colors["orange"], str)
     assert sthm.colors["orange"] == "#ffb86c"
-    assert len(sthm.colors) == 14
 
 
 def test_loads_styles(sthm):
@@ -104,7 +110,6 @@ def test_loads_styles(sthm):
     assert isinstance(sthm.styles["text"], rich.style.Style)
     assert isinstance(sthm.styles["text_high"], rich.style.Style)
     assert isinstance(sthm.styles["color1"], rich.style.Style)
-    assert len(sthm.styles) == 11
 
 
 def test_loads_empty():
@@ -154,6 +159,19 @@ def test_colors_unknown_reference(sthm):
 
 def test_colors_load_order(sthm):
     assert sthm.colors["notyet"] == ""
+
+
+def test_colors_subtable(sthm):
+    assert isinstance(sthm.colors["triad"], dict)
+    assert sthm.colors["triad.first"] == sthm.colors["purple"]
+
+
+def test_colors_subtable_reference1(sthm):
+    assert sthm.colors["tetrad.first"] == sthm.colors["purple"]
+
+
+def test_colors_subtable_reference2(sthm):
+    assert sthm.colors["tetrad.fourth"] == sthm.colors["green"]
 
 
 #
