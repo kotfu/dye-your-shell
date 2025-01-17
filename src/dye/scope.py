@@ -26,11 +26,11 @@ import subprocess
 
 import jinja2
 import rich
+from benedict import benedict
 
 from .agents import AgentBase
 from .exceptions import DyeError, DyeSyntaxError
 from .filters import jinja_filters
-from .utils import deep_map
 
 
 class Scope:
@@ -95,18 +95,18 @@ class Scope:
         data["variables"] = pattern.variables
         env.globals = data
 
-        def render_func(value):
+        def render_func(d, key, value):
             # only process strings
             if isinstance(value, str):
                 template = env.from_string(value)
-                return template.render()
-            return value
+                d[key] = template.render()
 
         try:
-            self.definition = pattern.definition["scopes"][name].copy()
+            scopedef = benedict(pattern.definition["scopes"][name])
         except KeyError as exc:
             raise DyeError(f"{name}: no such scope") from exc
-        deep_map(self.definition, render_func)
+        scopedef.traverse(render_func)
+
         self._process_agent()
         self._process_scope_styles(pattern)
 

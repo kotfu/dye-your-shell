@@ -37,6 +37,7 @@ dependencies = [
     "rich_argparse",
     "tomlkit",
     "Jinja2",
+    "python-benedict",
 ]
 # for setuptools-scm
 dynamic = ["version"]
