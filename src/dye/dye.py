@@ -39,7 +39,7 @@ from .agents import AgentBase
 from .exceptions import DyeError, DyeSyntaxError
 from .pattern import Pattern
 from .theme import Theme
-from .version import version_string
+from .utils import version_string
 
 
 class Dye:
