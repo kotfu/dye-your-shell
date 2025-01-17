@@ -35,29 +35,32 @@ def render_func(value, newval):
 
 
 def test_deep_map_onevalue():
+    # can't mutate a string, so it should just come back with the old value
     old = "oldval"
-    new = deep_map(old, render_func, "newvalue")
-    assert new == "newvalue"
+    deep_map(old, render_func, "newvalue")
+    assert old == "oldval"
 
 
 def test_deep_map_nested_dicts():
-    old = {"one": "oldval", "two": {"three": "oldval"}}
-    new = deep_map(old, render_func, "fixed")
-    assert new["two"]["three"] == "fixed"
+    data = {"one": "oldval", "two": {"three": "oldval"}}
+    deep_map(data, render_func, "fixed")
+    assert data["two"]["three"] == "fixed"
 
 
 def test_deep_map_nested_list():
-    old = ["one", "two", {"three": "oldval", "four": "oldval"}]
-    new = deep_map(old, render_func, "shiny")
-    assert new[0] == "shiny"
-    assert new[2]["four"] == "shiny"
+    data = ["one", "two", {"three": "oldval", "four": "oldval"}]
+    deep_map(data, render_func, "shiny")
+    assert data[0] == "shiny"
+    assert data[2]["four"] == "shiny"
 
 
 def test_deep_map_empty_dict():
-    new = deep_map({}, render_func, "gotime")
-    assert new == {}
+    data = {}
+    deep_map(data, render_func, "gotime")
+    assert data == {}
 
 
 def test_deep_map_empty_list():
-    new = deep_map([], render_func, "gotime")
-    assert new == []
+    data = []
+    deep_map(data, render_func, "gotime")
+    assert data == []

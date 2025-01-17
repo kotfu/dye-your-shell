@@ -37,27 +37,36 @@ def version_string():
 def deep_map(data, process_func, *args, **kwargs):
     """
     Recursively iterate through a nested data structure and apply process_func to each
-    value. Works with nested dictionaries, lists, and individual values.
+    value. Works with nested dictionaries and lists.
 
-    Mutates all values in place.
+    Mutates all values in place, which means if you pass a single string or number in,
+    nothing will happen.
 
     Args:
-        data: Input dictionary, list, or value process_func: Function to apply to each
-        value *args: Additional positional arguments to pass to process_func **kwargs:
-        Additional keyword arguments to pass to process_func
-
-    Returns:
-        Same structure as input, with process_func applied to all values
+        data: Input dictionary, list, or value
+        process_func: Function to apply to each
+        value *args: Additional positional arguments to pass to process_func
+        **kwargs: Additional keyword arguments to pass to process_func
     """
     if isinstance(data, dict):
+        for key in data:
+            if isinstance(data[key], (dict, list)):
+                deep_map(data[key], process_func, *args, **kwargs)
+            else:
+                data[key] = process_func(data[key], *args, **kwargs)
         # build a new dictionary with a recursive call on each value
-        return {
-            key: deep_map(value, process_func, *args, **kwargs)
-            for key, value in data.items()
-        }
+        # return {
+        #     key: deep_map(value, process_func, *args, **kwargs)
+        #     for key, value in data.items()
+        # }
     elif isinstance(data, list):
+        for pos, _ in enumerate(data):
+            if isinstance(data[pos], (dict, list)):
+                deep_map(data[pos], process_func, *args, **kwargs)
+            else:
+                data[pos] = process_func(data[pos], *args, **kwargs)
         # build a new list with a recursive call on each item
-        return [deep_map(item, process_func, *args, **kwargs) for item in data]
-    else:
-        # it's just an end node, call the function which will process the values
-        return process_func(data, *args, **kwargs)
+        # return [deep_map(item, process_func, *args, **kwargs) for item in data]
+    # else:
+    # it's just an end node, call the function which will process the values
+    # return process_func(data, *args, **kwargs)

@@ -103,10 +103,10 @@ class Scope:
             return value
 
         try:
-            scopedef = pattern.definition["scopes"][name]
+            self.definition = pattern.definition["scopes"][name].copy()
         except KeyError as exc:
             raise DyeError(f"{name}: no such scope") from exc
-        self.definition = deep_map(scopedef, render_func)
+        deep_map(self.definition, render_func)
         self._process_agent()
         self._process_scope_styles(pattern)
 
