@@ -30,6 +30,7 @@ import rich
 from .agents import AgentBase
 from .exceptions import DyeError, DyeSyntaxError
 from .filters import jinja_filters
+from .utils import deep_map
 
 
 class Scope:
@@ -78,10 +79,7 @@ class Scope:
 
         it also sets self.styles, as a dict of style objects
         """
-        try:
-            scopedef = pattern.definition["scopes"][name]
-        except KeyError as exc:
-            raise DyeError(f"{name}: no such scope") from exc
+
         self.name = name
 
         env = jinja2.Environment()
@@ -98,30 +96,19 @@ class Scope:
         env.globals = data
 
         def render_func(value):
-            template = env.from_string(value)
-            return template.render()
+            # only process strings
+            if isinstance(value, str):
+                template = env.from_string(value)
+                return template.render()
+            return value
 
-        self.definition = self._process_graph(scopedef, render_func)
+        try:
+            scopedef = pattern.definition["scopes"][name]
+        except KeyError as exc:
+            raise DyeError(f"{name}: no such scope") from exc
+        self.definition = deep_map(scopedef, render_func)
         self._process_agent()
         self._process_scope_styles(pattern)
-
-    def _process_graph(self, dataset, render_func):
-        """recursive function to crawl through a dictionary and
-        call render_func for every nested dict and list item
-
-        """
-        result = {}
-        for key, value in dataset.items():
-            if isinstance(value, dict):
-                result[key] = self._process_graph(value, render_func)
-            elif isinstance(value, list):
-                result[key] = map(render_func, value)
-            elif isinstance(value, str):
-                result[key] = render_func(value)
-            else:
-                # don't try and render non-string values
-                result[key] = value
-        return result
 
     def _process_agent(self):
         """validate and set self.agent_name and self.agent"""
