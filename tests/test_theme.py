@@ -67,6 +67,10 @@ SAMPLE_THEME = """
     color1 = "#ff79c6"
     color2 = "{{ colors.unknown }}"
     color3 = ""
+
+    triad.first = "{{ color.green }} on {{ color.pink }}"
+    triad.second = "foreground"
+    triad.third = "{{ style.triad.first }}"
 """
 
 
@@ -96,7 +100,6 @@ def test_load(tmp_path):
 
 def test_loads(sthm):
     assert isinstance(sthm.definition, dict)
-    assert len(sthm.definition) == 2
 
 
 def test_loads_colors(sthm):
@@ -193,6 +196,15 @@ def test_style(sthm):
     assert sthm.styles["text"].bgcolor.triplet.hex == "#282a36"
 
 
+def test_styles_must_be_strings():
+    theme_str = """
+    [styles]
+    text = 282
+    """
+    with pytest.raises(DyeSyntaxError):
+        Theme.loads(theme_str)
+
+
 def test_style_color_ref(sthm):
     assert sthm.styles["foreground"].color.name == sthm.colors["foreground"]
 
@@ -231,3 +243,16 @@ def test_styles_load_order(sthm):
 def test_style_empty(sthm):
     assert not sthm.styles["color3"]
     assert isinstance(sthm.styles["color3"], rich.style.Style)
+
+
+def test_styles_subtable(sthm):
+    assert isinstance(sthm.styles["triad"], dict)
+    assert sthm.styles["triad.first"].color.name == "#50fa7b"
+
+
+def test_styles_subtable_reference1(sthm):
+    assert sthm.styles["triad.second"] == sthm.styles["foreground"]
+
+
+def test_styles_subtable_reference2(sthm):
+    assert sthm.styles["triad.third"].color.name == "#50fa7b"

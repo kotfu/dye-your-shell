@@ -102,6 +102,10 @@ pattern_text_high = '#000000 on #ffffff'
 pattern_text_low = '#999999 on #ffffff'
 pattern_yellow = "{{ colors.pattern_yellow }}"
 
+triad_sty.first = "{{ colors.triad.first }}"
+triad_sty.second = "pattern_text"
+triad_sty.third = "{{ style.themeonly }}"
+
 [variables]
 capture.somevar = "printf '%s' jojo"
 secondhalf = "5555"
@@ -337,6 +341,15 @@ def test_style_pattern(spat):
     assert spat.styles["text"].bgcolor.triplet.hex == "#282a36"
 
 
+def test_styles_must_be_strings():
+    pattern_str = """
+    [styles]
+    text = 282
+    """
+    with pytest.raises(DyeSyntaxError):
+        Pattern.loads(pattern_str)
+
+
 def test_style_theme(sthmpat):
     """a style that is only defined in the theme"""
     assert sthmpat.styles["themeonly"].bgcolor.name == "#393b47"
@@ -410,6 +423,19 @@ def test_styles_load_order(sthmpat):
 def test_style_empty(sthmpat):
     assert isinstance(sthmpat.styles["color4"], rich.style.Style)
     assert not sthmpat.styles["color4"]
+
+
+def test_styles_subtable(sthmpat):
+    assert isinstance(sthmpat.styles["triad_sty"], dict)
+    assert sthmpat.styles["triad_sty.first"].color.name == "#aaaaaa"
+
+
+def test_styles_subtable_reference1(sthmpat):
+    assert sthmpat.styles["triad_sty.second"].color.name == "#cccccc"
+
+
+def test_styles_subtable_reference2(sthmpat):
+    assert sthmpat.styles["triad_sty.third"].bgcolor.name == "#393b47"
 
 
 #

@@ -25,14 +25,13 @@ import contextlib
 import subprocess
 
 import jinja2
-import rich
 import tomlkit
 from benedict import benedict
 
 from .exceptions import DyeError, DyeSyntaxError
 from .filters import jinja_filters
 from .scope import Scope
-from .utils import colors_merge_and_process
+from .utils import merge_and_process_colors, merge_and_process_styles
 
 
 class Pattern:
@@ -155,43 +154,18 @@ class Pattern:
         pattern_colors = benedict()
         with contextlib.suppress(KeyError):
             pattern_colors = benedict(self.definition["colors"])
-        colors_merge_and_process(self.colors, pattern_colors, jinja_env)
+        merge_and_process_colors(self.colors, pattern_colors, jinja_env)
 
     def _process_styles(self, jinja_env, theme=None):
         """merge the styles from this pattern and the given theme together
 
         this sets self.styles
         """
-        merged_styles = theme.styles.copy() if theme else {}
-
-        pattern_styles = {}
+        self.styles = theme.styles.copy() if theme else benedict()
+        pattern_styles = benedict()
         with contextlib.suppress(KeyError):
-            pattern_styles = self.definition["styles"]
-
-        # go through the pattern styles one at a time, rendering them,
-        #     and adding them to merged_colors
-        # one intentional side effect is that if you define a style in
-        #     your pattern that has already been defined in the theme,
-        #     the definition in the pattern will over-ride
-        # we also pass the colors and the growing list of merged_styles
-        #     as context
-        for key, value in pattern_styles.items():
-            # do a bare lookup so that text_low = "text" works
-            if value in merged_styles:
-                merged_styles[key] = merged_styles[value]
-            else:
-                template = jinja_env.from_string(value)
-                # allow {{style.foreground}} or {{styles.foreground}}
-                # or {{color.background}} or {{colors.background}}
-                rendered = template.render(
-                    color=self.colors,
-                    colors=self.colors,
-                    style=merged_styles,
-                    styles=merged_styles,
-                )
-                merged_styles[key] = rich.style.Style.parse(rendered)
-
-        self.styles = merged_styles
+            pattern_styles = benedict(self.definition["styles"])
+        merge_and_process_styles(self.styles, pattern_styles, jinja_env, self.colors)
 
     def _process_variables(self, jinja_env):
         """process the variables into self.variables"""

@@ -26,7 +26,7 @@ import rich
 import tomlkit
 from benedict import benedict
 
-from .utils import colors_merge_and_process
+from .utils import merge_and_process_colors, merge_and_process_styles
 
 
 class Theme:
@@ -92,27 +92,13 @@ class Theme:
         except KeyError:
             raw_colors = benedict()
         self.colors = benedict()
-        colors_merge_and_process(self.colors, raw_colors, env)
+        merge_and_process_colors(self.colors, raw_colors, env)
 
         # process the elements, using the colors as variables
         # each element in should be a rich.Style() object
         try:
-            raw_styles = self.definition["styles"]
+            raw_styles = benedict(self.definition["styles"])
         except KeyError:
-            raw_styles = {}
-        self.styles = {}
-        for key, value in raw_styles.items():
-            # do a bare lookup so that text_low = "text" works
-            if value in self.styles:
-                self.styles[key] = self.styles[value]
-            else:
-                template = env.from_string(value)
-                # allow {{style.foreground}} or {{styles.foreground}}
-                # or {{color.background}} or {{colors.background}}
-                rendered = template.render(
-                    color=self.colors,
-                    colors=self.colors,
-                    style=self.styles,
-                    styles=self.styles,
-                )
-                self.styles[key] = rich.style.Style.parse(rendered)
+            raw_styles = benedict()
+        self.styles = benedict()
+        merge_and_process_styles(self.styles, raw_styles, env, self.colors)
