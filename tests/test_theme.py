@@ -25,7 +25,7 @@
 import pytest
 import rich
 
-from dye import Theme
+from dye import DyeSyntaxError, Theme
 
 SAMPLE_THEME = """
     [colors]
@@ -131,6 +131,15 @@ def test_loads_none():
 #
 def test_color(sthm):
     assert sthm.colors["background"] == "#282a36"
+
+
+def test_colors_must_be_strings():
+    theme_str = """
+    [colors]
+    background = 282
+    """
+    with pytest.raises(DyeSyntaxError):
+        Theme.loads(theme_str)
 
 
 def test_colors_reference(sthm):

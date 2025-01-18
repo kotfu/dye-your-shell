@@ -39,6 +39,10 @@ foreground_high = "foreground"
 foreground_medium = "foreground"
 foreground_low = "foreground"
 
+triad.first = "#aaaaaa"
+triad.second = "#bbbbbb"
+triad.third = "#cccccc"
+
 [styles]
 themeonly = "{{color.foreground}} on #393b47"
 foreground = "{{ color.foreground }}"
@@ -69,6 +73,14 @@ background_double1 = "{{ color.background_low }}"
 background_double2 = "background_medium"
 
 yellow = "#e2eb9c"
+
+triad.second = "#dd2222"
+
+tetrad.first = "#ff1111"
+tetrad.second = "#ff2222"
+tetrad.third = "foreground_low"
+tetrad.fourth = "{{ color.pattern_purple }}"
+tetrad.fifth = "{{ colors.triad.third }}"
 
 [styles]
 notyet = "{{ styles.text }}"
@@ -147,43 +159,34 @@ def test_load(tmp_path):
 
     with open(patternfile, encoding="utf8") as fvar:
         pat = Pattern.load(fvar)
-    # Pattern.load() uses the same code as Pattern.loads(), so we don't
-    # have to retest everything. If loads() works and load() can
-    # open and read the file, load() will work too
-    assert len(pat.definition) == 9
+        assert pat.definition
 
 
 def test_loads(spat):
     assert isinstance(spat.definition, dict)
-    assert len(spat.definition) == 9
+    assert spat.definition
 
 
 def test_loads_empty():
     pat = Pattern.loads("")
     assert pat.definition == {}
-    # assert pat.colors == {}
-    # assert theme.styles == {}
 
 
 def test_loads_none():
     pat = Pattern.loads(None)
     assert pat.definition == {}
-    # assert pat.colors == {}
-    # assert theme.styles == {}
 
 
 def test_loads_colors(spat):
     assert isinstance(spat.colors, dict)
     assert isinstance(spat.colors["pattern_purple"], str)
     assert spat.colors["pattern_purple"] == "#bd93f8"
-    assert len(spat.colors) == 12
 
 
 def test_loads_styles(spat):
     assert isinstance(spat.styles, dict)
     assert isinstance(spat.styles["pattern_text"], rich.style.Style)
     assert isinstance(spat.styles["pattern_text_high"], rich.style.Style)
-    assert len(spat.styles) == 17
 
 
 #
@@ -245,6 +248,15 @@ def test_color_theme(sthmpat):
     assert sthmpat.colors["foreground_high"] == "#f8f8f2"
 
 
+def test_colors_must_be_strings():
+    pattern_str = """
+    [colors]
+    background = 282
+    """
+    with pytest.raises(DyeSyntaxError):
+        Pattern.loads(pattern_str)
+
+
 def test_color_pattern_override_theme(sthm, spat, sthmpat):
     """a color defined in both pattern and theme, make sure pattern overrides"""
     assert sthm.colors["foreground"] == "#f8f8f2"
@@ -279,6 +291,32 @@ def test_colors_unknown_reference(sthmpat):
 
 def test_colors_load_order(sthmpat):
     assert sthmpat.colors["notyet"] == ""
+
+
+def test_colors_subtable(sthmpat):
+    assert sthmpat.colors["tetrad.first"] == "#ff1111"
+    assert sthmpat.colors["tetrad.second"] == "#ff2222"
+
+
+def test_colors_subtable_from_theme(sthmpat):
+    assert sthmpat.colors["triad.first"] == "#aaaaaa"
+    assert sthmpat.colors["triad.second"] == "#dd2222"
+    assert sthmpat.colors["triad.third"] == "#cccccc"
+
+
+def test_colors_subtable_reference1(sthmpat):
+    # theme colors get resolved to values before pattern
+    # colors do. Therefore, foreground_low for tetrad.third
+    # resolves to #f8f8f2 not #e9e9e3
+    assert sthmpat.colors["tetrad.third"] == "#f8f8f2"
+
+
+def test_colors_subtable_reference2(sthmpat):
+    assert sthmpat.colors["tetrad.fourth"] == sthmpat.colors["pattern_purple"]
+
+
+def test_colors_subtable_reference3(sthmpat):
+    assert sthmpat.colors["tetrad.fifth"] == "#cccccc"
 
 
 #

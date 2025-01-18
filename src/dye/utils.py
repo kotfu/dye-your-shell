@@ -23,6 +23,8 @@
 
 from importlib import metadata
 
+import benedict
+
 
 def version_string():
     """return a version string suitable for display to a user"""
@@ -32,3 +34,18 @@ def version_string():
     except metadata.PackageNotFoundError:  # pragma: nocover
         ver = "unknown"
     return ver
+
+
+def benedict_keylist(d):
+    """return a list of keys from a benedict
+
+    benedict.keypaths() sorts the keypaths, and our use case requires
+    order to be preserved. I stole these two lines of code from
+    benedict.keypaths(), they are the ones right before the .sort()
+
+    I've submitted a PR to python-benedict to add a `sort` parameter to
+    keylists. If/when that PR is merged, this utility function could go
+    away.
+    """
+    kls = benedict.core.keylists(d)
+    return [".".join([f"{key}" for key in kl]) for kl in kls]

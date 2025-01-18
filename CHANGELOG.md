@@ -12,7 +12,13 @@ and the format of this file follows recommendations from
 
 ### Added
 
+- colors in both themes and patterns can define and reference nested tables, ie
+  `triad.first = '#ff0000'` and `triad.second = '{{ colors.triad.first }}`
+
 ### Changed
+
+- colors in themes and patterns must be defined as a string (previously you'd
+  get wierd errors, now it's formalized and you'll get a proper syntax error).
 
 
 ## [0.11.0] - 2025-01-14
@@ -36,7 +42,6 @@ and the format of this file follows recommendations from
 
 - `dye print` command like echo but can use styles from themes and patterns
   on the output. This command uses [console markup](https://rich.readthedocs.io/en/latest/markup.html) from rich to use your styles in the output
-
 
 ### Changed
 

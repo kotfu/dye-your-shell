@@ -27,10 +27,12 @@ import subprocess
 import jinja2
 import rich
 import tomlkit
+from benedict import benedict
 
 from .exceptions import DyeError, DyeSyntaxError
 from .filters import jinja_filters
 from .scope import Scope
+from .utils import benedict_keylist
 
 
 class Pattern:
@@ -138,7 +140,7 @@ class Pattern:
 
         this sets self.colors
 
-        A color can be referenced in this section in any of three ways:
+        A color can be referenced in this section in any of these ways:
 
         foreground = "#f8f8f2"
         foreground_high = "foreground"
@@ -149,31 +151,41 @@ class Pattern:
         You could do everything with a variable that you can do with a color,
         it's just a convenient way to group/name them.
         """
-        merged_colors = theme.colors.copy() if theme else {}
+        self.colors = theme.colors.copy() if theme else benedict()
 
-        pattern_colors = {}
+        pattern_colors = benedict()
         with contextlib.suppress(KeyError):
-            pattern_colors = self.definition["colors"]
+            pattern_colors = benedict(self.definition["colors"])
 
         # go through the pattern colors one at a time, rendering them,
-        #     and adding them to merged_colors
+        #     and adding them to self.colors
         # one intentional side effect is that if you define a color in
         #     your pattern that has already been defined in the theme,
         #     the definition in the pattern will over-ride
-        # we also pass the growing list of merged_colors as context
-
-        # do a bare lookup so that foreground_low = "foreground" works
-        for key, value in pattern_colors.items():
-            if value in merged_colors:
-                merged_colors[key] = merged_colors[value]
+        keylist = benedict_keylist(pattern_colors)
+        for key in keylist:
+            value = pattern_colors[key]
+            if isinstance(value, str):
+                if value in self.colors:
+                    # do a bare lookup so that foreground_low = "foreground" works
+                    self.colors[key] = self.colors[value]
+                else:
+                    template = jinja_env.from_string(value)
+                    self.colors[key] = template.render(
+                        # this lets us do {{colors.foreground}} or {{color.foreground}}
+                        colors=self.colors,
+                        color=self.colors,
+                    )
+            elif isinstance(value, dict):
+                # If we move dictionaries straight over we could erase subtable keys
+                # that are only present in the theme but not the pattern. So we rely
+                # on and test for the fact that both the subtable name (with the
+                # dict value) and each of the subtable keys show up in keylist.
+                # Those other keys will be picked up in a different iteration of the
+                # loop.
+                pass
             else:
-                template = jinja_env.from_string(value)
-                # this lets us do {{colors.foreground}} or {{color.foreground}}
-                merged_colors[key] = template.render(
-                    color=merged_colors, colors=merged_colors
-                )
-
-        self.colors = merged_colors
+                raise DyeSyntaxError(f"color {key} must be defined as a string")
 
     def _process_styles(self, jinja_env, theme=None):
         """merge the styles from this pattern and the given theme together
