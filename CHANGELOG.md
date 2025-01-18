@@ -14,6 +14,10 @@ and the format of this file follows recommendations from
 
 ### Changed
 
+### Fixed
+
+- `dye preview` crashed if you had nested colors or styles
+
 
 ## [0.12.0] - 2025-01-17
 
