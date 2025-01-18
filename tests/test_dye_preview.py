@@ -42,12 +42,18 @@ def test_preview(dye_cmdline, capsys):
         purple = "#bd93f9"
         red = "#ff5555"
         yellow = "#f1fa8c"
+        triad.one = "cyan"
+        triad.two = "pink"
+        triad.three = "purple"
 
         [styles]
         # have to define a 'text' style or preview doesn't work
         text = "#f6f6f0 on #222531"
         current_line =  "#f8f8f2 on #44475a"
         comment =  "{{color.comment}}"
+        triad.one = "{{color.triad.one}}"
+        triad.two = "{{color.triad.two}}"
+        triad.three = "{{color.triad.three}}"
     """
     exit_code = dye_cmdline("preview", theme_toml)
     out, err = capsys.readouterr()
@@ -55,7 +61,7 @@ def test_preview(dye_cmdline, capsys):
     assert out
     assert not err
     # here's a list of strings that should be in the output
-    tests = ["current_line", "comment", "text", "cyan", "pink", "purple"]
+    tests = ["current_line", "comment", "text", "cyan", "pink", "purple", "triad.one"]
     for test in tests:
         assert test in out
 

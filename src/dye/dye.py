@@ -311,8 +311,11 @@ class Dye:
         # show all the colors
         colors_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
         colors_table.add_column("[colors]")
-        for color in theme.colors:
+        for color in theme.colors.keypaths(sort=False):
             value = theme.definition["colors"][color]
+            if isinstance(value, dict):
+                # don't show the table items of nested tables, just their values
+                continue
             col1 = rich.text.Text.assemble(("██", value), f" {color}")
             col2 = rich.text.Text(f' = "{value}"')
             colors_table.add_row(col1, col2)
@@ -323,8 +326,12 @@ class Dye:
         # show all the styles
         styles_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
         styles_table.add_column("[styles]")
-        for name, style in theme.styles.items():
+        for name in theme.styles.keypaths(sort=False):
             value = theme.definition["styles"][name]
+            if isinstance(value, dict):
+                # don't show the table items of nested tables, just their values
+                continue
+            style = theme.styles[name]
             col1 = rich.text.Text(name, style)
             col2 = rich.text.Text(f' = "{value}"')
             styles_table.add_row(col1, col2)

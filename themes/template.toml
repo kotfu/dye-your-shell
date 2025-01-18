@@ -64,13 +64,12 @@ version = "1.0.0"
 foreground_more2 = "{{ colors.foreground }}"
 foreground_more1 = "{{ colors.foreground }}"
 foreground_more = "{{ colors.foreground }}"
-foreground = "{{ colors.foreground }}"
+foreground =  "#b2cacd"
 foreground_less = "{{ colors.foreground }}"
 foreground_less1 = "{{ colors.foreground }}"
 foreground_less2 = "{{ colors.foreground }}"
 
 # standard background colors
-# high, , and low contrast with foreground
 #
 # for a dark theme more3 should be the closest
 # to black, and low3 should be the closest to white
@@ -90,7 +89,7 @@ foreground_less2 = "{{ colors.foreground }}"
 background_more2 = "{{ colors.background }}"
 background_more1 = "{{ colors.background }}"
 background_more = "{{ colors.background }}"
-background = "{{ colors.background }}"
+background =  "#031417"
 background_less = "{{ colors.background }}"
 background_less1 = "{{ colors.background }}"
 background_less2 = "{{ colors.background }}"
@@ -135,7 +134,7 @@ rose = ""
 # list 12 accent colors. your reddest should be 1, moving clockwise around
 # the rbg color wheel. If you have fewer than 12 accents, TODO???
 #
-accent_1 = ""
+accent_1 = "violet"
 accent_2 = ""
 accent_3 = ""
 accent_4 = ""
@@ -152,14 +151,14 @@ accent_12 = ""
 # define those here. your triads don't have to be evenly across from each other
 # on the color wheel, it's just fine to have a dark purple, a light purple, and
 # a gold, or whatever. Same thing for the tetrad
-triad_1 = ""
-triad_2 = ""
-triad_3 = ""
+triad.one = ""
+triad.two = ""
+triad.three = ""
 
-tetrad_1 = ""
-tetrad_2 = ""
-tetrad_3 = ""
-tetrad_4 = ""
+tetrad.one = ""
+tetrad.two = ""
+tetrad.three = ""
+tetrad.four = ""
 
 
 

@@ -50,7 +50,7 @@ class Pattern:
             # or if the caller pased None intentionally...
             toparse = ""
         pattern = Pattern()
-        pattern.definition = tomlkit.loads(toparse)
+        pattern.definition = benedict(tomlkit.loads(toparse))
         pattern._process(theme)
         return pattern
 
@@ -61,7 +61,7 @@ class Pattern:
         doesn't do any processing or applying of the pattern
         """
         pattern = Pattern()
-        pattern.definition = tomlkit.load(fobj)
+        pattern.definition = benedict(tomlkit.load(fobj))
         pattern._process(theme)
 
         return pattern
@@ -73,16 +73,16 @@ class Pattern:
         """Construct a new Pattern object"""
 
         # the raw toml definition of the pattern
-        self.definition = {}
+        self.definition = benedict()
 
         # these contain the core parts of the pattern,
         # but they have all been processed through the template
         # so they can be used by consumers of our class.
         # these are all set by process()
-        self.colors = {}
-        self.styles = {}
-        self.variables = {}
-        self.scopes = {}
+        self.colors = benedict()
+        self.styles = benedict()
+        self.variables = benedict()
+        self.scopes = benedict()
 
     @property
     def description(self):

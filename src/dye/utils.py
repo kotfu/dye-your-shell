@@ -26,7 +26,6 @@ from importlib import metadata
 import benedict
 import rich
 
-
 from .exceptions import DyeSyntaxError
 
 
@@ -38,21 +37,6 @@ def version_string():
     except metadata.PackageNotFoundError:  # pragma: nocover
         ver = "unknown"
     return ver
-
-
-def benedict_keylist(d):
-    """return a list of keys from a benedict
-
-    benedict.keypaths() sorts the keypaths, and our use case requires
-    order to be preserved. I stole these two lines of code from
-    benedict.keypaths(), they are the ones right before the .sort()
-
-    I've submitted a PR to python-benedict to add a `sort` parameter to
-    keylists. If/when that PR is merged, this utility function could go
-    away.
-    """
-    kls = benedict.core.keylists(d)
-    return [".".join([f"{key}" for key in kl]) for kl in kls]
 
 
 def merge_and_process_colors(base_colors, merging_colors, jinja_env):
@@ -81,7 +65,7 @@ def merge_and_process_colors(base_colors, merging_colors, jinja_env):
     """
     # iterate over all the keys in raw_colors, processing and inserting
     # the values into self.colors
-    keylist = benedict_keylist(merging_colors)
+    keylist = merging_colors.keypaths(sort=False)
     for key in keylist:
         value = merging_colors[key]
         if isinstance(value, str):
@@ -133,7 +117,7 @@ def merge_and_process_styles(base_styles, merging_styles, jinja_env, colors=None
     if not colors:
         colors = benedict.benedict()
 
-    keylist = benedict_keylist(merging_styles)
+    keylist = merging_styles.keypaths(sort=False)
     for key in keylist:
         value = merging_styles[key]
         if isinstance(value, str):

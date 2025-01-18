@@ -22,7 +22,6 @@
 """classes for storing a theme"""
 
 import jinja2
-import rich
 import tomlkit
 from benedict import benedict
 
@@ -43,7 +42,7 @@ class Theme:
             # or if the caller pased None intentionally...
             toparse = ""
         theme = cls()
-        theme.definition = tomlkit.loads(toparse)
+        theme.definition = benedict(tomlkit.loads(toparse))
         theme._process()
         return theme
 
@@ -55,7 +54,7 @@ class Theme:
         of the returned theme object
         """
         theme = cls()
-        theme.definition = tomlkit.load(fobj)
+        theme.definition = benedict(tomlkit.load(fobj))
         theme.filename = filename
         theme._process()
         return theme
@@ -67,13 +66,13 @@ class Theme:
         """Construct a new Theme object"""
 
         # the raw toml definition of the theme
-        self.definition = {}
+        self.definition = benedict()
 
         # the processed colors, it's a dict of strings
-        self.colors = {}
+        self.colors = benedict()
 
         # the processed elements, it's a dict of rich.style.Style()
-        self.styles = {}
+        self.styles = benedict()
 
         # a place to stash the file that the theme was loaded from
         # it's up to the caller/user to make sure this is set properly

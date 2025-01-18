@@ -69,7 +69,7 @@ def test_themes_no_theme_dir(dye_cmdline, capsys, mocker, tmp_path):
     assert "is not a directory" in err
 
 
-def test_themes_no_dye_dir(dye_cmdline, capsys, mocker, tmp_path):
+def test_themes_no_dye_dir(dye_cmdline, capsys, mocker):
     # gotta patch dye_dir, which reads the environment variable DYE_DIR
     dirmock = mocker.patch(
         "dye.Dye.dye_dir", create=True, new_callable=mock.PropertyMock
