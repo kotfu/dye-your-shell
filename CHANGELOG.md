@@ -16,6 +16,7 @@ and the format of this file follows recommendations from
   `triad.first = '#ff0000'` and `triad.second = '{{ colors.triad.first }}`
 - styles in both themes and patterns can define and reference nested tables, ie
   `triad.first = '#ff0000'` and `triad.second = '{{ colors.triad.first }}`
+- scope styles can reference nested style tables
 
 ### Changed
 

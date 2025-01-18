@@ -34,6 +34,10 @@ orange = "#d5971a"
 cyan = "#09ecff"
 purple = "#7060eb"
 
+triad.first = "purple"
+triad.second = "cyan"
+triad.third = "orange"
+
 [scopes.iterm]
 agent = "iterm"
 cursor = "block"
@@ -55,6 +59,13 @@ style.border = "purple"
 # purple should win
 styles.prompt = "purple"
 style.prompt = "orange"
+
+[scopes.fzf2]
+agent = "fzf"
+environment_variable = "MY_SPECIAL_FZF_OPTS"
+style.file = "triad.first"
+style.directory = "{{ style.triad.second }}"
+styles.prompt = "{{ styles.triad.third }}"
 """
 
 
@@ -106,3 +117,18 @@ def test_scope_styles_overrides_style(spat):
     # you get #333333
     scope = spat.scopes["fzf"]
     assert scope.styles["prompt"] == spat.styles["purple"]
+
+
+def test_scope_styles_subtable1(spat):
+    scope = spat.scopes["fzf2"]
+    assert scope.styles["file"] == spat.styles["purple"]
+
+
+def test_scope_styles_subtable2(spat):
+    scope = spat.scopes["fzf2"]
+    assert scope.styles["directory"] == spat.styles["cyan"]
+
+
+def test_scope_styles_subtable3(spat):
+    scope = spat.scopes["fzf2"]
+    assert scope.styles["prompt"] == spat.styles["orange"]
