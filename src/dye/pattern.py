@@ -32,7 +32,7 @@ from benedict import benedict
 from .exceptions import DyeError, DyeSyntaxError
 from .filters import jinja_filters
 from .scope import Scope
-from .utils import benedict_keylist
+from .utils import colors_merge_and_process
 
 
 class Pattern:
@@ -152,40 +152,10 @@ class Pattern:
         it's just a convenient way to group/name them.
         """
         self.colors = theme.colors.copy() if theme else benedict()
-
         pattern_colors = benedict()
         with contextlib.suppress(KeyError):
             pattern_colors = benedict(self.definition["colors"])
-
-        # go through the pattern colors one at a time, rendering them,
-        #     and adding them to self.colors
-        # one intentional side effect is that if you define a color in
-        #     your pattern that has already been defined in the theme,
-        #     the definition in the pattern will over-ride
-        keylist = benedict_keylist(pattern_colors)
-        for key in keylist:
-            value = pattern_colors[key]
-            if isinstance(value, str):
-                if value in self.colors:
-                    # do a bare lookup so that foreground_low = "foreground" works
-                    self.colors[key] = self.colors[value]
-                else:
-                    template = jinja_env.from_string(value)
-                    self.colors[key] = template.render(
-                        # this lets us do {{colors.foreground}} or {{color.foreground}}
-                        colors=self.colors,
-                        color=self.colors,
-                    )
-            elif isinstance(value, dict):
-                # If we move dictionaries straight over we could erase subtable keys
-                # that are only present in the theme but not the pattern. So we rely
-                # on and test for the fact that both the subtable name (with the
-                # dict value) and each of the subtable keys show up in keylist.
-                # Those other keys will be picked up in a different iteration of the
-                # loop.
-                pass
-            else:
-                raise DyeSyntaxError(f"color {key} must be defined as a string")
+        colors_merge_and_process(self.colors, pattern_colors, jinja_env)
 
     def _process_styles(self, jinja_env, theme=None):
         """merge the styles from this pattern and the given theme together

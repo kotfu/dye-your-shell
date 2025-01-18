@@ -26,8 +26,7 @@ import rich
 import tomlkit
 from benedict import benedict
 
-from .exceptions import DyeSyntaxError
-from .utils import benedict_keylist
+from .utils import colors_merge_and_process
 
 
 class Theme:
@@ -93,31 +92,7 @@ class Theme:
         except KeyError:
             raw_colors = benedict()
         self.colors = benedict()
-
-        # iterate over all the keys in raw_colors, processing and inserting
-        # the values into self.colors
-        keylist = benedict_keylist(raw_colors)
-        for key in keylist:
-            value = raw_colors[key]
-            if isinstance(value, str):
-                if value in self.colors:
-                    # bare lookup so that foreground_low = "foreground" works
-                    self.colors[key] = self.colors[value]
-                else:
-                    template = env.from_string(value)
-                    self.colors[key] = template.render(
-                        # this lets us do {{colors.foreground}} or {{color.foreground}}
-                        colors=self.colors,
-                        color=self.colors,
-                    )
-            elif isinstance(value, dict):
-                # So we rely on and test for the fact that both the subtable name
-                # (with the dict value) and each of the subtable keys show up in
-                # keylist. Those other keys will be picked up in a different iteration
-                # of the loop. But they shouldn't be a syntax error.
-                pass
-            else:
-                raise DyeSyntaxError(f"color {key} must be defined as a string")
+        colors_merge_and_process(self.colors, raw_colors, env)
 
         # process the elements, using the colors as variables
         # each element in should be a rich.Style() object
