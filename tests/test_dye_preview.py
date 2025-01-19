@@ -28,6 +28,15 @@ from dye import Dye
 #
 # test the preview command
 #
+def test_preview_nothing(dye_cmdline, capsys):
+    # no theme, no pattern is an error
+    exit_code = dye_cmdline("preview")
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_ERROR
+    assert not out
+    assert "nothing to preview" in err
+
+
 def test_preview(dye_cmdline, capsys):
     theme_toml = """
         [colors]
@@ -89,4 +98,4 @@ def test_preview_no_text(dye_cmdline, capsys):
     out, err = capsys.readouterr()
     assert exit_code == Dye.EXIT_ERROR
     assert not out
-    assert "theme must define a 'text' style" in err
+    assert "no 'text' style defined" in err

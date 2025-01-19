@@ -39,9 +39,8 @@ def test_output_color_cmdline(dye_cmdline, mocker):
     # command line color arguments should override
     # all environment variables
     RichHelpFormatter.styles["argparse.text"] = "#000000"
-    mocker.patch.dict(os.environ, {}, clear=True)
-    mocker.patch.dict(os.environ, {"SHELL_THEMER_COLORS": "text=#f0f0f0"})
-    mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"})
+    envs = {"DYE_COLORS": "text=#f0f0f0", "NO_COLOR": "doesn't matter"}
+    mocker.patch.dict(os.environ, envs, clear=True)
     argv = [
         "--help",
         "--color=text=#ffff00:args=#bd93f9:metavar=#f8f8f2 on #44475a bold",
@@ -52,43 +51,49 @@ def test_output_color_cmdline(dye_cmdline, mocker):
     assert RichHelpFormatter.styles["argparse.metavar"] == "#f8f8f2 on #44475a bold"
 
 
-def test_output_color_no_color(dye_cmdline, mocker):
-    mocker.patch.dict(os.environ, {}, clear=True)
+def test_output_color_no_color_env(dye_cmdline, mocker):
     RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
-    mocker.patch.dict(os.environ, {}, clear=True)
-    mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"})
+    mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"}, clear=True)
     dye_cmdline("--help")
     for element in Dye.HELP_ELEMENTS:
         assert RichHelpFormatter.styles[f"argparse.{element}"] == "default"
 
 
 def test_output_color_envs_only(dye_cmdline, mocker):
-    # NO_COLOR should override SHELL_THEMER_COLORS
+    # NO_COLOR should override DYE_COLORS
     RichHelpFormatter.styles["argparse.text"] = "#333333"
-    mocker.patch.dict(os.environ, {}, clear=True)
-    mocker.patch.dict(os.environ, {"DYE_COLORS": "text=#f0f0f0"})
-    mocker.patch.dict(os.environ, {"NO_COLOR": "doesn't matter"})
+    envs = {"DYE_COLORS": "text=#f0f0f0", "NO_COLOR": "doesn't matter"}
+    mocker.patch.dict(os.environ, envs, clear=True)
     dye_cmdline("--help")
     for element in Dye.HELP_ELEMENTS:
         assert RichHelpFormatter.styles[f"argparse.{element}"] == "default"
 
 
 def test_output_color_env_color(dye_cmdline, mocker):
-    # SHELL_THEMER_COLORS should override default colors
+    # DYE_COLORS should override default colors
     RichHelpFormatter.styles["argparse.text"] = "#333333"
-    mocker.patch.dict(os.environ, {}, clear=True)
-    mocker.patch.dict(os.environ, {"DYE_COLORS": "text=#f0f0f0"})
+    mocker.patch.dict(os.environ, {"DYE_COLORS": "text=#f0f0f0"}, clear=True)
     dye_cmdline("--help")
     assert RichHelpFormatter.styles["argparse.text"] == "#f0f0f0"
 
 
 def test_output_color_env_empty(dye_cmdline, mocker):
-    # SHELL_THEMER_COLORS should override default colors
+    # DYE_COLORS should override default colors
     RichHelpFormatter.styles["argparse.text"] = "#ff00ff"
-    mocker.patch.dict(os.environ, {}, clear=True)
-    mocker.patch.dict(os.environ, {"DYE_COLORS": ""})
+    mocker.patch.dict(os.environ, {"DYE_COLORS": ""}, clear=True)
+    # mocker.patch.dict(os.environ, )
     dye_cmdline("--help")
     assert RichHelpFormatter.styles["argparse.text"] == "default"
+
+
+def test_output_color_no_color_cmdline(dye_cmdline, mocker):
+    # --no-color should override DYE_COLORS
+    RichHelpFormatter.styles["argparse.text"] = "#333333"
+    envs = {"DYE_COLORS": "text=#f0f0f0"}
+    mocker.patch.dict(os.environ, envs, clear=True)
+    dye_cmdline("--help --no-color")
+    for element in Dye.HELP_ELEMENTS:
+        assert RichHelpFormatter.styles[f"argparse.{element}"] == "default"
 
 
 #
@@ -276,8 +281,7 @@ def test_load_theme_from_args_apply1(argv, mocker):
         dye.load_theme_from_args(args, required=True)
 
     theme = dye.load_theme_from_args(args, required=False)
-    assert theme.colors == {}
-    assert theme.styles == {}
+    assert not theme
 
 
 def test_load_theme_from_args_apply2(mocker):

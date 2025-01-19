@@ -228,26 +228,59 @@ def test_description(spat):
 def test_no_description():
     pattern_str = """prevent_themes = true"""
     pat = Pattern.loads(pattern_str)
-    assert pat.description is None
+    assert not pat.description
+
+
+def test_type_not_defined():
+    pattern_str = """
+    [colors]
+    foreground = "#d2d2d2"
+    """
+    pattern = Pattern.loads(pattern_str)
+    assert not pattern.type
+
+
+def test_type():
+    pattern_str = """
+    type = "dark"
+    """
+    pattern = Pattern.loads(pattern_str)
+    assert pattern.type == "dark"
+
+
+def test_version_not_defined():
+    pattern_str = """
+    [colors]
+    foreground = "#d2d2d2"
+    """
+    pattern = Pattern.loads(pattern_str)
+    assert not pattern.version
+
+
+def test_version():
+    pattern_str = """
+    version = "2.1"
+    """
+    pattern = Theme.loads(pattern_str)
+    assert pattern.version == "2.1"
 
 
 def test_prevent_themes():
     pattern_str = """prevent_themes = true"""
     pat = Pattern.loads(pattern_str)
-    assert pat.prevent_themes is True
+    assert pat.prevent_themes
 
 
-def test_prevent_themes_not_present():
+def test_prevent_themes_not_defined():
     pattern_str = """description = 'hi'"""
     pat = Pattern.loads(pattern_str)
-    assert pat.prevent_themes is False
+    assert not pat.prevent_themes
 
 
 def test_prevent_themes_not_boolean():
     pattern_str = "prevent_themes = 'nope'"
-    pat = Pattern.loads(pattern_str)
     with pytest.raises(DyeSyntaxError):
-        _ = pat.prevent_themes
+        Pattern.loads(pattern_str)
 
 
 def test_requires_theme():
@@ -256,10 +289,10 @@ def test_requires_theme():
     assert pat.requires_theme == "/path/to/theme"
 
 
-def test_requires_theme_not_present():
+def test_requires_theme_not_defined():
     pattern_str = """description = 'hi'"""
     pat = Pattern.loads(pattern_str)
-    assert pat.requires_theme is None
+    assert not pat.requires_theme
 
 
 #

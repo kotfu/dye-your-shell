@@ -136,16 +136,75 @@ def test_loads_styles(sthm):
 
 def test_loads_empty():
     theme = Theme.loads("")
+    assert not theme
     assert theme.definition == {}
     assert theme.colors == {}
     assert theme.styles == {}
+    assert not theme.description
+    assert not theme.type
+    assert not theme.version
 
 
 def test_loads_none():
     theme = Theme.loads(None)
+    assert not theme
     assert theme.definition == {}
     assert theme.colors == {}
     assert theme.styles == {}
+    assert not theme.description
+    assert not theme.type
+    assert not theme.version
+
+
+def test_description_not_defined():
+    theme_str = """
+    [colors]
+    foreground = "#d2d2d2"
+    """
+    theme = Theme.loads(theme_str)
+    assert not theme.description
+
+
+def test_description():
+    theme_str = """
+    description = "my theme"
+    """
+    theme = Theme.loads(theme_str)
+    assert theme.description == "my theme"
+
+
+def test_type_not_defined():
+    theme_str = """
+    [colors]
+    foreground = "#d2d2d2"
+    """
+    theme = Theme.loads(theme_str)
+    assert not theme.type
+
+
+def test_type():
+    theme_str = """
+    type = "dark"
+    """
+    theme = Theme.loads(theme_str)
+    assert theme.type == "dark"
+
+
+def test_version_not_defined():
+    theme_str = """
+    [colors]
+    foreground = "#d2d2d2"
+    """
+    theme = Theme.loads(theme_str)
+    assert not theme.version
+
+
+def test_version():
+    theme_str = """
+    version = "2.1"
+    """
+    theme = Theme.loads(theme_str)
+    assert theme.version == "2.1"
 
 
 #

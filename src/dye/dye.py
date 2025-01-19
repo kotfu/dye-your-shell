@@ -32,6 +32,7 @@ import rich.color
 import rich.console
 import rich.errors
 import rich.layout
+import rich.rule
 import rich.style
 from rich_argparse import RichHelpFormatter
 
@@ -198,28 +199,14 @@ class Dye:
         help_styles = {}
         try:
             env_colors = os.environ["DYE_COLORS"]
-            if not env_colors:
-                # if it's set to an empty string that means we shouldn't
-                # show any colors
-                args.nocolor = True
-                self.debug_msg(
-                    "No color output in help because $DYE_COLORS is an empty string."
-                )
-                return
-
         except KeyError:
-            # wasn't set
             env_colors = None
 
         # https://no-color.org/
         try:
-            _ = os.environ["NO_COLOR"]
-            # overrides DYE_COLORS, making it easy
-            # to turn off colors for a bunch of tools
-            args.nocolor = True
+            env_no_color = os.environ["NO_COLOR"]
         except KeyError:
-            # don't do anything
-            pass
+            env_no_color = None
 
         if args.color:
             # overrides environment variables
@@ -229,6 +216,16 @@ class Dye:
             # disable the default color output
             help_styles = self._parse_colorspec("")
             self.debug_msg("help styles disabled because of --no-color")
+        elif env_no_color:
+            help_styles = self._parse_colorspec("")
+            self.debug_msg("disabling color output because NO_COLOR is set")
+        elif env_colors == "":
+            # None is different than an empty string
+            # disable the default color output
+            help_styles = self._parse_colorspec("")
+            self.debug_msg(
+                "no color output in help because $DYE_COLORS is an empty string"
+            )
         elif env_colors:
             # was set, and was set to a non-empty string
             help_styles = self._parse_colorspec(env_colors)
@@ -292,38 +289,73 @@ class Dye:
 
     def command_preview(self, args):
         """Display a preview of the styles in a theme"""
-        theme = self.load_theme_from_args(args, required=True)
+        theme = self.load_theme_from_args(args, required=False)
+        pattern = self.load_pattern_from_args(args, required=False, theme=theme)
+        if not theme and not pattern:
+            raise DyeError("nothing to preview")
+
+        # the text style here makes the whole panel print with the foreground
+        # and background colors from the style
+        try:
+            text_style = pattern.styles["text"]
+        except KeyError as exc:
+            raise DyeSyntaxError("no 'text' style defined") from exc
 
         outer_table = rich.table.Table(
-            box=None, expand=True, show_header=False, padding=0
+            box=rich.box.ROUNDED,
+            show_lines=True,
+            expand=True,
+            show_header=False,
+            padding=0,
         )
 
-        # output some basic information about the theme
+        # output some basic information about the theme and pattern
         summary_table = rich.table.Table(
-            box=None, expand=False, show_header=False, padding=(0, 0, 0, 1)
+            box=None,
+            expand=False,
+            show_header=False,
+            padding=(0, 0, 0, 1),
         )
-        summary_table.add_row("Theme file:", str(theme.filename))
-        try:
-            description = theme.definition["description"]
-        except KeyError:
-            description = ""
-        summary_table.add_row("Description:", description)
-        try:
-            version = theme.definition["type"]
-        except KeyError:
-            version = ""
-        summary_table.add_row("Type:", version)
-        try:
-            version = theme.definition["version"]
-        except KeyError:
-            version = ""
-        summary_table.add_row("Version:", version)
-        outer_table.add_row(summary_table)
-        outer_table.add_row("")
 
-        # show all the colors
-        colors_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
-        colors_table.add_column("[colors]")
+        if theme:
+            summary_table.add_row("Theme file:", theme.filename)
+            theme_description = (
+                f' = "{theme.description}"' if theme.description else " ="
+            )
+            summary_table.add_row("  description", theme_description)
+            theme_type = f' = "{theme.type}"' if theme.type else " ="
+            summary_table.add_row("  type", theme_type)
+            theme_version = f' = "{theme.version}"' if theme.version else " ="
+            summary_table.add_row("  version", theme_version)
+        else:
+            summary_table.add_row("No theme file.")
+        summary_table.add_row("")
+
+        if pattern:
+            summary_table.add_row("Pattern file:", pattern.filename)
+            pattern_description = (
+                f' = "{pattern.description}"' if pattern.description else " ="
+            )
+            summary_table.add_row("  description", pattern_description)
+            pattern_type = f' = "{pattern.type}"' if pattern.type else " ="
+            summary_table.add_row("  type", pattern_type)
+            pattern_version = f' = "{pattern.version}"' if pattern.version else " ="
+            summary_table.add_row("  version", pattern_version)
+        else:
+            summary_table.add_row("No pattern file.")
+
+        # add the summary table to the outer table
+        outer_table.add_row(summary_table)
+
+        # create a contents table for styles and colors
+        contents_table = rich.table.Table(
+            box=None,
+            expand=False,
+            padding=(0, 0, 0, 1),
+            style=text_style,
+        )
+
+        contents_table.add_row("[colors]")
         for color in theme.colors.keypaths(sort=False):
             value = theme.definition["colors"][color]
             if isinstance(value, dict):
@@ -331,14 +363,10 @@ class Dye:
                 continue
             col1 = rich.text.Text.assemble(("██", value), f" {color}")
             col2 = rich.text.Text(f' = "{value}"')
-            colors_table.add_row(col1, col2)
-        outer_table.add_row(colors_table)
-        outer_table.add_row("")
-        outer_table.add_row("")
+            contents_table.add_row(col1, col2)
 
-        # show all the styles
-        styles_table = rich.table.Table(box=None, expand=False, padding=(0, 0, 0, 1))
-        styles_table.add_column("[styles]")
+        contents_table.add_row("")
+        contents_table.add_row("[styles]")
         for name in theme.styles.keypaths(sort=False):
             value = theme.definition["styles"][name]
             if isinstance(value, dict):
@@ -347,16 +375,13 @@ class Dye:
             style = theme.styles[name]
             col1 = rich.text.Text(name, style)
             col2 = rich.text.Text(f' = "{value}"')
-            styles_table.add_row(col1, col2)
-        outer_table.add_row(styles_table)
+            contents_table.add_row(col1, col2)
 
-        # the text style here makes the whole panel print with the foreground
-        # and background colors from the style
-        try:
-            text_style = theme.styles["text"]
-        except KeyError as exc:
-            raise DyeSyntaxError("theme must define a 'text' style") from exc
-        self.console.print(rich.panel.Panel(outer_table, style=text_style))
+        outer_table.add_row(contents_table)
+
+        self.console.print(
+            rich.panel.Panel(outer_table, box=rich.box.SIMPLE, style=text_style)
+        )
         return self.EXIT_SUCCESS
 
     def command_print(self, args):
@@ -450,12 +475,6 @@ class Dye:
         :raises: an exception if we can't find a theme file
 
         """
-        # if we don't have a no_theme attribute, make sure it's set to false
-        # some versions of the args we call with (like fore preview), don't
-        # have this argument because it doesn't make any sense
-        if not hasattr(args, "no_theme"):
-            args.no_theme = False
-
         if required and args.no_theme:
             raise DyeError("a theme is required and you specified --no-theme")
 
@@ -468,16 +487,19 @@ class Dye:
             fname = args.theme_file
         else:
             with contextlib.suppress(KeyError):
-                fname = pathlib.Path(os.environ["DYE_THEME_FILE"])
+                fname = os.environ["DYE_THEME_FILE"]
+                self.debug_msg(f"found theme '{fname}' in $DYE_THEME_FILE")
 
         if fname:
-            with open(fname, "rb") as file:
+            with open(os.path.expanduser(fname), "rb") as file:
+                self.debug_msg(f"loading theme from '{fname}'")
                 theme = Theme.load(file, filename=fname)
             return theme
 
         if required:
             raise DyeError("no theme specified")
 
+        self.debug_msg("no theme specified")
         return Theme()
 
     def load_pattern_from_args(self, args, required=True, theme=None):
@@ -513,16 +535,19 @@ class Dye:
             fname = args.pattern_file
         else:
             with contextlib.suppress(KeyError):
-                fname = pathlib.Path(os.environ["DYE_PATTERN_FILE"])
+                fname = os.environ["DYE_PATTERN_FILE"]
+                self.debug_msg(f"found pattern '{fname}' in $DYE_PATTERN_FILE")
 
         if fname:
-            with open(fname, "rb") as fobj:
-                pattern = Pattern.load(fobj, theme)
+            with open(os.path.expanduser(fname), "rb") as fobj:
+                self.debug_msg(f"loading pattern from '{fname}'")
+                pattern = Pattern.load(fobj, theme, filename=fname)
             return pattern
 
         if required:
             raise DyeError("no pattern specified")
 
+        self.debug_msg("no pattern specified")
         return Pattern()
 
     #
@@ -657,9 +682,23 @@ class Dye:
             formatter_class=RichHelpFormatter,
             help=cmd_help,
         )
+        pattern_group = parser.add_mutually_exclusive_group()
+        pfile_help = "specify a file containing a pattern"
+        pattern_group.add_argument(
+            "-f", "--pattern-file", metavar="<path>", help=pfile_help
+        )
+        no_pattern_help = "don't load any pattern, ignores DYE_PATTERN_FILE"
+        pattern_group.add_argument(
+            "--no-pattern", action="store_true", help=no_pattern_help
+        )
+
         theme_group = parser.add_mutually_exclusive_group()
-        file_help = "specify a file containing a theme"
-        theme_group.add_argument("-t", "--theme-file", metavar="<path>", help=file_help)
+        tfile_help = "specify a file containing a theme"
+        theme_group.add_argument(
+            "-t", "--theme-file", metavar="<path>", help=tfile_help
+        )
+        no_theme_help = "don't load any theme, ignores DYE_THEME_FILE"
+        theme_group.add_argument("--no-theme", action="store_true", help=no_theme_help)
 
     @staticmethod
     def _argparser_print(subparsers):

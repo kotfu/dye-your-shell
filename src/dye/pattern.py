@@ -55,13 +55,14 @@ class Pattern:
         return pattern
 
     @staticmethod
-    def load(fobj, theme=None):
+    def load(fobj, theme=None, filename=None):
         """Load a pattern a file object
 
         doesn't do any processing or applying of the pattern
         """
         pattern = Pattern()
         pattern.definition = benedict(tomlkit.load(fobj))
+        pattern.filename = filename
         pattern._process(theme)
 
         return pattern
@@ -84,41 +85,21 @@ class Pattern:
         self.variables = benedict()
         self.scopes = benedict()
 
+        # metadata and pattern info
+        self.description = None
+        self.type = None
+        self.version = None
+        self.prevent_themes = False
+        self.requires_theme = None
+
+        # a place to stash the file that the pattern was loaded from
+        # it's up to the caller/user to make sure this is set properly
+        # defaults to None
+        self.filename = None
+
     def __bool__(self):
         """Falsy if the definition is falsy, truthy if the definition is truthy"""
         return bool(self.definition)
-
-    @property
-    def description(self):
-        """get the description from self.definition
-
-        returns None if the element is not present in the toml
-        """
-        try:
-            return self.definition["description"]
-        except KeyError:
-            return None
-
-    @property
-    def prevent_themes(self):
-        """returns true if this pattern won't let you apply external themes"""
-        out = False
-        with contextlib.suppress(KeyError):
-            out = self.definition["prevent_themes"]
-            if not isinstance(out, bool):
-                raise DyeSyntaxError("'prevent_themes' must be true or false")
-        return out
-
-    @property
-    def requires_theme(self):
-        """get the requires_theme setting from the definition
-
-        returns None if the element is not present in the toml
-        """
-        try:
-            return self.definition["requires_theme"]
-        except KeyError:
-            return None
 
     def _process(self, theme=None):
         """Process the loaded pattern definition, merging in a theme if given
@@ -130,6 +111,17 @@ class Pattern:
             .variables
             .scopes
         """
+        self.description = self.definition.get("description", None)
+        self.type = self.definition.get("type", None)
+        self.version = self.definition.get("version", None)
+
+        prevent = self.definition.get("prevent_themes", False)
+        if not isinstance(prevent, bool):
+            raise DyeSyntaxError("'prevent_themes' must be true or false")
+        self.prevent_themes = prevent
+
+        self.requires_theme = self.definition.get("requires_theme", None)
+
         jinja_env = jinja2.Environment()
         jinja_env.filters = jinja_filters()
 

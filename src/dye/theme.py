@@ -32,8 +32,8 @@ class Theme:
     """load and parse a toml file into a theme object"""
 
     # class methods to create a new theme
-    @classmethod
-    def loads(cls, tomlstring=None):
+    @staticmethod
+    def loads(tomlstring=None):
         """Process a given string as a theme and return a new theme object"""
         if tomlstring:  # noqa: SIM108
             toparse = tomlstring
@@ -41,19 +41,19 @@ class Theme:
             # tomlkit can't parse None, so if we got it as the default
             # or if the caller pased None intentionally...
             toparse = ""
-        theme = cls()
+        theme = Theme()
         theme.definition = benedict(tomlkit.loads(toparse))
         theme._process()
         return theme
 
-    @classmethod
-    def load(cls, fobj, filename=None):
+    @staticmethod
+    def load(fobj, filename=None):
         """Process a file object as a theme and return a new theme object
 
         Pass the optional filename to put in the .filename property
         of the returned theme object
         """
-        theme = cls()
+        theme = Theme()
         theme.definition = benedict(tomlkit.load(fobj))
         theme.filename = filename
         theme._process()
@@ -74,6 +74,11 @@ class Theme:
         # the processed elements, it's a dict of rich.style.Style()
         self.styles = benedict()
 
+        # metadata from the theme file
+        self.description = None
+        self.type = None
+        self.version = None
+
         # a place to stash the file that the theme was loaded from
         # it's up to the caller/user to make sure this is set properly
         # defaults to None
@@ -88,6 +93,11 @@ class Theme:
 
         this sets self.colors and self.styles
         """
+
+        self.description = self.definition.get("description", None)
+        self.type = self.definition.get("type", None)
+        self.version = self.definition.get("version", None)
+
         env = jinja2.Environment()
 
         try:

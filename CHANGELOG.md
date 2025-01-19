@@ -14,6 +14,8 @@ and the format of this file follows recommendations from
 
 ### Changed
 
+- `dye preview` can now show patterns and styles
+
 ### Fixed
 
 - `dye preview` crashed if you had nested colors or styles
