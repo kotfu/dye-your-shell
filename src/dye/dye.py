@@ -57,6 +57,8 @@ class Dye:
     def __init__(self, force_color=False):
         """Construct a new Dye object"""
 
+        self.debug = False
+
         self.console = self._create_console(force_color)
         self.error_console = self._create_error_console(force_color)
         self.print_console = self._create_print_console(force_color)
@@ -148,7 +150,8 @@ class Dye:
     #
     def dispatch(self, prog, args):
         """process and execute all the arguments and options"""
-        # set the color output options
+
+        self.debug = args.debug
         self.set_help_colors(args)
 
         # now go process everything (order matters)
@@ -199,6 +202,11 @@ class Dye:
                 # if it's set to an empty string that means we shouldn't
                 # show any colors
                 args.nocolor = True
+                self.debug_msg(
+                    "No color output in help because $DYE_COLORS is an empty string."
+                )
+                return
+
         except KeyError:
             # wasn't set
             env_colors = None
@@ -216,12 +224,17 @@ class Dye:
         if args.color:
             # overrides environment variables
             help_styles = self._parse_colorspec(args.color)
+            self.debug_msg("help styles set from --color")
         elif args.nocolor:
             # disable the default color output
             help_styles = self._parse_colorspec("")
+            self.debug_msg("help styles disabled because of --no-color")
         elif env_colors:
             # was set, and was set to a non-empty string
             help_styles = self._parse_colorspec(env_colors)
+            self.debug_msg("help styles set from $DYE_COLORS")
+        else:
+            self.debug_msg("no styles found for help")
 
         # now map this all into rich.styles
         for key, value in help_styles.items():
@@ -413,6 +426,12 @@ class Dye:
     #
     # supporting methods
     #
+
+    def debug_msg(self, msg):
+        """print the message to stderr if debug is enabled"""
+        if self.debug:
+            self.error_console.print(f"[debug] {msg}")
+
     def load_theme_from_args(self, args, required=True):
         """Load a theme from the command line args
 
@@ -579,6 +598,10 @@ class Dye:
         parser.add_argument(
             "-F", "--force-color", action="store_true", help=forcecolor_help
         )
+
+        # debug
+        debug_help = "output debug and status information to stderr"
+        parser.add_argument("-d", "--debug", action="store_true", help=debug_help)
 
         # set up for the sub commands
         subparsers = parser.add_subparsers(

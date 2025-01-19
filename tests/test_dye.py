@@ -92,7 +92,7 @@ def test_output_color_env_empty(dye_cmdline, mocker):
 
 
 #
-# test unknown commands, no commands, help, and version
+# test unknown commands, no commands, help, version, and debug
 #
 def test_help_option(dye_cmdline, capsys):
     exit_code = dye_cmdline("--help")
@@ -173,6 +173,17 @@ def test_unknown_command(dye_cmdline, capsys):
     assert not out
     assert "error" in err
     assert "invalid choice" in err
+
+
+def test_debug(dye_cmdline, capsys):
+    # use the print command to make sure debug generates output
+    msg = "Hello there. General Kenobi."
+    exit_code = dye_cmdline(f"-d print {msg}")
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    # we should have some debug info
+    assert err
+    assert out == f"{msg}\n"
 
 
 #
