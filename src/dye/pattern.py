@@ -84,6 +84,10 @@ class Pattern:
         self.variables = benedict()
         self.scopes = benedict()
 
+    def __bool__(self):
+        """Falsy if the definition is falsy, truthy if the definition is truthy"""
+        return bool(self.definition)
+
     @property
     def description(self):
         """get the description from self.definition

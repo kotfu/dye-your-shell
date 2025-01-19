@@ -79,6 +79,10 @@ class Theme:
         # defaults to None
         self.filename = None
 
+    def __bool__(self):
+        """Falsy if the definition is falsy, truthy if the definition is truthy"""
+        return bool(self.definition)
+
     def _process(self):
         """process a newly loaded definition, including variables and styles
 

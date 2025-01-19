@@ -152,6 +152,29 @@ def sthmpat():
 
 
 #
+# test dunders
+#
+def test_truthy1(spat):
+    assert spat
+
+
+def test_truthy2(sthmpat):
+    assert sthmpat
+
+
+def test_falsy1():
+    assert not Pattern()
+
+
+def test_falsy2():
+    assert not Pattern.loads("")
+
+
+def test_falsy3():
+    assert not Pattern.loads(None)
+
+
+#
 # make sure load() and loads() work properly
 #
 def test_load(tmp_path):

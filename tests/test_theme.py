@@ -80,6 +80,25 @@ def sthm():
 
 
 #
+# test dunders
+#
+def test_truthy(sthm):
+    assert sthm
+
+
+def test_falsy1():
+    assert not Theme()
+
+
+def test_falsy2():
+    assert not Theme.loads("")
+
+
+def test_falsy3():
+    assert not Theme.loads(None)
+
+
+#
 # test load() and loads()
 #
 def test_load(tmp_path):
