@@ -19,14 +19,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-"""utility functions"""
+"""utility functions and classes"""
 
+from enum import Enum
 from importlib import metadata
 
 import benedict
 import rich
 
 from .exceptions import DyeSyntaxError
+
+
+class DefinitionSource(Enum):
+    """Enum to indicate where a style or color is defined"""
+
+    def __str__(self):
+        return self.value
+
+    THEME = "theme"
+    PATTERN = "pattern"
 
 
 def version_string():

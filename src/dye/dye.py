@@ -361,7 +361,7 @@ class Dye:
             if isinstance(pattern.colors[color_name], dict):
                 # this one is a nested table, skip it
                 continue
-            (source, color_def) = self.get_color_def(theme, pattern, color_name)
+            (source, color_def) = pattern.get_color_def(color_name)
             col1 = rich.text.Text.assemble(("██", color_def), f" {color_name}")
             col2 = rich.text.Text(f' = "{color_def}"  # from {source}')
             colors_table.add_row(col1, col2)
@@ -380,7 +380,7 @@ class Dye:
             if isinstance(pattern.styles[style_name], dict):
                 # this one is a nested table, skip it
                 continue
-            (source, style_def) = self.get_style_def(theme, pattern, style_name)
+            (source, style_def) = pattern.get_style_def(style_name)
             style = pattern.styles[style_name]
             col1 = rich.text.Text(style_name, style)
             col2 = rich.text.Text(f' = "{style_def}"  # from {source}')
@@ -392,55 +392,6 @@ class Dye:
             rich.panel.Panel(outer_table, box=rich.box.SIMPLE, style=text_style)
         )
         return self.EXIT_SUCCESS
-
-    def get_color_def(self, theme, pattern, color_name):
-        """retrieve the definition of color_name from theme or pattern
-
-        Args:
-            theme (Theme): _description_
-            pattern (Pattern): _description_
-            color_name (str): _description_
-        """
-        found = False
-        source = None
-        color_def = None
-
-        with contextlib.suppress(KeyError):
-            color_def = theme.definition["colors"][color_name]
-            source = "theme"
-            found = True
-        with contextlib.suppress(KeyError):
-            color_def = pattern.definition["colors"][color_name]
-            source = "pattern"
-            found = True
-
-        if not found:
-            raise KeyError(color_name)
-        return (source, color_def)
-
-    def get_style_def(self, theme, pattern, style_name):
-        """retrieve the definition of style_name from theme or pattern
-
-        Args:
-            theme (Theme): _description_
-            pattern (Pattern): _description_
-            style_name (str): _description_
-        """
-        found = False
-        source = None
-        style_def = None
-
-        with contextlib.suppress(KeyError):
-            style_def = theme.definition["styles"][style_name]
-            source = "theme"
-            found = True
-        with contextlib.suppress(KeyError):
-            style_def = pattern.definition["styles"][style_name]
-            source = "pattern"
-            found = True
-        if not found:
-            raise KeyError(style_name)
-        return (source, style_def)
 
     def command_print(self, args):
         """print arbitrary strings applying styles from a theme or pattern"""

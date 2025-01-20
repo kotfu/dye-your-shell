@@ -31,6 +31,7 @@ from dye.exceptions import DyeError, DyeSyntaxError
 from dye.pattern import Pattern
 from dye.scope import Scope
 from dye.theme import Theme
+from dye.utils import DefinitionSource
 
 SAMPLE_THEME = """
 [colors]
@@ -641,3 +642,44 @@ def test_scopes_empty():
 
     assert len(pattern.scopes) == 0
     assert pattern.scopes == {}
+
+
+#
+# test other methods
+#
+COLOR_DEFS = [
+    ("foreground_high", DefinitionSource.THEME, "foreground"),
+    ("pattern_purple", DefinitionSource.PATTERN, "#bd93f8"),
+    ("triad.first", DefinitionSource.THEME, "#aaaaaa"),
+    ("triad.second", DefinitionSource.PATTERN, "#dd2222"),
+]
+
+
+@pytest.mark.parametrize("color_name, expected_source, expected_defn", COLOR_DEFS)
+def test_get_color_def_theme(sthmpat, color_name, expected_source, expected_defn):
+    (source, defn) = sthmpat.get_color_def(color_name)
+    assert source == expected_source
+    assert defn == expected_defn
+
+
+def test_get_color_def_notfound(sthmpat):
+    with pytest.raises(KeyError):
+        sthmpat.get_color_def("notfoundhere")
+
+
+STYLE_DEFS = [
+    ("themeonly", DefinitionSource.THEME, "{{color.foreground}} on #393b47"),
+    ("pattern_text_low", DefinitionSource.PATTERN, "#999999 on #ffffff"),
+]
+
+
+@pytest.mark.parametrize("style_name, expected_source, expected_defn", STYLE_DEFS)
+def test_get_style_def_theme(sthmpat, style_name, expected_source, expected_defn):
+    (source, defn) = sthmpat.get_style_def(style_name)
+    assert source == expected_source
+    assert defn == expected_defn
+
+
+def test_get_style_def_notfound(sthmpat):
+    with pytest.raises(KeyError):
+        sthmpat.get_style_def("notfoundhere")

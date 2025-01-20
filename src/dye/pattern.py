@@ -31,7 +31,7 @@ from benedict import benedict
 from .exceptions import DyeError, DyeSyntaxError
 from .filters import jinja_filters
 from .scope import Scope
-from .utils import merge_and_process_colors, merge_and_process_styles
+from .utils import DefinitionSource, merge_and_process_colors, merge_and_process_styles
 
 
 class Pattern:
@@ -238,8 +238,61 @@ class Pattern:
             self.scopes[name] = scope
 
     #
-    # scope methods
+    # other methods
     #
     def has_scope(self, scope):
         """Check if the given scope exists."""
         return scope in self.scopes
+
+    def get_color_def(self, color_name):
+        """retrieve the definition of color_name, from wherever it was defined
+
+        Args:
+            color_name (str): the name of the color you want to retrieve
+
+        Raises:
+            KeyError: if color_name is not defined anywhere
+
+        Returns:
+            (source, color_def): a DefinitionSource of where the color_name is defined
+            and a string of the definition
+        """
+        found = False
+        source = None
+        color_def = None
+
+        if self.theme:
+            with contextlib.suppress(KeyError):
+                color_def = self.theme.definition["colors"][color_name]
+                source = DefinitionSource.THEME
+                found = True
+        if self.definition:
+            with contextlib.suppress(KeyError):
+                color_def = self.definition["colors"][color_name]
+                source = DefinitionSource.PATTERN
+                found = True
+
+        if not found:
+            raise KeyError(color_name)
+        return (source, color_def)
+
+    def get_style_def(self, style_name):
+        """retrieve the definition of style_name from theme or pattern"""
+        found = False
+        source = None
+        style_def = None
+
+        if self.theme:
+            with contextlib.suppress(KeyError):
+                style_def = self.theme.definition["styles"][style_name]
+                source = DefinitionSource.THEME
+                found = True
+        if self.definition:
+            with contextlib.suppress(KeyError):
+                style_def = self.definition["styles"][style_name]
+                source = DefinitionSource.PATTERN
+                found = True
+
+        if not found:
+            raise KeyError(style_name)
+        return (source, style_def)
