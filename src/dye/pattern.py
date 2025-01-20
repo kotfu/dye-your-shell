@@ -51,7 +51,7 @@ class Pattern:
             toparse = ""
         pattern = Pattern()
         pattern.definition = benedict(tomlkit.loads(toparse))
-        pattern._process(theme)
+        pattern.process(theme)
         return pattern
 
     @staticmethod
@@ -63,7 +63,7 @@ class Pattern:
         pattern = Pattern()
         pattern.definition = benedict(tomlkit.load(fobj))
         pattern.filename = filename
-        pattern._process(theme)
+        pattern.process(theme)
 
         return pattern
 
@@ -75,6 +75,9 @@ class Pattern:
 
         # the raw toml definition of the pattern
         self.definition = benedict()
+
+        # if we have applied a theme to the pattern, store it here
+        self.theme = None
 
         # these contain the core parts of the pattern,
         # but they have all been processed through the template
@@ -101,16 +104,19 @@ class Pattern:
         """Falsy if the definition is falsy, truthy if the definition is truthy"""
         return bool(self.definition)
 
-    def _process(self, theme=None):
+    def process(self, theme=None):
         """Process the loaded pattern definition, merging in a theme if given
 
         returns nothing, populates stuff in the current object:
 
+            .theme
             .colors
             .styles
             .variables
             .scopes
         """
+        self.theme = theme
+
         self.description = self.definition.get("description", None)
         self.type = self.definition.get("type", None)
         self.version = self.definition.get("version", None)
@@ -125,13 +131,13 @@ class Pattern:
         jinja_env = jinja2.Environment()
         jinja_env.filters = jinja_filters()
 
-        self._process_colors(jinja_env, theme)
-        self._process_styles(jinja_env, theme)
+        self._process_colors(jinja_env)
+        self._process_styles(jinja_env)
         self._process_variables(jinja_env)
         self._process_scopes()
 
-    def _process_colors(self, jinja_env, theme=None):
-        """merge the colors from this pattern and the given theme together
+    def _process_colors(self, jinja_env):
+        """merge the colors from the pattern and self.theme together
 
         this sets self.colors
 
@@ -146,18 +152,18 @@ class Pattern:
         You could do everything with a variable that you can do with a color,
         it's just a convenient way to group/name them.
         """
-        self.colors = theme.colors.copy() if theme else benedict()
+        self.colors = self.theme.colors.copy() if self.theme else benedict()
         pattern_colors = benedict()
         with contextlib.suppress(KeyError):
             pattern_colors = benedict(self.definition["colors"])
         merge_and_process_colors(self.colors, pattern_colors, jinja_env)
 
-    def _process_styles(self, jinja_env, theme=None):
+    def _process_styles(self, jinja_env):
         """merge the styles from this pattern and the given theme together
 
         this sets self.styles
         """
-        self.styles = theme.styles.copy() if theme else benedict()
+        self.styles = self.theme.styles.copy() if self.theme else benedict()
         pattern_styles = benedict()
         with contextlib.suppress(KeyError):
             pattern_styles = benedict(self.definition["styles"])
