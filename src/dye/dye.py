@@ -345,44 +345,102 @@ class Dye:
             summary_table.add_row("No pattern file.")
 
         # add the summary table to the outer table
+        outer_table.add_row(" Inputs")
         outer_table.add_row(summary_table)
 
-        # create a contents table for styles and colors
-        contents_table = rich.table.Table(
+        # add colors
+        colors_table = rich.table.Table(
             box=None,
             expand=False,
             padding=(0, 0, 0, 1),
             style=text_style,
         )
-
-        contents_table.add_row("[colors]")
-        for color in theme.colors.keypaths(sort=False):
-            value = theme.definition["colors"][color]
-            if isinstance(value, dict):
-                # don't show the table items of nested tables, just their values
+        outer_table.add_row(" [colors]")
+        outer_table.add_section()
+        for color_name in pattern.colors.keypaths(sort=False):
+            if isinstance(pattern.colors[color_name], dict):
+                # this one is a nested table, skip it
                 continue
-            col1 = rich.text.Text.assemble(("██", value), f" {color}")
-            col2 = rich.text.Text(f' = "{value}"')
-            contents_table.add_row(col1, col2)
+            (source, color_def) = self.get_color_def(theme, pattern, color_name)
+            col1 = rich.text.Text.assemble(("██", color_def), f" {color_name}")
+            col2 = rich.text.Text(f' = "{color_def}"  # from {source}')
+            colors_table.add_row(col1, col2)
+        outer_table.add_row(colors_table)
 
-        contents_table.add_row("")
-        contents_table.add_row("[styles]")
-        for name in theme.styles.keypaths(sort=False):
-            value = theme.definition["styles"][name]
-            if isinstance(value, dict):
-                # don't show the table items of nested tables, just their values
+        # add styles
+        styles_table = rich.table.Table(
+            box=None,
+            expand=False,
+            padding=(0, 0, 0, 1),
+            style=text_style,
+        )
+        outer_table.add_row(" [styles]")
+        outer_table.add_section()
+        for style_name in pattern.styles.keypaths(sort=False):
+            if isinstance(pattern.styles[style_name], dict):
+                # this one is a nested table, skip it
                 continue
-            style = theme.styles[name]
-            col1 = rich.text.Text(name, style)
-            col2 = rich.text.Text(f' = "{value}"')
-            contents_table.add_row(col1, col2)
+            (source, style_def) = self.get_style_def(theme, pattern, style_name)
+            style = pattern.styles[style_name]
+            col1 = rich.text.Text(style_name, style)
+            col2 = rich.text.Text(f' = "{style_def}"  # from {source}')
+            styles_table.add_row(col1, col2)
+        outer_table.add_row(styles_table)
 
-        outer_table.add_row(contents_table)
-
+        # print the whole thing out
         self.console.print(
             rich.panel.Panel(outer_table, box=rich.box.SIMPLE, style=text_style)
         )
         return self.EXIT_SUCCESS
+
+    def get_color_def(self, theme, pattern, color_name):
+        """retrieve the definition of color_name from theme or pattern
+
+        Args:
+            theme (Theme): _description_
+            pattern (Pattern): _description_
+            color_name (str): _description_
+        """
+        found = False
+        source = None
+        color_def = None
+
+        with contextlib.suppress(KeyError):
+            color_def = theme.definition["colors"][color_name]
+            source = "theme"
+            found = True
+        with contextlib.suppress(KeyError):
+            color_def = pattern.definition["colors"][color_name]
+            source = "pattern"
+            found = True
+
+        if not found:
+            raise KeyError(color_name)
+        return (source, color_def)
+
+    def get_style_def(self, theme, pattern, style_name):
+        """retrieve the definition of style_name from theme or pattern
+
+        Args:
+            theme (Theme): _description_
+            pattern (Pattern): _description_
+            style_name (str): _description_
+        """
+        found = False
+        source = None
+        style_def = None
+
+        with contextlib.suppress(KeyError):
+            style_def = theme.definition["styles"][style_name]
+            source = "theme"
+            found = True
+        with contextlib.suppress(KeyError):
+            style_def = pattern.definition["styles"][style_name]
+            source = "pattern"
+            found = True
+        if not found:
+            raise KeyError(style_name)
+        return (source, style_def)
 
     def command_print(self, args):
         """print arbitrary strings applying styles from a theme or pattern"""

@@ -99,3 +99,16 @@ def test_preview_no_text(dye_cmdline, capsys):
     assert exit_code == Dye.EXIT_ERROR
     assert not out
     assert "no 'text' style defined" in err
+
+
+def test_preview_empty_style(dye_cmdline, capsys):
+    theme_toml = """
+        [styles]
+        text = "#d2d2d2 on #2d2d2d"
+        empty_style = ""
+    """
+    exit_code = dye_cmdline("preview", theme_toml)
+    out, err = capsys.readouterr()
+    assert exit_code == Dye.EXIT_SUCCESS
+    assert "empty_style" in out
+    assert not err
